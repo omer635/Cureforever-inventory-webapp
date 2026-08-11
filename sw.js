@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cureforever-v3';
+const CACHE_NAME = 'cureforever-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -41,11 +41,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network first strategy for API requests, Cache first with network fallback for static assets
+  // Network first strategy for API requests
   if (event.request.url.includes('supabase.co')) {
     event.respondWith(
       fetch(event.request).catch(() => {
         return caches.match(event.request);
+      })
+    );
+    return;
+  }
+
+  // Navigation requests: ALWAYS try the network first so a new deploy
+  // (index.html) takes effect on the very next reload. Cache is only a
+  // fallback when offline.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).then((networkResponse) => {
+        const clone = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)).catch(() => {});
+        return networkResponse;
+      }).catch(() => {
+        return caches.match(event.request).then((cached) => cached || caches.match('./index.html'));
       })
     );
     return;
