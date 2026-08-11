@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CureForever — Inventory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy:#0F1F3D; --navy-2:#1C2E52; --gold:#B8935A; --gold-light:#E8DCC4;
+    --cream:#FAF8F4; --paper:#FFFFFF; --ink:#1A1D24; --muted:#6B7280; --line:#E7E2D6;
+    --danger:#B3261E; --danger-bg:#FBEAE8; --warn:#B8722A; --warn-bg:#FBF0E2; --ok:#2F6B4F; --ok-bg:#EAF3EE;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--cream); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3,.brand{ font-family:'Cormorant Garamond', serif; }
+  #app{ min-height:100vh; }
+
+  .login-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 55%, #24406e 100%); padding:24px; }
+  .login-card{ background:var(--paper); width:100%; max-width:400px; border-radius:4px;
+    padding:44px 36px 36px; box-shadow:0 30px 60px rgba(0,0,0,.35); border-top:3px solid var(--gold); }
+  .login-card .brand{ font-size:30px; font-weight:700; color:var(--navy); margin:0 0 2px; letter-spacing:.3px;}
+  .login-card .sub{ color:var(--muted); font-size:13px; margin:0 0 28px; letter-spacing:.5px; text-transform:uppercase;}
+  label{ display:block; font-size:12px; font-weight:600; color:var(--navy-2); margin-bottom:6px; letter-spacing:.3px;}
+  input, textarea{ width:100%; padding:11px 13px; border:1px solid var(--line); border-radius:3px;
+    font-size:14px; font-family:'Inter',sans-serif; margin-bottom:16px; background:#fff; }
+  input:focus, textarea:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-light); }
+  button{ cursor:pointer; border:none; border-radius:3px; font-family:'Inter',sans-serif; font-weight:600; }
+  .btn-primary{ width:100%; background:var(--navy); color:#fff; padding:12px; font-size:14px; letter-spacing:.3px; margin-top:6px; }
+  .btn-primary:hover{ background:var(--navy-2); }
+  .btn-primary:disabled{ opacity:.5; cursor:not-allowed; }
+  .err{ color:var(--danger); font-size:13px; margin:-6px 0 14px; }
+
+  header.top{ background:var(--navy); color:#fff; padding:16px 28px; display:flex; align-items:center;
+    justify-content:space-between; border-bottom:3px solid var(--gold); flex-wrap:wrap; gap:10px; }
+  header.top .brand{ font-size:22px; font-weight:700; margin:0; }
+  header.top .who{ font-size:12px; color:var(--gold-light); margin-top:2px; text-transform:uppercase; letter-spacing:.4px;}
+  .header-actions{ display:flex; gap:10px; align-items:center; }
+  .live-dot{ display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--gold-light);
+    text-transform:uppercase; letter-spacing:.4px; }
+  .live-dot::before{ content:""; width:7px; height:7px; border-radius:50%; background:#4ADE80; display:inline-block; }
+  .live-dot.pulse::before{ animation:pulse 1.1s ease; }
+  @keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(74,222,128,.6);} 100%{ box-shadow:0 0 0 8px rgba(74,222,128,0);} }
+  .btn-logout{ background:transparent; color:#fff; border:1px solid rgba(255,255,255,.4)!important; padding:8px 16px; font-size:13px; border-radius:3px;}
+  .btn-logout:hover{ background:rgba(255,255,255,.1); }
+  .btn-ghost{ background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.25)!important; padding:8px 14px; font-size:12px; border-radius:3px;}
+  .btn-ghost:hover{ background:rgba(255,255,255,.16); }
+
+  main{ max-width:1220px; margin:0 auto; padding:28px; }
+
+  .admin-tabs{ display:flex; gap:4px; margin-bottom:22px; flex-wrap:wrap; border-bottom:1px solid var(--line); }
+  .tab-btn{ background:transparent; color:var(--muted); padding:11px 16px; font-size:13.5px; font-weight:600;
+    border-bottom:2px solid transparent; border-radius:0; margin-bottom:-1px; }
+  .tab-btn:hover{ color:var(--navy); }
+  .tab-btn.active{ color:var(--navy); border-bottom:2px solid var(--gold); }
+
+  .stat-row{ display:flex; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+  .stat{ flex:1; min-width:150px; background:var(--paper); border:1px solid var(--line); border-radius:4px; padding:16px 18px; }
+  .stat .num{ font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:700; color:var(--navy); line-height:1;}
+  .stat .lbl{ font-size:12px; color:var(--muted); margin-top:4px; text-transform:uppercase; letter-spacing:.4px;}
+  .stat.alert .num{ color:var(--danger); }
+  .stat.warn .num{ color:var(--warn); }
+
+  .banner{ background:var(--danger-bg); border:1px solid #F0C7C2; border-radius:4px; padding:14px 18px; margin-bottom:20px; }
+  .banner-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+  .banner-head h3{ margin:0; font-size:15px; color:var(--danger); }
+  .banner-item{ display:flex; align-items:center; justify-content:space-between; padding:6px 0; font-size:13px; border-top:1px solid #F0C7C2; }
+  .banner-item:first-of-type{ border-top:none; }
+  .dismiss-btn{ background:#fff; border:1px solid var(--line)!important; color:var(--muted); padding:4px 10px; font-size:11px; border-radius:3px;}
+  .dismiss-btn:hover{ background:#F5F2EA; }
+  .banner.banner-info{ background:var(--gold-light); border-color:#DCC79A; }
+  .banner.banner-info h3{ color:var(--navy-2); }
+  .banner.banner-info .banner-item{ border-top-color:#DCC79A; }
+
+  .panel{ background:var(--paper); border:1px solid var(--line); border-radius:4px; margin-bottom:24px; overflow:hidden;}
+  .panel-head{ padding:16px 20px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+  .panel-head h2{ margin:0; font-size:19px; color:var(--navy); font-weight:600;}
+  .panel-body{ padding:20px; }
+  .filters{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .chip{ font-size:12px; padding:6px 12px; border-radius:20px; border:1px solid var(--line); background:#fff; color:var(--muted); cursor:pointer; font-weight:600; }
+  .chip.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .search-input{ width:190px; margin:0; padding:7px 10px; font-size:12.5px; }
+  .export-btn{ background:var(--gold); color:var(--navy); padding:7px 14px; font-size:12px; border-radius:3px; font-weight:700; }
+  .export-btn:hover{ background:#a37f47; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  th{ text-align:left; padding:10px 16px; background:#F5F2EA; color:var(--navy-2); font-size:11px;
+    text-transform:uppercase; letter-spacing:.4px; font-weight:700; border-bottom:1px solid var(--line); }
+  th.sortable{ cursor:pointer; user-select:none; }
+  th.sortable:hover{ color:var(--navy); }
+  td{ padding:11px 16px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tr:last-child td{ border-bottom:none; }
+  tr:hover td{ background:#FBFAF6; }
+  .sku{ color:var(--muted); font-size:12px; }
+  .qty-input, .date-input{ width:80px; padding:7px 8px; border:1px solid var(--line); border-radius:3px; font-size:13px; margin-bottom:0;}
+  .date-input{ width:135px; }
+  .notes-input{ width:150px; padding:7px 8px; border:1px solid var(--line); border-radius:3px; font-size:12.5px; margin-bottom:0;}
+  .badge{ display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.2px;}
+  .badge.danger{ background:var(--danger-bg); color:var(--danger); }
+  .badge.warn{ background:var(--warn-bg); color:var(--warn); }
+  .badge.ok{ background:var(--ok-bg); color:var(--ok); }
+  .badge.info{ background:#E8EEF7; color:var(--navy-2); }
+  .save-btn{ background:var(--gold); color:var(--navy); padding:6px 14px; font-size:12px; border-radius:3px; font-weight:700; margin-right:6px;}
+  .save-btn:hover{ background:#a37f47; }
+  .save-btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .link-btn{ background:none; color:var(--navy-2); padding:6px 4px; font-size:12px; text-decoration:underline; font-weight:600;}
+  .link-btn.danger-link{ color:var(--danger); }
+  .empty{ padding:40px 20px; text-align:center; color:var(--muted); font-size:14px;}
+  .toast{ position:fixed; bottom:24px; right:24px; background:var(--navy); color:#fff; padding:12px 20px; border-radius:4px;
+    font-size:13px; box-shadow:0 10px 30px rgba(0,0,0,.3); border-left:3px solid var(--gold); opacity:0; transform:translateY(10px);
+    transition:.25s; pointer-events:none; z-index:200; }
+  .toast.show{ opacity:1; transform:translateY(0); }
+  .state-tag{ font-size:11px; background:var(--gold-light); color:var(--navy-2); padding:2px 8px; border-radius:3px; font-weight:600;}
+  select{ padding:8px 10px; border:1px solid var(--line); border-radius:3px; font-size:13px; background:#fff;}
+  .row-actions{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+
+  .modal-overlay{ position:fixed; inset:0; background:rgba(15,31,61,.55); display:flex; align-items:center;
+    justify-content:center; z-index:300; padding:20px; }
+  .modal{ background:#fff; border-radius:4px; max-width:560px; width:100%; padding:28px; border-top:3px solid var(--gold);
+    max-height:85vh; overflow-y:auto; }
+  .modal h3{ margin:0 0 4px; color:var(--navy); font-size:20px;}
+  .modal .modal-sub{ color:var(--muted); font-size:12.5px; margin-bottom:18px;}
+  .modal-close{ float:right; background:none; color:var(--muted); font-size:20px; padding:0 4px; }
+  .modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+  .btn-secondary{ background:#F5F2EA; color:var(--navy-2); padding:10px 18px; font-size:13px; }
+  .btn-secondary:hover{ background:#EDE8DA; }
+  .radio-row{ display:flex; align-items:center; gap:8px; font-weight:600; font-size:13.5px; margin-bottom:8px; color:var(--ink); }
+  .radio-row input{ width:auto; margin:0; }
+  .check-row{ display:flex; align-items:center; gap:8px; font-weight:400; font-size:13px; margin-bottom:9px; color:var(--ink); }
+  .check-row input{ width:auto; margin:0; }
+  .preview-table-wrap{ max-height:280px; overflow-y:auto; border:1px solid var(--line); border-radius:3px; margin:14px 0 8px; }
+  .preview-table-wrap table{ font-size:12px; }
+  .chart-card{ flex:1; min-width:280px; padding:18px; }
+  .chart-card h3{ margin:0 0 12px; color:var(--navy); font-size:15px; font-weight:600; }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+<div id="modalRoot"></div>
+
+<script>
+/* ============================================================
+   1. CONFIG — paste your Supabase project values here
+   ============================================================ */
+const SUPABASE_URL = "https://uchozkkzgqeismqvamye.supabase.co";       // e.g. https://xxxxxxxx.supabase.co
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaG96a2t6Z3FlaXNtcXZhbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0Mzc5ODgsImV4cCI6MjEwMjAxMzk4OH0.AmpMk0huP9cwbmHEn1EaO8FZsIEJDF8ZqzHxIoYh37Q";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ============================================================
+   2. STATE
+   ============================================================ */
+let session = null;
+let vendorRow = null;
+let products = [];
+let vendors = [];
+let stockEntries = [];
+let reorderRequests = [];
+let productVisibility = [];     // raw rows from product_visibility
+let visibilityMap = {};         // product_id -> Set(vendor_id) of ALLOWED vendors (empty/missing = open to all)
+let announcements = [];
+let announcementReads = [];
+let lastAnnouncementNotifyCount = null; // used to fire a browser Notification only on NEW unread announcements
+
+let activeFilter = "all";        // all | low | expiring | expired  (All Stock tab)
+let adminSelectedVendor = "all"; // All Stock tab vendor filter
+let adminSearch = "";
+let sortKey = "state";
+let sortDir = "asc";
+
+let adminTab = "dashboard";      // dashboard | vendors | allstock | products | announcements
+let adminVendorTabId = null;     // which vendor sub-tab is open on the "By Vendor" tab
+
+let historyChart = null;
+let dashboardCharts = {};        // holds live Chart.js instances so they can be destroyed before re-render
+
+const app = document.getElementById("app");
+const toastEl = document.getElementById("toast");
+const modalRoot = document.getElementById("modalRoot");
+const SEEN_KEY = "cf_seen_alerts_v1";
+let realtimeChannel = null;
+let refreshPending = false;
+let liveIndicatorTimer = null;
+
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  setTimeout(()=> toastEl.classList.remove("show"), 2200);
+}
+function closeModal(){
+  modalRoot.innerHTML = "";
+  if(historyChart){ historyChart.destroy(); historyChart = null; }
+}
+
+// SECURITY: escape any user-supplied text before it goes into innerHTML.
+// Product names, vendor names, notes, and announcement text are all
+// attacker-controllable — without this, someone could type e.g.
+// <img src=x onerror=...> into a free-text field (stored XSS) and it
+// would execute for every admin/vendor who later views that row.
+function esc(str){
+  if(str === null || str === undefined) return "";
+  return String(str).replace(/[&<>"']/g, ch => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[ch]));
+}
+
+/* ============================================================
+   3. AUTH
+   ============================================================ */
+async function init(){
+  const { data } = await sb.auth.getSession();
+  session = data.session;
+  if(session){ await loadVendorProfile(); }
+  render();
+}
+sb.auth.onAuthStateChange((_event, s) => {
+  session = s;
+  if(session){ loadVendorProfile().then(render); } else { vendorRow = null; render(); }
+});
+async function loadVendorProfile(){
+  const { data, error } = await sb.from("vendors").select("*").eq("user_id", session.user.id).maybeSingle();
+  if(error){ console.error("loadVendorProfile error:", error); }
+  vendorRow = data || null;
+}
+async function login(email, password){
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  return error;
+}
+async function logout(){
+  unsubscribeRealtime();
+  await sb.auth.signOut();
+}
+
+/* ============================================================
+   3b. REALTIME SYNC — no more manual refreshing
+   ============================================================ */
+function subscribeRealtime(){
+  if(realtimeChannel) return; // already subscribed
+  realtimeChannel = sb.channel("inventory-live")
+    .on("postgres_changes", { event: "*", schema: "public", table: "stock_entries" }, scheduleRefresh)
+    .on("postgres_changes", { event: "*", schema: "public", table: "reorder_requests" }, scheduleRefresh)
+    .on("postgres_changes", { event: "*", schema: "public", table: "vendors" }, scheduleRefresh)
+    .on("postgres_changes", { event: "*", schema: "public", table: "products" }, scheduleRefresh)
+    .on("postgres_changes", { event: "*", schema: "public", table: "product_visibility" }, scheduleRefresh)
+    .on("postgres_changes", { event: "*", schema: "public", table: "announcements" }, scheduleRefresh)
+    .on("postgres_changes", { event: "*", schema: "public", table: "announcement_reads" }, scheduleRefresh)
+    .subscribe();
+}
+function unsubscribeRealtime(){
+  if(realtimeChannel){ sb.removeChannel(realtimeChannel); realtimeChannel = null; }
+}
+// Debounced refresh: if the person is mid-typing in a field or has a modal
+// open, wait rather than yanking the screen out from under them.
+function scheduleRefresh(){
+  if(refreshPending) return;
+  refreshPending = true;
+  setTimeout(async () => {
+    refreshPending = false;
+    const active = document.activeElement;
+    const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
+    const modalOpen = modalRoot.innerHTML.trim() !== "";
+    if(isTyping || modalOpen){ scheduleRefresh(); return; } // try again shortly
+    if(!vendorRow || !document.getElementById("main")) return;
+    await loadAll();
+    refreshCurrentView();
+    flashLiveIndicator();
+  }, 800);
+}
+function flashLiveIndicator(){
+  const el = document.getElementById("liveDot");
+  if(!el) return;
+  el.classList.add("pulse");
+  clearTimeout(liveIndicatorTimer);
+  liveIndicatorTimer = setTimeout(() => el.classList.remove("pulse"), 1200);
+}
+// Re-renders whatever screen is currently on display (used after realtime
+// events AND after any local save/import/announcement action).
+function refreshCurrentView(){
+  if(!vendorRow) return;
+  if(vendorRow.is_admin) renderAdminView();
+  else renderVendorView();
+}
+
+/* ============================================================
+   4. DATA LOADING
+   ============================================================ */
+async function loadAll(){
+  const [p, v, s, r, pv, an, ar] = await Promise.all([
+    sb.from("products").select("*").order("name"),
+    sb.from("vendors").select("*").order("state"),
+    sb.from("stock_entries").select("*"),
+    sb.from("reorder_requests").select("*").order("created_at", { ascending: false }),
+    sb.from("product_visibility").select("*"),
+    sb.from("announcements").select("*").order("created_at", { ascending: false }),
+    sb.from("announcement_reads").select("*")
+  ]);
+  products = p.data || [];
+  vendors = v.data || [];
+  stockEntries = s.data || [];
+  reorderRequests = r.data || [];
+  productVisibility = pv.data || [];
+  announcements = an.data || [];
+  announcementReads = ar.data || [];
+
+  visibilityMap = {};
+  productVisibility.forEach(row => {
+    if(!visibilityMap[row.product_id]) visibilityMap[row.product_id] = new Set();
+    visibilityMap[row.product_id].add(row.vendor_id);
+  });
+}
+
+function daysUntil(dateStr){
+  if(!dateStr) return null;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const target = new Date(dateStr + "T00:00:00");
+  return Math.round((target - today) / (1000*60*60*24));
+}
+function formatDate(dateStr, includeTime = false){
+  if(!dateStr) return "Never";
+  const d = new Date(dateStr);
+  if(isNaN(d.getTime())) return "Never";
+  return includeTime ? d.toLocaleString() : d.toLocaleDateString();
+}
+function stockStatus(entry, product){
+  const flags = [];
+  if(entry.quantity <= 0) flags.push({level:"danger", text:"Out of stock", type:"low"});
+  else if(entry.quantity <= product.low_stock_threshold) flags.push({level:"warn", text:"Low stock", type:"low"});
+  if(entry.expiry_date){
+    const d = daysUntil(entry.expiry_date);
+    if(d < 0) flags.push({level:"danger", text:"Expired", type:"expiry"});
+    else if(d <= 30) flags.push({level:"warn", text: d + "d to expiry", type:"expiry"});
+  }
+  return flags;
+}
+// A product with no product_visibility rows is open to everyone.
+// A product WITH rows is restricted to just the listed vendor(s).
+function isProductVisible(productId, vendorId){
+  const set = visibilityMap[productId];
+  return !set || set.size === 0 || set.has(vendorId);
+}
+
+/* ============================================================
+   5. LOGIN SCREEN
+   ============================================================ */
+function renderLogin(){
+  app.innerHTML = `
+    <div class="login-wrap">
+      <div class="login-card">
+        <p class="brand">CureForever</p>
+        <p class="sub">Inventory Portal</p>
+        <div id="loginErr" class="err" style="display:none;"></div>
+        <label>Email</label>
+        <input id="email" type="email" placeholder="you@example.com" autocomplete="username">
+        <label>Password</label>
+        <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+        <button class="btn-primary" id="loginBtn">Sign In</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("loginBtn").onclick = async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const btn = document.getElementById("loginBtn");
+    const errEl = document.getElementById("loginErr");
+    btn.disabled = true; btn.textContent = "Signing in...";
+    const error = await login(email, password);
+    if(error){
+      errEl.style.display = "block"; errEl.textContent = error.message;
+      btn.disabled = false; btn.textContent = "Sign In";
+    }
+  };
+}
+
+/* ============================================================
+   6. DASHBOARD SHELL
+   ============================================================ */
+async function renderDashboard(){
+  app.innerHTML = `<div style="padding:60px;text-align:center;color:#6B7280;">Loading inventory…</div>`;
+
+  if(!vendorRow){
+    app.innerHTML = `
+      <div style="max-width:560px;margin:80px auto;padding:32px;background:#fff;border:1px solid #E7E2D6;border-radius:4px;">
+        <h2 style="color:#B3261E;margin-top:0;">No vendor profile found</h2>
+        <p style="color:#1A1D24;font-size:14px;line-height:1.6;">
+          You're signed in as <strong>${esc(session.user.email)}</strong>, but there's no row in the
+          <code>vendors</code> table linked to this login yet.
+        </p>
+        <pre style="background:#F5F2EA;padding:12px;border-radius:3px;font-size:12px;overflow-x:auto;">select id from auth.users where email = '${esc(session.user.email)}';</pre>
+        <button class="btn-logout" style="background:#0F1F3D;margin-top:12px;" id="logoutBtn2">Sign Out</button>
+      </div>
+    `;
+    document.getElementById("logoutBtn2").onclick = logout;
+    return;
+  }
+
+  await loadAll();
+  const isAdmin = vendorRow?.is_admin;
+  const name = vendorRow?.name || session.user.email;
+
+  app.innerHTML = `
+    <header class="top">
+      <div>
+        <p class="brand">CureForever Inventory</p>
+        <p class="who">${isAdmin ? "Admin — all states" : "Vendor — " + esc(vendorRow?.state || "")} · ${esc(name)}</p>
+      </div>
+      <div class="header-actions">
+        <span class="live-dot" id="liveDot">Live</span>
+        <button class="btn-ghost" id="notifBtn">🔔 Enable Alerts</button>
+        <button class="btn-logout" id="logoutBtn">Sign Out</button>
+      </div>
+    </header>
+    <main id="main"></main>
+  `;
+  document.getElementById("logoutBtn").onclick = logout;
+  subscribeRealtime();
+
+  const notifBtn = document.getElementById("notifBtn");
+  if("Notification" in window){
+    if(Notification.permission === "granted") notifBtn.textContent = "🔔 Alerts On";
+    notifBtn.onclick = async () => {
+      const perm = await Notification.requestPermission();
+      notifBtn.textContent = perm === "granted" ? "🔔 Alerts On" : "🔔 Enable Alerts";
+    };
+  } else { notifBtn.style.display = "none"; }
+
+  if(isAdmin) renderAdminView();
+  else renderVendorView();
+}
+
+/* ============================================================
+   7. SHARED STOCK TABLE — used by both the vendor's own view and
+   the admin's "By Vendor" tab, so editing behaves identically everywhere.
+   ============================================================ */
+function computeVendorRows(vendorId, respectVisibility){
+  let list = products;
+  if(respectVisibility) list = list.filter(p => isProductVisible(p.id, vendorId));
+  return list.map(p => {
+    const entry = stockEntries.find(e => e.product_id === p.id && e.vendor_id === vendorId)
+      || { vendor_id: vendorId, product_id: p.id, quantity: 0, expiry_date: null, notes: "" };
+    return { product: p, entry };
+  });
+}
+function stockTableRowsHTML(rows){
+  return rows.map(({product, entry}) => {
+    const flags = stockStatus(entry, product);
+    const isLow = flags.some(f => f.type === "low");
+    return `
+      <tr>
+        <td><strong>${esc(product.name)}</strong><br><span class="sku">${esc(product.sku)}</span></td>
+        <td><input class="qty-input" type="number" min="0" value="${entry.quantity}" data-product="${product.id}"></td>
+        <td><input class="date-input" type="date" value="${entry.expiry_date || ''}" data-expiry="${product.id}"></td>
+        <td><input class="notes-input" type="text" placeholder="Optional note" value="${esc(entry.notes)}" data-notes="${product.id}"></td>
+        <td>${flags.map(f=>`<span class="badge ${f.level}">${f.text}</span>`).join(" ") || `<span class="badge ok">Good</span>`}</td>
+        <td class="row-actions">
+          <button class="save-btn" data-save="${product.id}">Save</button>
+          ${isLow ? `<button class="link-btn" data-reorder="${product.id}">Request reorder</button>` : ""}
+          <button class="link-btn" data-hist-vendor="${entry.vendor_id}" data-hist-product="${product.id}" data-hist-name="${esc(product.name)}">History</button>
+        </td>
+      </tr>`;
+  }).join("");
+}
+function wireStockTable(tbodyEl, vendorId, afterSave){
+  tbodyEl.querySelectorAll("[data-save]").forEach(btn => {
+    btn.onclick = async () => {
+      const pid = btn.dataset.save;
+      const qty = parseInt(tbodyEl.querySelector(`[data-product="${pid}"]`).value || "0", 10);
+      const expiry = tbodyEl.querySelector(`[data-expiry="${pid}"]`).value || null;
+      const notes = tbodyEl.querySelector(`[data-notes="${pid}"]`).value || null;
+      btn.disabled = true; btn.textContent = "Saving...";
+      const { error } = await sb.from("stock_entries").upsert({
+        vendor_id: vendorId, product_id: pid, quantity: qty, expiry_date: expiry, notes: notes
+      }, { onConflict: "vendor_id,product_id" });
+      btn.disabled = false; btn.textContent = "Save";
+      if(error){ showToast("Error: " + error.message); }
+      else { showToast("Saved"); await loadAll(); afterSave(); }
+    };
+  });
+  tbodyEl.querySelectorAll("[data-reorder]").forEach(btn => {
+    btn.onclick = () => openReorderModal(btn.dataset.reorder, vendorId);
+  });
+  tbodyEl.querySelectorAll("[data-hist-vendor]").forEach(btn => {
+    btn.onclick = () => openHistoryModal(btn.dataset.histVendor, btn.dataset.histProduct, btn.dataset.histName);
+  });
+}
+
+/* ============================================================
+   8. VENDOR VIEW
+   ============================================================ */
+function activeUnreadAnnouncements(){
+  if(!vendorRow) return [];
+  const readIds = new Set(announcementReads.filter(r => r.vendor_id === vendorRow.id).map(r => r.announcement_id));
+  return announcements.filter(a => a.is_active && !readIds.has(a.id));
+}
+
+function renderVendorView(){
+  const main = document.getElementById("main");
+  const unread = activeUnreadAnnouncements();
+  if(lastAnnouncementNotifyCount !== null && unread.length > lastAnnouncementNotifyCount
+     && "Notification" in window && Notification.permission === "granted"){
+    new Notification("CureForever Inventory", { body: unread[0].title });
+  }
+  lastAnnouncementNotifyCount = unread.length;
+
+  const rows = computeVendorRows(vendorRow.id, true);
+  const lowCount = rows.filter(x => x.entry.quantity <= x.product.low_stock_threshold).length;
+  const expiringCount = rows.filter(x => { const d = daysUntil(x.entry.expiry_date); return d !== null && d <= 30; }).length;
+  const myRequests = reorderRequests.filter(r => r.vendor_id === vendorRow.id);
+
+  main.innerHTML = `
+    ${unread.length ? `
+    <div class="banner banner-info" id="annBanner">
+      <div class="banner-head">
+        <h3>📣 ${unread.length} announcement${unread.length>1?'s':''}</h3>
+        <button class="dismiss-btn" id="dismissAllAnn">Dismiss all</button>
+      </div>
+      ${unread.map(a => `
+        <div class="banner-item">
+          <span><strong>${esc(a.title)}</strong> — ${esc(a.message)}</span>
+          <button class="dismiss-btn" data-dismiss-ann="${a.id}">Dismiss</button>
+        </div>
+      `).join("")}
+    </div>` : ""}
+    <div class="stat-row">
+      <div class="stat"><div class="num">${rows.length}</div><div class="lbl">Products tracked</div></div>
+      <div class="stat warn"><div class="num">${lowCount}</div><div class="lbl">Low / out of stock</div></div>
+      <div class="stat alert"><div class="num">${expiringCount}</div><div class="lbl">Expiring ≤ 30 days</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Your stock — ${esc(vendorRow.state)}</h2></div>
+      <table>
+        <thead><tr><th>Product</th><th>Quantity</th><th>Expiry date</th><th>Notes</th><th>Status</th><th></th></tr></thead>
+        <tbody id="stockBody"></tbody>
+      </table>
+      ${rows.length === 0 ? `<div class="empty">No products have been assigned to you yet — check back soon.</div>` : ""}
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Your reorder requests</h2></div>
+      <table>
+        <thead><tr><th>Product</th><th>Qty requested</th><th>Note</th><th>Status</th><th>Requested</th></tr></thead>
+        <tbody id="reqBody"></tbody>
+      </table>
+      ${myRequests.length === 0 ? `<div class="empty">No reorder requests yet.</div>` : ""}
+    </div>
+  `;
+
+  if(unread.length){
+    document.getElementById("dismissAllAnn").onclick = async () => {
+      await sb.from("announcement_reads").upsert(
+        unread.map(a => ({ announcement_id: a.id, vendor_id: vendorRow.id })),
+        { onConflict: "announcement_id,vendor_id" }
+      );
+      await loadAll(); renderVendorView();
+    };
+    main.querySelectorAll("[data-dismiss-ann]").forEach(btn => {
+      btn.onclick = async () => {
+        await sb.from("announcement_reads").upsert(
+          [{ announcement_id: btn.dataset.dismissAnn, vendor_id: vendorRow.id }],
+          { onConflict: "announcement_id,vendor_id" }
+        );
+        await loadAll(); renderVendorView();
+      };
+    });
+  }
+
+  const body = document.getElementById("stockBody");
+  body.innerHTML = stockTableRowsHTML(rows);
+  wireStockTable(body, vendorRow.id, () => renderVendorView());
+
+  const reqBody = document.getElementById("reqBody");
+  myRequests.forEach(r => {
+    const product = products.find(p => p.id === r.product_id);
+    const tr = document.createElement("tr");
+    const statusBadge = r.status === "fulfilled" ? "ok" : r.status === "cancelled" ? "info" : "warn";
+    tr.innerHTML = `
+      <td>${product ? esc(product.name) : "—"}</td>
+      <td>${r.requested_qty}</td>
+      <td>${esc(r.note) || "—"}</td>
+      <td><span class="badge ${statusBadge}">${r.status}</span></td>
+      <td class="sku">${new Date(r.created_at).toLocaleDateString()}</td>
+    `;
+    reqBody.appendChild(tr);
+  });
+}
+
+function openReorderModal(productId, vendorId){
+  vendorId = vendorId || vendorRow.id;
+  const product = products.find(p => p.id === productId);
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeX">×</button>
+        <h3>Request reorder</h3>
+        <p class="modal-sub">${esc(product.name)} · ${esc(product.sku)}</p>
+        <label>Quantity needed</label>
+        <input type="number" id="reqQty" min="1" value="${product.low_stock_threshold * 2}">
+        <label>Note (optional)</label>
+        <textarea id="reqNote" rows="2" placeholder="e.g. urgent, festival demand"></textarea>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelReq">Cancel</button>
+          <button class="btn-primary" style="width:auto;" id="submitReq">Submit request</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("closeX").onclick = closeModal;
+  document.getElementById("cancelReq").onclick = closeModal;
+  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+  document.getElementById("submitReq").onclick = async () => {
+    const qty = parseInt(document.getElementById("reqQty").value || "0", 10);
+    const note = document.getElementById("reqNote").value || null;
+    const { error } = await sb.from("reorder_requests").insert({
+      vendor_id: vendorId, product_id: productId, requested_qty: qty, note
+    });
+    if(error){ showToast("Error: " + error.message); }
+    else { showToast("Reorder request sent"); closeModal(); await loadAll(); refreshCurrentView(); }
+  };
+}
+
+/* ============================================================
+   9. ADMIN VIEW — shell + tab dispatcher
+   ============================================================ */
+function renderAdminView(){
+  const main = document.getElementById("main");
+  main.innerHTML = `
+    <div class="admin-tabs">
+      <button class="tab-btn ${adminTab==='dashboard'?'active':''}" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn ${adminTab==='vendors'?'active':''}" data-tab="vendors">By Vendor</button>
+      <button class="tab-btn ${adminTab==='allstock'?'active':''}" data-tab="allstock">All Stock</button>
+      <button class="tab-btn ${adminTab==='products'?'active':''}" data-tab="products">Products</button>
+      <button class="tab-btn ${adminTab==='announcements'?'active':''}" data-tab="announcements">Announcements</button>
+    </div>
+    <div id="adminTabBody"></div>
+  `;
+  main.querySelectorAll("[data-tab]").forEach(b => {
+    b.onclick = () => { adminTab = b.dataset.tab; renderAdminView(); };
+  });
+
+  if(adminTab === "dashboard") renderAdminDashboardTab();
+  else if(adminTab === "vendors") renderAdminByVendorTab();
+  else if(adminTab === "allstock") renderAdminAllStockTab();
+  else if(adminTab === "products") renderAdminProductsTab();
+  else if(adminTab === "announcements") renderAdminAnnouncementsTab();
+}
+
+/* ---- 9a. DASHBOARD TAB — stats, alerts, live charts, activity feed ---- */
+function getSeenAlerts(){
+  try{ return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || "[]")); } catch(e){ return new Set(); }
+}
+function saveSeenAlerts(set){ localStorage.setItem(SEEN_KEY, JSON.stringify([...set])); }
+
+function computeAlerts(rows){
+  const alerts = [];
+  rows.forEach(({entry, product, vendor}) => {
+    stockStatus(entry, product).forEach(f => {
+      alerts.push({
+        id: `${vendor.id}:${product.id}:${f.type}`,
+        text: `${vendor.name} (${vendor.state}) — ${product.name}: ${f.text}`,
+        level: f.level
+      });
+    });
+  });
+  return alerts;
+}
+
+function destroyDashboardCharts(){
+  Object.values(dashboardCharts).forEach(c => { if(c) c.destroy(); });
+  dashboardCharts = {};
+}
+
+function renderAdminDashboardTab(){
+  const container = document.getElementById("adminTabBody");
+  destroyDashboardCharts();
+
+  const rows = stockEntries.map(e => {
+    const product = products.find(p => p.id === e.product_id);
+    const vendor = vendors.find(v => v.id === e.vendor_id);
+    return { entry: e, product, vendor };
+  }).filter(r => r.product && r.vendor);
+
+  const nonAdminVendors = vendors.filter(v => !v.is_admin);
+  const lowCount = rows.filter(r => r.entry.quantity <= r.product.low_stock_threshold).length;
+  const expiringCount = rows.filter(r => { const d = daysUntil(r.entry.expiry_date); return d !== null && d <= 30 && d >= 0; }).length;
+  const expiredCount = rows.filter(r => { const d = daysUntil(r.entry.expiry_date); return d !== null && d < 0; }).length;
+  const pendingRequests = reorderRequests.filter(r => r.status === "pending");
+
+  const allAlerts = computeAlerts(rows);
+  const seen = getSeenAlerts();
+  const newAlerts = allAlerts.filter(a => !seen.has(a.id));
+  if(newAlerts.length && "Notification" in window && Notification.permission === "granted"){
+    new Notification("CureForever Inventory", {
+      body: newAlerts.length === 1 ? newAlerts[0].text : `${newAlerts.length} new low-stock / expiry alerts`
+    });
+  }
+
+  // ---- chart data ----
+  const lowByVendor = nonAdminVendors.map(v =>
+    rows.filter(r => r.vendor.id === v.id && r.entry.quantity <= r.product.low_stock_threshold).length
+  );
+
+  const buckets = { "Expired":0, "≤7d":0, "8–30d":0, "31–90d":0, "Healthy":0 };
+  rows.forEach(r => {
+    const d = daysUntil(r.entry.expiry_date);
+    if(d === null){ buckets["Healthy"]++; return; }
+    if(d < 0) buckets["Expired"]++;
+    else if(d <= 7) buckets["≤7d"]++;
+    else if(d <= 30) buckets["8–30d"]++;
+    else if(d <= 90) buckets["31–90d"]++;
+    else buckets["Healthy"]++;
+  });
+
+  const categoryTotals = {};
+  rows.forEach(r => {
+    const cat = r.product.category || "Uncategorized";
+    categoryTotals[cat] = (categoryTotals[cat] || 0) + r.entry.quantity;
+  });
+
+  const reorderBuckets = { pending:0, fulfilled:0, cancelled:0 };
+  reorderRequests.forEach(r => { reorderBuckets[r.status] = (reorderBuckets[r.status] || 0) + 1; });
+
+  const recentActivity = [...stockEntries]
+    .filter(e => e.last_updated)
+    .sort((a,b) => new Date(b.last_updated) - new Date(a.last_updated))
+    .slice(0, 8);
+
+  container.innerHTML = `
+    ${newAlerts.length ? `
+      <div class="banner" id="alertBanner">
+        <div class="banner-head">
+          <h3>⚠ ${newAlerts.length} new alert${newAlerts.length>1?'s':''}</h3>
+          <button class="dismiss-btn" id="dismissAll">Dismiss all</button>
+        </div>
+        <div id="alertList">
+          ${newAlerts.map(a => `
+            <div class="banner-item">
+              <span>${esc(a.text)}</span>
+              <button class="dismiss-btn" data-dismiss="${a.id}">Dismiss</button>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    ` : ""}
+
+    <div class="stat-row">
+      <div class="stat"><div class="num">${nonAdminVendors.length}</div><div class="lbl">Vendors</div></div>
+      <div class="stat"><div class="num">${products.length}</div><div class="lbl">Products</div></div>
+      <div class="stat warn"><div class="num">${lowCount}</div><div class="lbl">Low / out of stock</div></div>
+      <div class="stat alert"><div class="num">${expiringCount + expiredCount}</div><div class="lbl">Expiring or expired</div></div>
+    </div>
+
+    ${pendingRequests.length ? `
+    <div class="panel">
+      <div class="panel-head"><h2>Reorder requests — ${pendingRequests.length} pending</h2></div>
+      <table>
+        <thead><tr><th>Vendor</th><th>Product</th><th>Qty</th><th>Note</th><th>Requested</th><th></th></tr></thead>
+        <tbody id="reorderBody"></tbody>
+      </table>
+    </div>` : ""}
+
+    <div class="stat-row">
+      <div class="panel chart-card"><h3>Low stock by vendor</h3><canvas id="chartLowByVendor" height="200"></canvas></div>
+      <div class="panel chart-card"><h3>Expiry outlook</h3><canvas id="chartExpiry" height="200"></canvas></div>
+    </div>
+    <div class="stat-row">
+      <div class="panel chart-card"><h3>Units by category</h3><canvas id="chartCategory" height="200"></canvas></div>
+      <div class="panel chart-card"><h3>Reorder requests</h3><canvas id="chartReorder" height="200"></canvas></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Recent activity</h2></div>
+      <table>
+        <thead><tr><th>Vendor</th><th>Product</th><th>Quantity</th><th>Updated</th></tr></thead>
+        <tbody id="activityBody"></tbody>
+      </table>
+      ${recentActivity.length === 0 ? `<div class="empty">No stock updates yet.</div>` : ""}
+    </div>
+  `;
+
+  if(pendingRequests.length){
+    const reorderBody = document.getElementById("reorderBody");
+    pendingRequests.forEach(r => {
+      const vendor = vendors.find(v => v.id === r.vendor_id);
+      const product = products.find(p => p.id === r.product_id);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${esc(vendor?.name) || "—"}</strong><br><span class="state-tag">${esc(vendor?.state)}</span></td>
+        <td>${esc(product?.name) || "—"}</td>
+        <td>${r.requested_qty}</td>
+        <td>${esc(r.note) || "—"}</td>
+        <td class="sku">${new Date(r.created_at).toLocaleDateString()}</td>
+        <td><button class="save-btn" data-fulfill="${r.id}">Mark fulfilled</button></td>
+      `;
+      reorderBody.appendChild(tr);
+    });
+    reorderBody.querySelectorAll("[data-fulfill]").forEach(btn => {
+      btn.onclick = async () => {
+        btn.disabled = true; btn.textContent = "Saving...";
+        const { error } = await sb.from("reorder_requests").update({ status: "fulfilled", resolved_at: new Date().toISOString() }).eq("id", btn.dataset.fulfill);
+        if(error){ showToast("Error: " + error.message); btn.disabled = false; btn.textContent = "Mark fulfilled"; }
+        else { showToast("Marked fulfilled"); await loadAll(); renderAdminDashboardTab(); }
+      };
+    });
+  }
+
+  const activityBody = document.getElementById("activityBody");
+  recentActivity.forEach(e => {
+    const product = products.find(p => p.id === e.product_id);
+    const vendor = vendors.find(v => v.id === e.vendor_id);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><strong>${esc(vendor?.name) || "—"}</strong> <span class="state-tag">${esc(vendor?.state) || ""}</span></td>
+      <td>${esc(product?.name) || "—"}</td>
+      <td>${e.quantity}</td>
+      <td class="sku">${formatDate(e.last_updated, true)}</td>
+    `;
+    activityBody.appendChild(tr);
+  });
+
+  if(newAlerts.length){
+    document.getElementById("dismissAll").onclick = () => {
+      const s = getSeenAlerts();
+      newAlerts.forEach(a => s.add(a.id));
+      saveSeenAlerts(s);
+      renderAdminDashboardTab();
+    };
+    container.querySelectorAll("[data-dismiss]").forEach(btn => {
+      btn.onclick = () => {
+        const s = getSeenAlerts();
+        s.add(btn.dataset.dismiss);
+        saveSeenAlerts(s);
+        renderAdminDashboardTab();
+      };
+    });
+  }
+
+  // ---- charts ----
+  const cNavy = "#0F1F3D", cGold = "#B8935A", cDanger = "#B3261E", cWarn = "#B8722A", cOk = "#2F6B4F", cMuted = "#6B7280";
+
+  dashboardCharts.lowByVendor = new Chart(document.getElementById("chartLowByVendor").getContext("2d"), {
+    type: "bar",
+    data: { labels: nonAdminVendors.map(v => v.name), datasets: [{ label: "Low/out of stock items", data: lowByVendor, backgroundColor: cGold }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+  dashboardCharts.expiry = new Chart(document.getElementById("chartExpiry").getContext("2d"), {
+    type: "doughnut",
+    data: { labels: Object.keys(buckets), datasets: [{ data: Object.values(buckets), backgroundColor: [cDanger, cWarn, "#D9A441", "#8FA98C", cOk] }] },
+    options: { responsive: true, plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } } }
+  });
+  dashboardCharts.category = new Chart(document.getElementById("chartCategory").getContext("2d"), {
+    type: "bar",
+    data: { labels: Object.keys(categoryTotals), datasets: [{ label: "Units", data: Object.values(categoryTotals), backgroundColor: cNavy }] },
+    options: { responsive: true, indexAxis: "y", plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+  dashboardCharts.reorder = new Chart(document.getElementById("chartReorder").getContext("2d"), {
+    type: "doughnut",
+    data: { labels: ["Pending","Fulfilled","Cancelled"], datasets: [{ data: [reorderBuckets.pending||0, reorderBuckets.fulfilled||0, reorderBuckets.cancelled||0], backgroundColor: [cWarn, cOk, cMuted] }] },
+    options: { responsive: true, plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } } }
+  });
+}
+
+/* ---- 9b. BY VENDOR TAB — per-vendor sub-tabs with the same editable table ---- */
+function renderAdminByVendorTab(){
+  const container = document.getElementById("adminTabBody");
+  const nonAdminVendors = vendors.filter(v => !v.is_admin);
+
+  if(nonAdminVendors.length === 0){
+    container.innerHTML = `<div class="panel"><div class="empty">No vendors yet.</div></div>`;
+    return;
+  }
+  if(!adminVendorTabId || !nonAdminVendors.find(v => v.id === adminVendorTabId)){
+    adminVendorTabId = nonAdminVendors[0].id;
+  }
+  const activeVendor = nonAdminVendors.find(v => v.id === adminVendorTabId);
+  const rows = computeVendorRows(activeVendor.id, false); // admin sees every product, visibility restriction or not
+  const lowCount = rows.filter(x => x.entry.quantity <= x.product.low_stock_threshold).length;
+  const expiringCount = rows.filter(x => { const d = daysUntil(x.entry.expiry_date); return d !== null && d <= 30; }).length;
+  const vendorRequests = reorderRequests.filter(r => r.vendor_id === activeVendor.id);
+
+  container.innerHTML = `
+    <div class="filters" style="margin-bottom:16px;">
+      ${nonAdminVendors.map(v => `<span class="chip ${v.id===adminVendorTabId?'active':''}" data-vendortab="${v.id}">${esc(v.name)} — ${esc(v.state)}</span>`).join("")}
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="num">${rows.length}</div><div class="lbl">Products tracked</div></div>
+      <div class="stat warn"><div class="num">${lowCount}</div><div class="lbl">Low / out of stock</div></div>
+      <div class="stat alert"><div class="num">${expiringCount}</div><div class="lbl">Expiring ≤ 30 days</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>${esc(activeVendor.name)} — ${esc(activeVendor.state)}</h2></div>
+      <table>
+        <thead><tr><th>Product</th><th>Quantity</th><th>Expiry date</th><th>Notes</th><th>Status</th><th></th></tr></thead>
+        <tbody id="stockBody"></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Reorder requests</h2></div>
+      <table>
+        <thead><tr><th>Product</th><th>Qty requested</th><th>Note</th><th>Status</th><th>Requested</th></tr></thead>
+        <tbody id="reqBody"></tbody>
+      </table>
+      ${vendorRequests.length === 0 ? `<div class="empty">No reorder requests yet.</div>` : ""}
+    </div>
+  `;
+
+  container.querySelectorAll("[data-vendortab]").forEach(chip => {
+    chip.onclick = () => { adminVendorTabId = chip.dataset.vendortab; renderAdminByVendorTab(); };
+  });
+
+  const body = document.getElementById("stockBody");
+  body.innerHTML = stockTableRowsHTML(rows);
+  wireStockTable(body, activeVendor.id, () => renderAdminByVendorTab());
+
+  const reqBody = document.getElementById("reqBody");
+  vendorRequests.forEach(r => {
+    const product = products.find(p => p.id === r.product_id);
+    const tr = document.createElement("tr");
+    const statusBadge = r.status === "fulfilled" ? "ok" : r.status === "cancelled" ? "info" : "warn";
+    tr.innerHTML = `
+      <td>${product ? esc(product.name) : "—"}</td>
+      <td>${r.requested_qty}</td>
+      <td>${esc(r.note) || "—"}</td>
+      <td><span class="badge ${statusBadge}">${r.status}</span></td>
+      <td class="sku">${new Date(r.created_at).toLocaleDateString()}</td>
+    `;
+    reqBody.appendChild(tr);
+  });
+}
+
+/* ---- 9c. ALL STOCK TAB — the original flat, filterable, exportable table ---- */
+function sortRows(rows){
+  const dir = sortDir === "asc" ? 1 : -1;
+  return [...rows].sort((a, b) => {
+    let av, bv;
+    switch(sortKey){
+      case "vendor": av = a.vendor.state + a.vendor.name; bv = b.vendor.state + b.vendor.name; break;
+      case "product": av = a.product.name; bv = b.product.name; break;
+      case "quantity": av = a.entry.quantity; bv = b.entry.quantity; return (av - bv) * dir;
+      case "expiry": av = a.entry.expiry_date || "9999"; bv = b.entry.expiry_date || "9999"; break;
+      case "updated": av = a.entry.last_updated; bv = b.entry.last_updated; break;
+      default: av = a.vendor.state; bv = b.vendor.state;
+    }
+    return String(av).localeCompare(String(bv)) * dir;
+  });
+}
+
+function renderAdminAllStockTab(){
+  const container = document.getElementById("adminTabBody");
+  const rows = stockEntries.map(e => {
+    const product = products.find(p => p.id === e.product_id);
+    const vendor = vendors.find(v => v.id === e.vendor_id);
+    return { entry: e, product, vendor };
+  }).filter(r => r.product && r.vendor);
+
+  let filtered = rows;
+  if(activeFilter === "low") filtered = rows.filter(r => r.entry.quantity <= r.product.low_stock_threshold);
+  if(activeFilter === "expiring") filtered = rows.filter(r => { const d = daysUntil(r.entry.expiry_date); return d !== null && d <= 30 && d >= 0; });
+  if(activeFilter === "expired") filtered = rows.filter(r => { const d = daysUntil(r.entry.expiry_date); return d !== null && d < 0; });
+  if(adminSelectedVendor !== "all") filtered = filtered.filter(r => r.vendor.id === adminSelectedVendor);
+  if(adminSearch.trim()){
+    const q = adminSearch.trim().toLowerCase();
+    filtered = filtered.filter(r =>
+      r.vendor.name.toLowerCase().includes(q) || r.vendor.state.toLowerCase().includes(q) ||
+      r.product.name.toLowerCase().includes(q) || r.product.sku.toLowerCase().includes(q)
+    );
+  }
+  filtered = sortRows(filtered);
+
+  container.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <h2>All states</h2>
+        <div class="filters">
+          <input class="search-input" id="searchInput" type="text" placeholder="Search vendor, state, product, SKU" value="${esc(adminSearch)}">
+          <select id="vendorFilter">
+            <option value="all">All vendors</option>
+            ${vendors.filter(v=>!v.is_admin).map(v=>`<option value="${v.id}" ${adminSelectedVendor===v.id?'selected':''}>${esc(v.name)} — ${esc(v.state)}</option>`).join("")}
+          </select>
+          <span class="chip ${activeFilter==='all'?'active':''}" data-f="all">All</span>
+          <span class="chip ${activeFilter==='low'?'active':''}" data-f="low">Low stock</span>
+          <span class="chip ${activeFilter==='expiring'?'active':''}" data-f="expiring">Expiring soon</span>
+          <span class="chip ${activeFilter==='expired'?'active':''}" data-f="expired">Expired</span>
+          <button class="export-btn" id="exportBtn">⬇ Export CSV</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr>
+          <th class="sortable" data-sort="vendor">Vendor / State</th>
+          <th class="sortable" data-sort="product">Product</th>
+          <th class="sortable" data-sort="quantity">Quantity</th>
+          <th class="sortable" data-sort="expiry">Expiry</th>
+          <th>Notes</th>
+          <th>Status</th>
+          <th class="sortable" data-sort="updated">Last updated</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="adminBody"></tbody>
+      </table>
+      ${filtered.length === 0 ? `<div class="empty">No entries match this filter.</div>` : ""}
+    </div>
+  `;
+
+  const body = document.getElementById("adminBody");
+  filtered.forEach(({entry, product, vendor}) => {
+    const flags = stockStatus(entry, product);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><strong>${esc(vendor.name)}</strong><br><span class="state-tag">${esc(vendor.state)}</span></td>
+      <td>${esc(product.name)}<br><span class="sku">${esc(product.sku)}</span></td>
+      <td>${entry.quantity}</td>
+      <td>${entry.expiry_date || "—"}</td>
+      <td class="sku">${esc(entry.notes) || "—"}</td>
+      <td>${flags.map(f=>`<span class="badge ${f.level}">${f.text}</span>`).join(" ") || `<span class="badge ok">Good</span>`}</td>
+      <td class="sku">${formatDate(entry.last_updated)}</td>
+      <td><button class="link-btn" data-hist-vendor="${vendor.id}" data-hist-product="${product.id}" data-hist-name="${esc(product.name)}">History</button></td>
+    `;
+    body.appendChild(tr);
+  });
+  body.querySelectorAll("[data-hist-vendor]").forEach(btn => {
+    btn.onclick = () => openHistoryModal(btn.dataset.histVendor, btn.dataset.histProduct, btn.dataset.histName);
+  });
+
+  container.querySelectorAll(".chip").forEach(c => c.onclick = () => { activeFilter = c.dataset.f; renderAdminAllStockTab(); });
+  document.getElementById("vendorFilter").onchange = (e) => { adminSelectedVendor = e.target.value; renderAdminAllStockTab(); };
+  const searchInput = document.getElementById("searchInput");
+  let searchTimer;
+  searchInput.oninput = (e) => {
+    clearTimeout(searchTimer);
+    const val = e.target.value;
+    searchTimer = setTimeout(() => {
+      adminSearch = val; renderAdminAllStockTab();
+      const el = document.getElementById("searchInput");
+      el.focus(); el.value = val; el.setSelectionRange(val.length, val.length);
+    }, 300);
+  };
+  document.getElementById("exportBtn").onclick = () => exportCSV(filtered);
+  container.querySelectorAll("[data-sort]").forEach(th => {
+    th.onclick = () => {
+      const key = th.dataset.sort;
+      if(sortKey === key) sortDir = sortDir === "asc" ? "desc" : "asc";
+      else { sortKey = key; sortDir = "asc"; }
+      renderAdminAllStockTab();
+    };
+  });
+}
+
+/* ---- 9d. PRODUCTS TAB — bulk import, add product, per-product visibility ---- */
+function renderAdminProductsTab(){
+  const container = document.getElementById("adminTabBody");
+  container.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Products</h2>
+        <div class="filters">
+          <button class="export-btn" id="bulkImportBtn">⬆ Bulk import (Excel)</button>
+          <button class="btn-secondary" id="addProductBtn" style="padding:7px 14px;font-size:12px;">+ Add product</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Product</th><th>SKU</th><th>Category</th><th>Low stock at</th><th>Visible to</th><th></th></tr></thead>
+        <tbody id="productsBody"></tbody>
+      </table>
+      ${products.length === 0 ? `<div class="empty">No products yet — add one or bulk import.</div>` : ""}
+    </div>
+  `;
+
+  const body = document.getElementById("productsBody");
+  products.forEach(p => {
+    const set = visibilityMap[p.id];
+    const restricted = !!(set && set.size > 0);
+    const visLabel = !restricted ? "All vendors" : `${set.size} vendor${set.size>1?'s':''} only`;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><strong>${esc(p.name)}</strong></td>
+      <td class="sku">${esc(p.sku)}</td>
+      <td>${esc(p.category) || "—"}</td>
+      <td>${p.low_stock_threshold}</td>
+      <td><span class="badge ${restricted ? 'warn' : 'ok'}">${visLabel}</span></td>
+      <td><button class="link-btn" data-editvis="${p.id}">Edit visibility</button></td>
+    `;
+    body.appendChild(tr);
+  });
+  body.querySelectorAll("[data-editvis]").forEach(btn => btn.onclick = () => openVisibilityModal(btn.dataset.editvis));
+  document.getElementById("bulkImportBtn").onclick = openBulkImportModal;
+  document.getElementById("addProductBtn").onclick = openAddProductModal;
+}
+
+function openAddProductModal(){
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeX">×</button>
+        <h3>Add product</h3>
+        <p class="modal-sub">Visible to all vendors by default — restrict it afterwards from Products → Edit visibility.</p>
+        <label>Name</label>
+        <input id="npName" type="text">
+        <label>SKU</label>
+        <input id="npSku" type="text">
+        <label>Category</label>
+        <input id="npCategory" type="text" placeholder="Optional">
+        <label>Low stock threshold</label>
+        <input id="npThreshold" type="number" min="0" value="10">
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelNp">Cancel</button>
+          <button class="btn-primary" style="width:auto;" id="saveNp">Add product</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("closeX").onclick = closeModal;
+  document.getElementById("cancelNp").onclick = closeModal;
+  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+  document.getElementById("saveNp").onclick = async () => {
+    const name = document.getElementById("npName").value.trim();
+    const sku = document.getElementById("npSku").value.trim();
+    const category = document.getElementById("npCategory").value.trim() || null;
+    const threshold = parseInt(document.getElementById("npThreshold").value || "0", 10);
+    if(!name || !sku){ showToast("Name and SKU are required"); return; }
+    const btn = document.getElementById("saveNp");
+    btn.disabled = true; btn.textContent = "Saving...";
+    const { error } = await sb.from("products").insert({ name, sku, category, low_stock_threshold: threshold });
+    if(error){ showToast("Error: " + error.message); btn.disabled = false; btn.textContent = "Add product"; }
+    else { showToast("Product added"); closeModal(); await loadAll(); refreshCurrentView(); }
+  };
+}
+
+function openVisibilityModal(productId){
+  const product = products.find(p => p.id === productId);
+  const nonAdminVendors = vendors.filter(v => !v.is_admin);
+  const set = visibilityMap[productId];
+  const restricted = !!(set && set.size > 0);
+
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeX">×</button>
+        <h3>Visibility</h3>
+        <p class="modal-sub">${esc(product.name)} · ${esc(product.sku)}</p>
+        <label class="radio-row"><input type="radio" name="visMode" value="all" ${!restricted?'checked':''}> Visible to all vendors</label>
+        <label class="radio-row"><input type="radio" name="visMode" value="restrict" ${restricted?'checked':''}> Restrict to specific vendors</label>
+        <div id="vendorCheckboxes" style="margin:14px 0 6px;${restricted?'':'opacity:.4;pointer-events:none;'}">
+          ${nonAdminVendors.map(v => `
+            <label class="check-row">
+              <input type="checkbox" data-vendor-check="${v.id}" ${set?.has(v.id) ? 'checked':''}> ${esc(v.name)} — ${esc(v.state)}
+            </label>
+          `).join("")}
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelVis">Cancel</button>
+          <button class="btn-primary" style="width:auto;" id="saveVis">Save</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("closeX").onclick = closeModal;
+  document.getElementById("cancelVis").onclick = closeModal;
+  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+
+  const checkboxWrap = document.getElementById("vendorCheckboxes");
+  modalRoot.querySelectorAll('input[name="visMode"]').forEach(radio => {
+    radio.onchange = () => {
+      const isRestrict = modalRoot.querySelector('input[name="visMode"]:checked').value === "restrict";
+      checkboxWrap.style.opacity = isRestrict ? "1" : ".4";
+      checkboxWrap.style.pointerEvents = isRestrict ? "auto" : "none";
+    };
+  });
+
+  document.getElementById("saveVis").onclick = async () => {
+    const mode = modalRoot.querySelector('input[name="visMode"]:checked').value;
+    const btn = document.getElementById("saveVis");
+    btn.disabled = true; btn.textContent = "Saving...";
+
+    const del = await sb.from("product_visibility").delete().eq("product_id", productId);
+    if(del.error){ showToast("Error: " + del.error.message); btn.disabled = false; btn.textContent = "Save"; return; }
+
+    if(mode === "restrict"){
+      const selected = [...modalRoot.querySelectorAll("[data-vendor-check]:checked")].map(c => c.dataset.vendorCheck);
+      if(selected.length){
+        const ins = await sb.from("product_visibility").insert(selected.map(vid => ({ product_id: productId, vendor_id: vid })));
+        if(ins.error){ showToast("Error: " + ins.error.message); btn.disabled = false; btn.textContent = "Save"; return; }
+      }
+    }
+    showToast("Visibility updated");
+    closeModal();
+    await loadAll();
+    refreshCurrentView();
+  };
+}
+
+function openBulkImportModal(){
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="modal" style="max-width:720px;">
+        <button class="modal-close" id="closeX">×</button>
+        <h3>Bulk import products</h3>
+        <p class="modal-sub">Upload the product template (.xlsx). Rows with an existing SKU update that product; new SKUs are created.</p>
+        <input type="file" id="bulkFile" accept=".xlsx,.xls">
+        <div id="bulkPreviewWrap"></div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelBulk">Cancel</button>
+          <button class="btn-primary" style="width:auto;" id="confirmBulk" disabled>Import</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("closeX").onclick = closeModal;
+  document.getElementById("cancelBulk").onclick = closeModal;
+  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+
+  let parsedValidRows = [];
+
+  document.getElementById("bulkFile").onchange = async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const previewWrap = document.getElementById("bulkPreviewWrap");
+    previewWrap.innerHTML = `<p class="modal-sub">Reading file…</p>`;
+    try{
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const sheetName = wb.SheetNames.includes("Products") ? "Products" : wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
+      const raw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+      const seenSkus = new Set();
+      const parsed = [];
+      // Row 0 is the header row and is always skipped. Every other row is judged
+      // on its own — the template's description row is skipped automatically
+      // because its "threshold" cell is a sentence, not a whole number.
+      for(let i = 1; i < raw.length; i++){
+        const r = raw[i];
+        if(!r || r.every(c => String(c).trim() === "")) continue;
+        const name = String(r[0] ?? "").trim();
+        const sku = String(r[1] ?? "").trim();
+        const category = String(r[2] ?? "").trim();
+        const thresholdRaw = r[3];
+        const threshold = parseInt(thresholdRaw, 10);
+        const thresholdOk = Number.isInteger(threshold) && String(thresholdRaw).trim() !== "" && threshold >= 0;
+
+        let status = "ok", reason = "";
+        if(!name || !sku){ status = "skip"; reason = "Missing name or SKU"; }
+        else if(!thresholdOk){ status = "skip"; reason = "Not a data row"; }
+        else if(seenSkus.has(sku)){ status = "warn"; reason = "Duplicate SKU in file — using this row"; }
+
+        if(sku) seenSkus.add(sku);
+        parsed.push({ name, sku, category, threshold, status, reason });
+      }
+
+      // De-dupe by SKU, keeping the LAST occurrence of each.
+      const bySku = new Map();
+      parsed.filter(r => r.status !== "skip").forEach(r => bySku.set(r.sku, r));
+      parsedValidRows = [...bySku.values()];
+
+      const confirmBtn = document.getElementById("confirmBulk");
+      confirmBtn.disabled = parsedValidRows.length === 0;
+      confirmBtn.textContent = `Import ${parsedValidRows.length} product${parsedValidRows.length===1?'':'s'}`;
+
+      previewWrap.innerHTML = `
+        <div class="preview-table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>SKU</th><th>Category</th><th>Threshold</th><th>Status</th></tr></thead>
+            <tbody>
+              ${parsed.map(r => `
+                <tr>
+                  <td>${esc(r.name) || "—"}</td>
+                  <td class="sku">${esc(r.sku) || "—"}</td>
+                  <td>${esc(r.category) || "—"}</td>
+                  <td>${Number.isInteger(r.threshold) ? r.threshold : "—"}</td>
+                  <td><span class="badge ${r.status==='ok'?'ok':r.status==='warn'?'warn':'info'}">${r.status==='ok'?'Ready':r.status==='warn'?'Duplicate':'Skipped'}${r.reason ? ' — ' + esc(r.reason) : ''}</span></td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+        <p class="modal-sub">${parsedValidRows.length} of ${parsed.length} rows will be imported.</p>
+      `;
+    } catch(err){
+      previewWrap.innerHTML = `<p class="err" style="margin-top:10px;">Couldn't read that file: ${esc(err.message)}</p>`;
+    }
+  };
+
+  document.getElementById("confirmBulk").onclick = async () => {
+    if(parsedValidRows.length === 0) return;
+    const btn = document.getElementById("confirmBulk");
+    btn.disabled = true; btn.textContent = "Importing...";
+    const { error } = await sb.from("products").upsert(
+      parsedValidRows.map(r => ({ name: r.name, sku: r.sku, category: r.category || null, low_stock_threshold: r.threshold })),
+      { onConflict: "sku" }
+    );
+    if(error){ showToast("Import failed: " + error.message); btn.disabled = false; btn.textContent = "Retry import"; }
+    else {
+      showToast(`Imported ${parsedValidRows.length} product${parsedValidRows.length===1?'':'s'}`);
+      closeModal();
+      await loadAll();
+      refreshCurrentView();
+    }
+  };
+}
+
+/* ---- 9e. ANNOUNCEMENTS TAB — compose + history with per-vendor seen counts ---- */
+function renderAdminAnnouncementsTab(){
+  const container = document.getElementById("adminTabBody");
+  const vendorCount = vendors.filter(v => !v.is_admin).length;
+
+  container.innerHTML = `
+    <div class="panel">
+      <div class="panel-head"><h2>Send an announcement</h2></div>
+      <div class="panel-body">
+        <label>Title</label>
+        <input id="annTitle" type="text" placeholder="e.g. Diwali stock top-up window">
+        <label>Message</label>
+        <textarea id="annMsg" rows="3" placeholder="What vendors need to know"></textarea>
+        <button class="btn-primary" style="width:auto;" id="sendAnnBtn">Send to all vendors</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Sent announcements</h2></div>
+      <table>
+        <thead><tr><th>Title</th><th>Message</th><th>Seen</th><th>Sent</th><th>Status</th><th></th></tr></thead>
+        <tbody id="annBody"></tbody>
+      </table>
+      ${announcements.length === 0 ? `<div class="empty">No announcements sent yet.</div>` : ""}
+    </div>
+  `;
+
+  document.getElementById("sendAnnBtn").onclick = async () => {
+    const title = document.getElementById("annTitle").value.trim();
+    const message = document.getElementById("annMsg").value.trim();
+    if(!title || !message){ showToast("Title and message are required"); return; }
+    const btn = document.getElementById("sendAnnBtn");
+    btn.disabled = true; btn.textContent = "Sending...";
+    const { error } = await sb.from("announcements").insert({ title, message, created_by: session.user.id });
+    btn.disabled = false; btn.textContent = "Send to all vendors";
+    if(error){ showToast("Error: " + error.message); }
+    else { showToast("Announcement sent"); await loadAll(); renderAdminAnnouncementsTab(); }
+  };
+
+  const body = document.getElementById("annBody");
+  announcements.forEach(a => {
+    const seenCount = announcementReads.filter(r => r.announcement_id === a.id).length;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><strong>${esc(a.title)}</strong></td>
+      <td class="sku">${esc(a.message)}</td>
+      <td>${seenCount}/${vendorCount}</td>
+      <td class="sku">${new Date(a.created_at).toLocaleDateString()}</td>
+      <td><span class="badge ${a.is_active?'ok':'info'}">${a.is_active?'Active':'Inactive'}</span></td>
+      <td><button class="link-btn ${a.is_active?'danger-link':''}" data-toggle="${a.id}">${a.is_active?'Deactivate':'Reactivate'}</button></td>
+    `;
+    body.appendChild(tr);
+  });
+  body.querySelectorAll("[data-toggle]").forEach(btn => {
+    btn.onclick = async () => {
+      const a = announcements.find(x => x.id === btn.dataset.toggle);
+      const { error } = await sb.from("announcements").update({ is_active: !a.is_active }).eq("id", a.id);
+      if(error) showToast("Error: " + error.message);
+      else { await loadAll(); renderAdminAnnouncementsTab(); }
+    };
+  });
+}
+
+/* ============================================================
+   10. CSV EXPORT
+   ============================================================ */
+function exportCSV(rows){
+  const headers = ["Vendor","State","Product","SKU","Quantity","Expiry Date","Notes","Status","Last Updated"];
+  const lines = [headers.join(",")];
+  rows.forEach(({entry, product, vendor}) => {
+    const flags = stockStatus(entry, product).map(f=>f.text).join(" / ") || "Good";
+    const row = [
+      vendor.name, vendor.state, product.name, product.sku, entry.quantity,
+      entry.expiry_date || "", (entry.notes || "").replace(/,/g," "), flags,
+      formatDate(entry.last_updated)
+    ].map(v => `"${String(v).replace(/"/g,'""')}"`);
+    lines.push(row.join(","));
+  });
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `cureforever-inventory-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("CSV downloaded");
+}
+
+/* ============================================================
+   11. STOCK HISTORY CHART
+   ============================================================ */
+async function openHistoryModal(vendorId, productId, productName){
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeX">×</button>
+        <h3>${esc(productName)}</h3>
+        <p class="modal-sub">Quantity history</p>
+        <canvas id="historyCanvas" height="220"></canvas>
+      </div>
+    </div>
+  `;
+  document.getElementById("closeX").onclick = closeModal;
+  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+
+  const { data, error } = await sb.from("stock_history")
+    .select("*").eq("vendor_id", vendorId).eq("product_id", productId)
+    .order("recorded_at", { ascending: true });
+
+  if(error || !data || data.length === 0){
+    document.getElementById("historyCanvas").outerHTML = `<div class="empty">No history recorded yet — history builds up as stock is updated over time.</div>`;
+    return;
+  }
+
+  const ctx = document.getElementById("historyCanvas").getContext("2d");
+  historyChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: data.map(d => new Date(d.recorded_at).toLocaleDateString()),
+      datasets: [{
+        label: "Quantity",
+        data: data.map(d => d.quantity),
+        borderColor: "#B8935A",
+        backgroundColor: "rgba(184,147,90,0.12)",
+        tension: 0.25,
+        fill: true,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
+/* ============================================================
+   12. ROOT RENDER
+   ============================================================ */
+function render(){
+  if(!session) renderLogin();
+  else renderDashboard();
+}
+init();
+</script>
+</body>
+</html>
