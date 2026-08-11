@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -52,7 +52,7 @@
   .net-badge{ font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:.4px; }
   .net-badge.online{ background:rgba(74,222,128,.15); color:#4ADE80; border:1px solid rgba(74,222,128,.4); }
   .net-badge.offline{ background:rgba(239,68,68,.15); color:#F87171; border:1px solid rgba(239,68,68,.4); }
-  
+
   @keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(74,222,128,.6);} 100%{ box-shadow:0 0 0 8px rgba(74,222,128,0);} }
   .btn-logout{ background:transparent; color:#fff; border:1px solid rgba(255,255,255,.4)!important; padding:8px 16px; font-size:13px; border-radius:3px;}
   .btn-logout:hover{ background:rgba(255,255,255,.1); }
@@ -78,11 +78,12 @@
   .stat.alert .num{ color:var(--danger); }
   .stat.warn .num{ color:var(--warn); }
   .stat.purple .num{ color:var(--accent-purple); }
+  .stat.ok .num{ color:var(--ok); }
 
   .banner{ background:var(--danger-bg); border:1px solid #F0C7C2; border-radius:4px; padding:14px 18px; margin-bottom:20px; }
   .banner-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
   .banner-head h3{ margin:0; font-size:15px; color:var(--danger); }
-  .banner-item{ display:flex; align-items:center; justify-content:space-between; padding:6px 0; font-size:13px; border-top:1px solid #F0C7C2; }
+  .banner-item{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 0; font-size:13px; border-top:1px solid #F0C7C2; }
   .banner-item:first-of-type{ border-top:none; }
   .dismiss-btn{ background:#fff; border:1px solid var(--line)!important; color:var(--muted); padding:4px 10px; font-size:11px; border-radius:3px;}
   .dismiss-btn:hover{ background:#F5F2EA; }
@@ -97,24 +98,31 @@
   .panel-head h2{ margin:0; font-size:19px; color:var(--navy); font-weight:600;}
   .panel-body{ padding:20px; }
   .filters{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .chips-row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .chip{ font-size:12px; padding:6px 12px; border-radius:20px; border:1px solid var(--line); background:#fff; color:var(--muted); cursor:pointer; font-weight:600; }
   .chip.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
   .search-input{ width:190px; margin:0; padding:7px 10px; font-size:12.5px; }
   .export-btn{ background:var(--gold); color:var(--navy); padding:7px 14px; font-size:12px; border-radius:3px; font-weight:700; }
   .export-btn:hover{ background:#a37f47; }
+  .export-btn.alt{ background:#F5F2EA; color:var(--navy-2); }
+  .export-btn.alt:hover{ background:#EDE8DA; }
 
   table{ width:100%; border-collapse:collapse; font-size:13.5px; }
   th{ text-align:left; padding:10px 16px; background:#F5F2EA; color:var(--navy-2); font-size:11px;
     text-transform:uppercase; letter-spacing:.4px; font-weight:700; border-bottom:1px solid var(--line); }
   th.sortable{ cursor:pointer; user-select:none; }
   th.sortable:hover{ color:var(--navy); }
+  th.sortable::after{ content:' ⇅'; font-size:9px; color:#B9B3A5; }
+  th.sortable.asc::after{ content:' ▲'; color:var(--gold); }
+  th.sortable.desc::after{ content:' ▼'; color:var(--gold); }
   td{ padding:11px 16px; border-bottom:1px solid var(--line); vertical-align:middle;}
   tr:last-child td{ border-bottom:none; }
   tr:hover td{ background:#FBFAF6; }
   .sku{ color:var(--muted); font-size:12px; }
-  .qty-input, .date-input, .reason-select{ width:85px; padding:7px 8px; border:1px solid var(--line); border-radius:3px; font-size:13px; margin-bottom:0;}
+  .qty-input, .date-input{ width:85px; padding:7px 8px; border:1px solid var(--line); border-radius:3px; font-size:13px; margin-bottom:0;}
   .date-input{ width:135px; }
-  .reason-select{ width:150px; font-size:12px; }
+  .reason-select{ width:115px; padding:7px 8px; border:1px solid var(--line); border-radius:3px; font-size:11.5px; margin-bottom:0;}
+  .batch-select{ width:140px; padding:7px 8px; border:1px solid var(--line); border-radius:3px; font-size:11.5px; margin-bottom:0;}
   .notes-input{ width:130px; padding:7px 8px; border:1px solid var(--line); border-radius:3px; font-size:12.5px; margin-bottom:0;}
   .badge{ display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.2px;}
   .badge.danger{ background:var(--danger-bg); color:var(--danger); }
@@ -145,6 +153,8 @@
   .modal-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
   .btn-secondary{ background:#F5F2EA; color:var(--navy-2); padding:10px 18px; font-size:13px; }
   .btn-secondary:hover{ background:#EDE8DA; }
+  .btn-danger{ background:var(--danger); color:#fff; padding:10px 18px; font-size:13px; }
+  .btn-danger:hover{ background:#8f1d16; }
   .radio-row{ display:flex; align-items:center; gap:8px; font-weight:600; font-size:13.5px; margin-bottom:8px; color:var(--ink); }
   .radio-row input{ width:auto; margin:0; }
   .check-row{ display:flex; align-items:center; gap:8px; font-weight:400; font-size:13px; margin-bottom:9px; color:var(--ink); }
@@ -154,13 +164,44 @@
   .chart-card{ flex:1; min-width:280px; padding:18px; }
   .chart-card h3{ margin:0 0 12px; color:var(--navy); font-size:15px; font-weight:600; }
   #qr-reader{ width:100%; border:2px dashed var(--gold); border-radius:4px; overflow:hidden; background:#000; }
+
+  .toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .alert-list{ max-height:360px; overflow-y:auto; }
+  .alert-item{ border:1px solid var(--line); border-left:3px solid var(--gold); border-radius:4px; padding:11px 13px; margin-bottom:9px; background:#fff; }
+  .alert-item.alert-danger{ border-left-color:var(--danger); }
+  .alert-item.alert-warn{ border-left-color:var(--warn); }
+  .alert-item .alert-title{ font-weight:700; font-size:13px; color:var(--navy); }
+  .alert-item .alert-meta{ font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.5; }
+  .alert-item .alert-actions{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
+  .mini-stat-note{ font-size:12px; color:var(--muted); font-weight:400; }
+  .inline-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
+  @media (max-width:640px){ .inline-form-grid{ grid-template-columns:1fr; } }
+
+  @media print{
+    header.top, .admin-tabs, .filters, .toolbar, .no-print, .toast, .modal-overlay, .print-root{ display:none !important; }
+    body{ background:#fff; }
+    main{ max-width:100%; padding:10px; }
+    .panel{ break-inside:avoid; border:none; border-top:2px solid var(--navy); }
+    .stat-row{ display:flex; }
+    table td, table th{ padding:6px 8px; }
+  }
 </style>
 </head>
 <body>
+<style>
+.print-root{ display:none; }
+@media print{
+  .print-root{ display:block !important; }
+  #app, #adminViewTitle, body > main{ display:none !important; }
+  .print-root table{ width:100%; border-collapse:collapse; font-size:11px; }
+  .print-root table th, .print-root table td{ border:1px solid #444; padding:5px 7px; }
+  .print-root table th{ background:#0F1F3D; color:#fff; }
+}
 
 <div id="app"></div>
 <div class="toast" id="toast"></div>
 <div id="modalRoot"></div>
+<div id="printRoot" class="print-root"></div>
 
 <script>
 /* ============================================================
@@ -169,6 +210,21 @@
 const SUPABASE_URL = "https://uchozkkzgqeismqvamye.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaG96a2t6Z3FlaXNtcXZhbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0Mzc5ODgsImV4cCI6MjEwMjAxMzk4OH0.AmpMk0huP9cwbmHEn1EaO8FZsIEJDF8ZqzHxIoYh37Q";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* Reason codes used across the UI and audit trail */
+const REASONS = [
+  "manual_adjustment", "physical_reconciliation", "damaged_goods",
+  "expired_disposal", "qc_sample", "return_to_vendor"
+];
+const REASON_LABELS = {
+  manual_adjustment: "Manual Adjustment",
+  physical_reconciliation: "Physical Audit Reconciliation",
+  damaged_goods: "Damaged Goods / Waste",
+  expired_disposal: "Expired Stock Disposal",
+  qc_sample: "QC Testing Sample",
+  return_to_vendor: "Restock Return",
+  initial_stock: "Initial Stock"
+};
 
 /* Safe Numeric Helpers to Prevent NaN / Null Violations */
 function safeNum(val, defaultVal = 0.0) {
@@ -202,18 +258,19 @@ let productVisibility = [];
 let visibilityMap = {};
 let announcements = [];
 let announcementReads = [];
-let lastAnnouncementNotifyCount = null;
 
 let isOnline = navigator.onLine;
+let offlineMode = false;
 let activeFilter = "all";        // all | low | expiring | expired  (All Stock tab)
-let adminSelectedVendor = "all";
+let categoryFilter = "all";
 let adminSearch = "";
-let sortKey = "state";
+let vendorSearch = "";
+let sortKey = "vendor";
 let sortDir = "asc";
-
 let adminTab = "dashboard";      // dashboard | vendors | allstock | batches | financials | products | announcements
 let adminVendorTabId = null;
 let auditReasonFilter = "all";
+let auditVendorFilter = "all";
 
 let historyChart = null;
 let dashboardCharts = {};
@@ -222,7 +279,6 @@ let scannerInstance = null;
 const app = document.getElementById("app");
 const toastEl = document.getElementById("toast");
 const modalRoot = document.getElementById("modalRoot");
-const SEEN_KEY = "cf_seen_alerts_v2";
 let realtimeChannel = null;
 let refreshPending = false;
 let liveIndicatorTimer = null;
@@ -230,20 +286,111 @@ let liveIndicatorTimer = null;
 /* PWA & Service Worker Registration */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('[PWA] ServiceWorker registered:', reg.scope))
-      .catch(err => console.log('[PWA] ServiceWorker failed:', err));
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}/* ============================================================
+   3. OFFLINE CACHE & SYNC QUEUE
+   ============================================================ */
+const CACHE_KEY = "cf_cache_v2";
+const OFFLINE_OPS_KEY = "cf_offline_ops_v2";
+
+function isOnlineNow(){ return isOnline && navigator.onLine; }
+
+function queueOfflineOp(op){
+  let ops = [];
+  try { ops = JSON.parse(localStorage.getItem(OFFLINE_OPS_KEY) || "[]"); } catch(e){ ops = []; }
+  ops.push(op);
+  try { localStorage.setItem(OFFLINE_OPS_KEY, JSON.stringify(ops)); }
+  catch(e){ showToast("Offline storage full — change was not saved locally"); }
+}
+
+function pendingOfflineOps(){
+  try { return JSON.parse(localStorage.getItem(OFFLINE_OPS_KEY) || "[]"); } catch(e){ return []; }
+}
+
+async function flushOfflineQueue(){
+  const ops = pendingOfflineOps();
+  if(!ops.length) return;
+  const remaining = [];
+  for(const op of ops){
+    try {
+      if(op.type === "stock_upsert"){
+        const { id, ...upd } = op.payload;
+        const { error } = await sb.from("stock_entries").update(upd).eq("id", id);
+        if(error) throw new Error(error.message);
+      } else if(op.type === "reorder"){
+        const { error } = await sb.from("reorder_requests").insert(op.payload);
+        if(error) throw new Error(error.message);
+      } else if(op.type === "announcement_read"){
+        const { error } = await sb.from("announcement_reads").upsert(op.payload, { onConflict: "announcement_id,vendor_id" });
+        if(error) throw new Error(error.message);
+      }
+    } catch(e){
+      remaining.push(op);
+    }
+  }
+  localStorage.setItem(OFFLINE_OPS_KEY, JSON.stringify(remaining));
+  if(remaining.length < ops.length){
+    showToast(`✓ Synced ${ops.length - remaining.length} offline change${ops.length - remaining.length > 1 ? 's' : ''}`);
+    if(vendorRow){
+      await loadAll();
+      refreshCurrentView();
+    }
+  }
+}
+
+function cacheState(){
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      products, productBatches, vendors, stockEntries, stockAdjustments, stockHistory,
+      reorderRequests, productVisibility, announcements, announcementReads
+    }));
+  } catch(e){ /* storage full — ignore */ }
+}
+
+function restoreFromCache(){
+  const raw = localStorage.getItem(CACHE_KEY);
+  if(!raw) return false;
+  try {
+    const d = JSON.parse(raw);
+    products = d.products || [];
+    productBatches = d.productBatches || [];
+    vendors = d.vendors || [];
+    stockEntries = d.stockEntries || [];
+    stockAdjustments = d.stockAdjustments || [];
+    stockHistory = d.stockHistory || [];
+    reorderRequests = d.reorderRequests || [];
+    productVisibility = d.productVisibility || [];
+    announcements = d.announcements || [];
+    announcementReads = d.announcementReads || [];
+    rebuildVisibilityMap();
+    return true;
+  } catch(e){ return false; }
+}
+
+function rebuildVisibilityMap(){
+  visibilityMap = {};
+  productVisibility.forEach(row => {
+    if(!visibilityMap[row.product_id]) visibilityMap[row.product_id] = new Set();
+    visibilityMap[row.product_id].add(row.vendor_id);
   });
 }
-window.addEventListener('online', () => {
+
+window.addEventListener('online', async () => {
+  const wasOffline = offlineMode;
   isOnline = true;
+  offlineMode = false;
   updateNetworkBadge();
   showToast("🌐 Connection restored — Live Sync Active");
+  await flushOfflineQueue();
+  if(vendorRow){
+    if(wasOffline){ await loadAll(); refreshCurrentView(); }
+  }
 });
 window.addEventListener('offline', () => {
   isOnline = false;
   updateNetworkBadge();
-  showToast("⚠️ Operating Offline — Local Cache Active");
+  showToast("⚠️ Operating Offline — Local Cache & Sync Queue Active");
 });
 
 function updateNetworkBadge(){
@@ -253,11 +400,15 @@ function updateNetworkBadge(){
   badge.textContent = isOnline ? "🟢 Online" : "🔴 Offline";
 }
 
+/* ============================================================
+   4. UI HELPERS
+   ============================================================ */
 function showToast(msg){
   toastEl.textContent = msg;
   toastEl.classList.add("show");
-  setTimeout(()=> toastEl.classList.remove("show"), 2600);
+  setTimeout(()=> toastEl.classList.remove("show"), 3000);
 }
+
 function closeModal(){
   modalRoot.innerHTML = "";
   if(historyChart){ historyChart.destroy(); historyChart = null; }
@@ -277,8 +428,33 @@ function formatCurrency(num){
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(num || 0);
 }
 
+function formatDate(dateStr, includeTime = false){
+  if(!dateStr) return "Never";
+  const d = new Date(dateStr);
+  if(isNaN(d.getTime())) return "Never";
+  return includeTime ? d.toLocaleString() : d.toLocaleDateString();
+}
+
+function daysUntil(dateStr){
+  if(!dateStr) return null;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const target = new Date(dateStr + "T00:00:00");
+  return Math.round((target - today) / (1000*60*60*24));
+}
+
+function downloadFile(filename, content, mime){
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 /* ============================================================
-   3. AUTHENTICATION
+   5. AUTHENTICATION
    ============================================================ */
 async function init(){
   const { data } = await sb.auth.getSession();
@@ -305,11 +481,11 @@ async function logout(){
 }
 
 /* ============================================================
-   4. REALTIME SYNC
+   6. REALTIME SYNC
    ============================================================ */
 function subscribeRealtime(){
   if(realtimeChannel) return;
-  realtimeChannel = sb.channel("inventory-live-v2")
+  realtimeChannel = sb.channel("inventory-live-v3")
     .on("postgres_changes", { event: "*", schema: "public", table: "stock_entries" }, scheduleRefresh)
     .on("postgres_changes", { event: "*", schema: "public", table: "product_batches" }, scheduleRefresh)
     .on("postgres_changes", { event: "*", schema: "public", table: "stock_adjustments" }, scheduleRefresh)
@@ -353,68 +529,97 @@ function refreshCurrentView(){
 }
 
 /* ============================================================
-   5. DATA LOADING
+   7. DATA LOADING (with offline cache fallback)
    ============================================================ */
 async function loadAll(){
-  const [p, pb, v, s, sa, r, pv, an, ar] = await Promise.all([
-    sb.from("products").select("*").order("name"),
-    sb.from("product_batches").select("*").order("expiry_date"),
-    sb.from("vendors").select("*").order("state"),
-    sb.from("stock_entries").select("*"),
-    sb.from("stock_adjustments").select("*").order("created_at", { ascending: false }).limit(150),
-    sb.from("reorder_requests").select("*").order("created_at", { ascending: false }),
-    sb.from("product_visibility").select("*"),
-    sb.from("announcements").select("*").order("created_at", { ascending: false }),
-    sb.from("announcement_reads").select("*")
-  ]);
-  products = p.data || [];
-  productBatches = pb.data || [];
-  vendors = v.data || [];
-  stockEntries = s.data || [];
-  stockAdjustments = sa.data || [];
-  reorderRequests = r.data || [];
-  productVisibility = pv.data || [];
-  announcements = an.data || [];
-  announcementReads = ar.data || [];
+  try {
+    const [p, pb, v, s, sa, sh, r, pv, an, ar] = await Promise.all([
+      sb.from("products").select("*").order("name"),
+      sb.from("product_batches").select("*").order("expiry_date"),
+      sb.from("vendors").select("*").order("state"),
+      sb.from("stock_entries").select("*"),
+      sb.from("stock_adjustments").select("*").order("created_at", { ascending: false }).limit(150),
+      sb.from("stock_history").select("*").order("recorded_at", { ascending: false }).limit(500),
+      sb.from("reorder_requests").select("*").order("created_at", { ascending: false }),
+      sb.from("product_visibility").select("*"),
+      sb.from("announcements").select("*").order("created_at", { ascending: false }),
+      sb.from("announcement_reads").select("*")
+    ]);
+    if([p, pb, v, s, sa, sh, r, pv, an, ar].some(res => res.error)) throw new Error("partial-load-failure");
 
-  visibilityMap = {};
-  productVisibility.forEach(row => {
-    if(!visibilityMap[row.product_id]) visibilityMap[row.product_id] = new Set();
-    visibilityMap[row.product_id].add(row.vendor_id);
-  });
-}
-
-function daysUntil(dateStr){
-  if(!dateStr) return null;
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const target = new Date(dateStr + "T00:00:00");
-  return Math.round((target - today) / (1000*60*60*24));
-}
-function formatDate(dateStr, includeTime = false){
-  if(!dateStr) return "Never";
-  const d = new Date(dateStr);
-  if(isNaN(d.getTime())) return "Never";
-  return includeTime ? d.toLocaleString() : d.toLocaleDateString();
-}
-function stockStatus(entry, product){
-  const flags = [];
-  if(entry.quantity <= 0) flags.push({level:"danger", text:"Out of stock", type:"low"});
-  else if(entry.quantity <= product.low_stock_threshold) flags.push({level:"warn", text:"Low stock", type:"low"});
-  if(entry.expiry_date){
-    const d = daysUntil(entry.expiry_date);
-    if(d < 0) flags.push({level:"danger", text:"Expired", type:"expiry"});
-    else if(d <= 30) flags.push({level:"warn", text: d + "d to expiry", type:"expiry"});
+    products = p.data || [];
+    productBatches = pb.data || [];
+    vendors = v.data || [];
+    stockEntries = s.data || [];
+    stockAdjustments = sa.data || [];
+    stockHistory = sh.data || [];
+    reorderRequests = r.data || [];
+    productVisibility = pv.data || [];
+    announcements = an.data || [];
+    announcementReads = ar.data || [];
+    rebuildVisibilityMap();
+    cacheState();
+    if(offlineMode){
+      offlineMode = false;
+      showToast("🌐 Live data restored");
+    }
+  } catch(e){
+    if(!offlineMode){
+      const ok = restoreFromCache();
+      if(ok){
+        offlineMode = true;
+        showToast("⚠️ Offline mode — showing last synced data");
+      }
+    } else {
+      restoreFromCache();
+    }
   }
-  return flags;
+  refreshExpiredBatches();
 }
+
+/* Auto-flag batches whose expiry date has passed */
+function refreshExpiredBatches(){
+  try {
+    const expiredIds = productBatches
+      .filter(b => b.status === "active" && b.expiry_date && daysUntil(b.expiry_date) < 0)
+      .map(b => b.id);
+    if(expiredIds.length){
+      sb.from("product_batches").update({ status: "expired" }).in("id", expiredIds).then(({ error }) => {
+        if(!error){
+          productBatches.forEach(b => { if(expiredIds.includes(b.id)) b.status = "expired"; });
+        }
+      }).catch(() => {});
+    }
+  } catch(e){ /* ignore */ }
+}
+
+function stockStatus(product, qty){
+  if(qty <= 0) return "out";
+  if(qty <= product.low_stock_threshold) return "low";
+  return "in";
+}
+
+function rankStatus(r){
+  return stockStatus(r.product, r.entry.quantity) === "out" ? 0 : (stockStatus(r.product, r.entry.quantity) === "low" ? 1 : 2);
+}
+
+function batchDisplayStatus(b){
+  if(b.status === "recalled") return "Recalled";
+  if(b.expiry_date && daysUntil(b.expiry_date) < 0) return "Expired";
+  const diff = b.expiry_date ? daysUntil(b.expiry_date) : null;
+  if(diff !== null && diff <= 30) return "Expiring Soon";
+  return "Active";
+}
+function batchStatusBadge(status){
+  const cls = status === "Active" ? "ok" : status === "Expired" ? "danger" : status === "Recalled" ? "danger" : "warn";
+  return `<span class="badge ${cls}">${status.toUpperCase()}</span>`;
+}
+
 function isProductVisible(productId, vendorId){
   const set = visibilityMap[productId];
   return !set || set.size === 0 || set.has(vendorId);
-}
-
-/* ============================================================
-   6. LOGIN SCREEN
+}/* ============================================================
+   8. LOGIN SCREEN
    ============================================================ */
 function renderLogin(){
   app.innerHTML = `
@@ -431,11 +636,15 @@ function renderLogin(){
       </div>
     </div>
   `;
+  const submit = () => document.getElementById("loginBtn").click();
+  document.getElementById("email").addEventListener("keydown", e => { if(e.key === "Enter") submit(); });
+  document.getElementById("password").addEventListener("keydown", e => { if(e.key === "Enter") submit(); });
   document.getElementById("loginBtn").onclick = async () => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
     const btn = document.getElementById("loginBtn");
     const errEl = document.getElementById("loginErr");
+    if(!email || !password){ errEl.style.display = "block"; errEl.textContent = "Enter your email and password."; return; }
     btn.disabled = true; btn.textContent = "Signing in...";
     const error = await login(email, password);
     if(error){
@@ -446,8 +655,22 @@ function renderLogin(){
 }
 
 /* ============================================================
-   7. DASHBOARD SHELL & ACTIONS
+   9. DASHBOARD SHELL & HEADER ACTIONS
    ============================================================ */
+function activeUnreadAnnouncements(){
+  if(!vendorRow) return [];
+  const readIds = new Set(announcementReads.filter(r => r.vendor_id === vendorRow.id).map(r => r.announcement_id));
+  return announcements.filter(a => a.is_active && !readIds.has(a.id));
+}
+
+function bellCountForHeader(){
+  let n = activeUnreadAnnouncements().length;
+  if(vendorRow && vendorRow.is_admin){
+    n += reorderRequests.filter(r => r.status === "pending").length;
+  }
+  return n;
+}
+
 async function renderDashboard(){
   app.innerHTML = `<div style="padding:60px;text-align:center;color:#6B7280;">Loading enterprise inventory engine…</div>`;
 
@@ -468,9 +691,10 @@ async function renderDashboard(){
   await loadAll();
   const isAdmin = vendorRow?.is_admin;
   const name = vendorRow?.name || session.user.email;
+  const bell = bellCountForHeader();
 
   app.innerHTML = `
-    <header class="top">
+    <header class="top no-print">
       <div>
         <p class="brand">CureForever Inventory</p>
         <p class="who">${isAdmin ? "Admin — All States & Financials" : "Vendor — " + esc(vendorRow?.state || "")} · ${esc(name)}</p>
@@ -480,7 +704,8 @@ async function renderDashboard(){
         <span class="live-dot" id="liveDot">Live</span>
         ${isAdmin ? `<button class="btn-add-vendor" id="headerAddVendorBtn">+ Add Vendor Account</button>` : ''}
         <button class="btn-scan" id="headerScanBtn">📷 Scan Barcode</button>
-        <button class="btn-ghost" id="notifBtn">🔔 Alerts</button>
+        <button class="btn-ghost" id="profileBtn">👤 Profile</button>
+        <button class="btn-ghost" id="notifBtn">🔔 Alerts${bell ? ` <strong>(${bell})</strong>` : ''}</button>
         <button class="btn-logout" id="logoutBtn">Sign Out</button>
       </div>
     </header>
@@ -488,25 +713,222 @@ async function renderDashboard(){
   `;
   document.getElementById("logoutBtn").onclick = logout;
   document.getElementById("headerScanBtn").onclick = openBarcodeScannerModal;
+  document.getElementById("profileBtn").onclick = openProfileModal;
+  document.getElementById("notifBtn").onclick = openAlertsModal;
   if(isAdmin && document.getElementById("headerAddVendorBtn")){
     document.getElementById("headerAddVendorBtn").onclick = openAddVendorModal;
   }
   subscribeRealtime();
 
-  const notifBtn = document.getElementById("notifBtn");
-  if("Notification" in window){
-    if(Notification.permission === "granted") notifBtn.textContent = "🔔 Alerts On";
-    notifBtn.onclick = async () => {
-      const perm = await Notification.requestPermission();
-      notifBtn.textContent = perm === "granted" ? "🔔 Alerts On" : "🔔 Alerts";
-    };
-  } else { notifBtn.style.display = "none"; }
-
   if(isAdmin) renderAdminView();
   else renderVendorView();
 }
 
-/* Secure Vendor Account Creation Modal */
+/* ---- Profile Modal (own details + password change) ---- */
+function openProfileModal(){
+  const v = vendorRow;
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeX">×</button>
+        <h3>👤 My Profile</h3>
+        <p class="modal-sub">Update your business details or change your login password.</p>
+        <div class="inline-form-grid">
+          <div><label>Business / Store Name</label>
+          <input id="pfName" type="text" value="${esc(v.name)}"></div>
+          <div><label>State / Region</label>
+          <input id="pfState" type="text" value="${esc(v.state)}"></div>
+          <div><label>Contact Phone</label>
+          <input id="pfPhone" type="tel" value="${esc(v.contact_phone || '')}"></div>
+          <div><label>New Password (optional)</label>
+          <input id="pfPass" type="password" placeholder="Min 6 characters" autocomplete="new-password"></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelPf">Cancel</button>
+          <button class="btn-primary" style="width:auto;" id="savePf">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById("closeX").onclick = closeModal;
+  document.getElementById("cancelPf").onclick = closeModal;
+  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+
+  document.getElementById("savePf").onclick = async () => {
+    const name = document.getElementById("pfName").value.trim();
+    const state = document.getElementById("pfState").value.trim();
+    const phone = document.getElementById("pfPhone").value.trim() || null;
+    const password = document.getElementById("pfPass").value;
+    if(!name || !state){ showToast("Name and State are required"); return; }
+    if(password && password.length < 6){ showToast("Password must be at least 6 characters"); return; }
+    const btn = document.getElementById("savePf");
+    btn.disabled = true; btn.textContent = "Saving...";
+
+    let pwError = null;
+    if(password){
+      const r = await sb.auth.updateUser({ password });
+      pwError = r.error;
+    }
+    const { error } = await sb.from("vendors").update({ name, state, contact_phone: phone }).eq("id", vendorRow.id);
+    btn.disabled = false; btn.textContent = "Save Changes";
+    if(error || pwError){
+      showToast("Error: " + (error?.message || pwError?.message));
+    } else {
+      showToast("✓ Profile updated");
+      closeModal();
+      await loadVendorProfile();
+      renderDashboard();
+    }
+  };
+}
+
+/* ---- Alerts / Notification Center Modal ---- */
+function openAlertsModal(){
+  const isAdmin = vendorRow?.is_admin;
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="modal" style="max-width:640px;">
+        <button class="modal-close" id="closeX">×</button>
+        <h3>🔔 Alerts & Notifications</h3>
+        <p class="modal-sub">${isAdmin ? "Global operational alerts across all vendors." : "Announcements and stock alerts for your store."}</p>
+        <div id="alertsBody"></div>
+      </div>
+    </div>
+  `;
+  document.getElementById("closeX").onclick = closeModal;
+  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+  renderAlertsBody();
+}
+
+async function markAnnouncementRead(announcementId){
+  if(!isOnlineNow()){
+    queueOfflineOp({ type: "announcement_read", payload: { announcement_id: announcementId, vendor_id: vendorRow.id } });
+    return;
+  }
+  await sb.from("announcement_reads").upsert(
+    [{ announcement_id: announcementId, vendor_id: vendorRow.id }],
+    { onConflict: "announcement_id,vendor_id" }
+  );
+}
+
+function renderAlertsBody(){
+  const isAdmin = vendorRow?.is_admin;
+  const body = document.getElementById("alertsBody");
+  if(!body) return;
+  let html = `<div class="alert-list">`;
+
+  if(isAdmin){
+    const pending = reorderRequests.filter(r => r.status === "pending");
+    if(pending.length){
+      html += `<div style="font-weight:700;color:var(--navy);font-size:13px;margin:6px 0 10px;">📦 Pending Reorder Requests (${pending.length})</div>`;
+      pending.slice(0, 20).forEach(r => {
+        const vendor = vendors.find(v => v.id === r.vendor_id);
+        const product = products.find(p => p.id === r.product_id);
+        html += `<div class="alert-item alert-warn">
+          <div><div class="alert-title">${esc(product?.name || "Product")}</div>
+          <div class="alert-meta">${esc(vendor?.name || "—")} · Qty ${r.requested_qty} · ${esc(r.note || "No note")} · ${new Date(r.created_at).toLocaleString()}</div></div>
+          <div class="alert-actions" style="justify-content:flex-end;">
+            <button class="save-btn" data-fulfill="${r.id}">Fulfill</button>
+            <button class="link-btn danger-link" data-cancel-req="${r.id}">Cancel</button>
+          </div>
+        </div>`;
+      });
+    }
+  } else {
+    const myPending = reorderRequests.filter(r => r.vendor_id === vendorRow.id && r.status === "pending");
+    if(myPending.length){
+      html += `<div style="font-weight:700;color:var(--navy);font-size:13px;margin:6px 0 10px;">📦 Your Pending Reorders (${myPending.length})</div>`;
+      myPending.forEach(r => {
+        const product = products.find(p => p.id === r.product_id);
+        html += `<div class="alert-item alert-warn">
+          <div><div class="alert-title">${esc(product?.name || "Product")}</div>
+          <div class="alert-meta">Qty ${r.requested_qty} · ${esc(r.note || "No note")} · ${new Date(r.created_at).toLocaleString()}</div></div>
+          <div class="alert-actions" style="justify-content:flex-end;">
+            <button class="link-btn danger-link" data-cancel-req="${r.id}">Cancel request</button>
+          </div>
+        </div>`;
+      });
+    }
+  }
+
+  const lowItems = isAdmin
+    ? stockEntries.map(e => ({ entry: e, product: products.find(p => p.id === e.product_id), vendor: vendors.find(v => v.id === e.vendor_id) }))
+        .filter(r => r.product && r.vendor && r.entry.quantity <= r.product.low_stock_threshold)
+        .sort((a,b) => a.entry.quantity - b.entry.quantity).slice(0, 15)
+    : computeVendorRows(vendorRow.id, true).filter(r => r.entry.quantity <= r.product.low_stock_threshold).slice(0, 15);
+
+  if(lowItems.length){
+    html += `<div style="font-weight:700;color:var(--navy);font-size:13px;margin:14px 0 10px;">⚠️ Low / Out of Stock (${lowItems.length}${isAdmin ? ' shown' : ''})</div>`;
+    lowItems.forEach(r => {
+      const badge = r.entry.quantity <= 0 ? "danger" : "warn";
+      html += `<div class="alert-item ${badge === 'danger' ? 'alert-danger' : 'alert-warn'}">
+        <div><div class="alert-title">${esc(r.product.name)}</div>
+        <div class="alert-meta">${isAdmin ? esc(r.vendor?.name || "") + " · " : ""}Quantity: <strong>${r.entry.quantity}</strong> / threshold ${r.product.low_stock_threshold} · ${esc(r.product.sku)}</div></div>
+        <div class="alert-actions" style="justify-content:flex-end;">
+          <button class="link-btn" data-jump-low="${r.product.id}">View</button>
+        </div>
+      </div>`;
+    });
+  } else {
+    html += `<div style="font-weight:700;color:var(--ok);font-size:13px;margin:6px 0 10px;">✅ No low-stock alerts</div>`;
+  }
+
+  const unread = activeUnreadAnnouncements();
+  if(unread.length){
+    html += `<div style="font-weight:700;color:var(--navy);font-size:13px;margin:14px 0 10px;">📣 Unread Announcements (${unread.length})</div>`;
+    unread.forEach(a => {
+      html += `<div class="alert-item">
+        <div><div class="alert-title">${esc(a.title)}</div>
+        <div class="alert-meta">${esc(a.message)}<br>${new Date(a.created_at).toLocaleString()}</div></div>
+        <div class="alert-actions" style="justify-content:flex-end;">
+          <button class="dismiss-btn" data-dismiss-ann="${a.id}">Mark read</button>
+        </div>
+      </div>`;
+    });
+  }
+
+  html += `</div>`;
+  body.innerHTML = html;
+
+  if(isAdmin){
+    body.querySelectorAll("[data-fulfill]").forEach(btn => {
+      btn.onclick = async () => {
+        await sb.from("reorder_requests").update({ status: "fulfilled", resolved_at: new Date().toISOString() }).eq("id", btn.dataset.fulfill);
+        await loadAll(); renderAlertsBody(); updateHeaderBell();
+      };
+    });
+  }
+  body.querySelectorAll("[data-cancel-req]").forEach(btn => {
+    btn.onclick = async () => {
+      await sb.from("reorder_requests").update({ status: "cancelled", resolved_at: new Date().toISOString() }).eq("id", btn.dataset.cancelReq);
+      await loadAll(); renderAlertsBody(); updateHeaderBell();
+    };
+  });
+  body.querySelectorAll("[data-dismiss-ann]").forEach(btn => {
+    btn.onclick = async () => {
+      await markAnnouncementRead(btn.dataset.dismissAnn);
+      await loadAll(); renderAlertsBody(); updateHeaderBell();
+    };
+  });
+  body.querySelectorAll("[data-jump-low]").forEach(btn => {
+    btn.onclick = () => {
+      if(!isAdmin) return;
+      closeModal();
+      adminTab = "allstock";
+      adminSearch = products.find(p => p.id === btn.dataset.jumpLow)?.sku || "";
+      renderAdminView();
+    };
+  });
+}
+
+function updateHeaderBell(){
+  const btn = document.getElementById("notifBtn");
+  if(!btn) return;
+  const bell = bellCountForHeader();
+  btn.innerHTML = `🔔 Alerts${bell ? ` <strong>(${bell})</strong>` : ''}`;
+}
+
+/* ---- Secure Vendor Account Creation Modal ---- */
 function openAddVendorModal(){
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="overlay">
@@ -531,9 +953,7 @@ function openAddVendorModal(){
       </div>
     </div>
   `;
-  document.getElementById("closeX").onclick = closeModal;
-  document.getElementById("cancelV").onclick = closeModal;
-  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+  bindModalClose(["closeX","cancelV"]);
 
   document.getElementById("saveV").onclick = async () => {
     const name = document.getElementById("vName").value.trim();
@@ -571,6 +991,7 @@ function openAddVendorModal(){
         name: name,
         state: state,
         contact_phone: phone,
+        email: email,
         is_admin: false
       }).select().single();
 
@@ -594,7 +1015,16 @@ function openAddVendorModal(){
   };
 }
 
-/* Hardware Barcode & QR Code Scanner Modal */
+function bindModalClose(idList){
+  idList.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.onclick = closeModal;
+  });
+  const overlay = document.getElementById("overlay");
+  if(overlay) overlay.onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+}
+
+/* ---- Hardware Barcode & QR Code Scanner Modal ---- */
 function openBarcodeScannerModal(){
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="overlay">
@@ -610,9 +1040,7 @@ function openBarcodeScannerModal(){
       </div>
     </div>
   `;
-  document.getElementById("closeX").onclick = closeModal;
-  document.getElementById("closeScanner").onclick = closeModal;
-  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+  bindModalClose(["closeX","closeScanner"]);
 
   setTimeout(() => {
     try {
@@ -623,21 +1051,32 @@ function openBarcodeScannerModal(){
         (decodedText) => {
           const code = decodedText.trim();
           document.getElementById("scanResult").innerHTML = `<span style="color:var(--ok);">✓ Scanned: <strong>${esc(code)}</strong></span>`;
-          
+
           const matched = products.find(p => p.sku.toLowerCase() === code.toLowerCase() || (p.barcode && p.barcode.toLowerCase() === code.toLowerCase()));
           const matchedBatch = productBatches.find(b => b.batch_number.toLowerCase() === code.toLowerCase());
 
           if(matched){
             showToast(`Scanned product: ${matched.name}`);
             closeModal();
-            adminTab = "allstock";
-            adminSearch = matched.sku;
-            renderAdminView();
+            if(vendorRow.is_admin){
+              adminTab = "allstock";
+              adminSearch = matched.sku;
+              renderAdminView();
+            } else {
+              vendorSearch = matched.sku;
+              renderVendorView();
+            }
           } else if(matchedBatch){
             showToast(`Scanned Batch: ${matchedBatch.batch_number}`);
             closeModal();
-            adminTab = "batches";
-            renderAdminView();
+            if(vendorRow.is_admin){
+              adminTab = "batches";
+              renderAdminView();
+            } else {
+              const prod = products.find(p => p.id === matchedBatch.product_id);
+              vendorSearch = prod ? prod.sku : "";
+              renderVendorView();
+            }
           } else {
             document.getElementById("scanResult").innerHTML = `<span style="color:var(--warn);">Scanned code "${esc(code)}" not found in SKU catalog.</span>`;
           }
@@ -650,607 +1089,1171 @@ function openBarcodeScannerModal(){
       console.error("Scanner Error:", e);
     }
   }, 300);
-}
-
-/* ============================================================
-   8. SHARED STOCK TABLE
+}/* ============================================================
+   10. SHARED STOCK TABLE (vendor & admin)
    ============================================================ */
-function computeVendorRows(vendorId, respectVisibility){
-  let list = products;
-  if(respectVisibility) list = list.filter(p => isProductVisible(p.id, vendorId));
-  return list.map(p => {
-    const entry = stockEntries.find(e => e.product_id === p.id && e.vendor_id === vendorId)
-      || { vendor_id: vendorId, product_id: p.id, quantity: 0, expiry_date: null, notes: "" };
-    return { product: p, entry };
+function computeVendorRows(vendorId, minOnly){
+  const rows = [];
+  stockEntries.forEach(e => {
+    if(e.vendor_id !== vendorId) return;
+    const product = products.find(p => p.id === e.product_id);
+    if(!product || !e.batch_id) return;
+    if(vendorId && !isProductVisible(product.id, vendorId)) return;
+    const batch = productBatches.find(b => b.id === e.batch_id);
+    rows.push({ entry: e, product, batch });
   });
+  if(minOnly) return rows;
+  rows.sort((a,b) => {
+    if(sortKey === "name") return (a.product.name || "").localeCompare(b.product.name || "");
+    if(sortKey === "sku") return (a.product.sku || "").localeCompare(b.product.sku || "");
+    if(sortKey === "qty") return a.entry.quantity - b.entry.quantity;
+    if(sortKey === "expiry") return (a.batch?.expiry_date || "9999").localeCompare(b.batch?.expiry_date || "9999");
+    if(sortKey === "low") return rankStatus(a) - rankStatus(b);
+    return (a.product.name || "").localeCompare(b.product.name || "");
+  });
+  if(sortDir === "desc") rows.reverse();
+  return rows;
 }
 
-function stockTableRowsHTML(rows){
-  return rows.map(({product, entry}) => {
-    const flags = stockStatus(entry, product);
-    const isLow = flags.some(f => f.type === "low");
-
-    return `
-      <tr>
-        <td>
-          <strong>${esc(product.name)}</strong><br>
-          <span class="sku">${esc(product.sku)} ${product.barcode ? '· 🏷️ ' + esc(product.barcode) : ''}</span>
-        </td>
-        <td><input class="qty-input" type="number" min="0" value="${entry.quantity}" data-product="${product.id}"></td>
-        <td>
-          <select class="reason-select" data-reason="${product.id}">
-            <option value="manual_adjustment">Manual Adjustment</option>
-            <option value="physical_reconciliation">Physical Audit Reconciliation</option>
-            <option value="damaged_goods">Damaged Goods / Waste</option>
-            <option value="expired_disposal">Expired Stock Disposal</option>
-            <option value="qc_sample">QC Testing Sample</option>
-            <option value="return_to_vendor">Restock Return</option>
-          </select>
-        </td>
-        <td><input class="date-input" type="date" value="${entry.expiry_date || ''}" data-expiry="${product.id}"></td>
-        <td><input class="notes-input" type="text" placeholder="Audit note" value="${esc(entry.notes)}" data-notes="${product.id}"></td>
-        <td>${flags.map(f=>`<span class="badge ${f.level}">${f.text}</span>`).join(" ") || `<span class="badge ok">Good</span>`}</td>
-        <td class="row-actions">
-          <button class="save-btn" data-save="${product.id}">Save</button>
-          ${isLow ? `<button class="link-btn" data-reorder="${product.id}">Reorder</button>` : ""}
-          <button class="link-btn" data-hist-vendor="${entry.vendor_id}" data-hist-product="${product.id}" data-hist-name="${esc(product.name)}">History</button>
-        </td>
-      </tr>`;
-  }).join("");
+function batchOptionsForProduct(productId){
+  return productBatches.filter(b => b.product_id === productId).sort((a,b) =>
+    (a.expiry_date || "9999").localeCompare(b.expiry_date || "9999")
+  );
 }
 
-function wireStockTable(tbodyEl, vendorId, afterSave){
+function labelForReason(r){
+  return REASON_LABELS[r] || r;
+}
+
+function stockTableRowsHTML(rows, context){
+  let html = "";
+  rows.forEach(r => {
+    const p = r.product, b = r.batch, e = r.entry;
+    const editable = e.reason_code !== "initial_stock";
+    const status = stockStatus(p, e.quantity);
+    const badge = status === "out" ? "badge-danger" : (status === "low" ? "badge-warn" : "badge-ok");
+    const statusLabel = status === "out" ? "Out of Stock" : (status === "low" ? "Low Stock" : "In Stock");
+    const histBtn = `<button class="link-btn" data-history="${e.product_id}" title="View stock history">History</button>`;
+
+    html += `<tr class="${e.quantity <= 0 ? 'row-danger' : (editable ? '' : 'row-initial')}">
+      <td><strong>${esc(p.name)}</strong><br><span class="muted">${esc(p.sku)}</span></td>
+      <td><span class="badge ${badge}">${statusLabel}</span></td>
+      <td><input class="qty-input" type="number" min="0" value="${e.quantity}" data-product="${p.id}" title="Edit quantity adjust"></td>
+      <td>
+        <select class="reason-select" data-reason="${p.id}">
+          ${REASONS.map(val =>
+            `<option value="${val}" ${(e.reason_code === val) ? "selected" : ""}>${REASON_LABELS[val] || val}</option>`
+          ).join("")}
+        </select>
+      </td>
+      <td>
+        ${!editable
+          ? `<input class="batch-input" type="text" value="${esc(b?.batch_number || "")}" data-batch="${p.id}" title="Link batch to this stock" placeholder="Add batch #">`
+          : (b
+              ? `<span class="batch-chip" title="${batchDisplayStatus(b)}">${esc(b.batch_number)} · ${esc(b.supplier || "")}</span>`
+              : `<span class="muted">—</span>`)}
+      </td>
+      <td>
+        ${editable
+          ? `<input class="date-input" type="date" value="${e.expiry_date ? e.expiry_date.slice(0,10) : ''}" data-expiry="${p.id}" title="Update stock expiry date">`
+          : (e.expiry_date ? e.expiry_date.slice(0,10) : "—")}
+      </td>
+      <td><input class="notes-input" type="text" value="${esc(e.notes || "")}" data-notes="${p.id}" placeholder="Edit notes for audit"></td>
+      <td class="row-actions">
+        <button class="save-btn" data-save="${p.id}">Save</button>
+        <button class="link-btn" data-reorder="${p.id}">Request Reorder</button>
+        ${histBtn}
+      </td>
+    </tr>`;
+  });
+  return html;
+}
+
+async function persistStockEntry(row, changes){
+  const p = row.product;
+  const updateData = {
+    id: row.entry.id,
+    quantity: changes.quantity,
+    reason_code: changes.reason_code,
+    notes: changes.notes
+  };
+  if(changes.expiry) updateData.expiry_date = changes.expiry;
+  if(changes.batch_id !== undefined) updateData.batch_id = changes.batch_id;
+
+  if(!isOnlineNow()){
+    queueOfflineOp({ type: "stock_upsert", payload: updateData });
+    updateRowInState(row.entry.id, { quantity: updateData.quantity, reason_code: updateData.reason_code, notes: updateData.notes, expiry_date: updateData.expiry_date, batch_id: updateData.batch_id });
+    showToast("📴 Offline — saved locally (will auto-sync)");
+    return;
+  }
+  const { error } = await sb.from("stock_entries").update(updateData).eq("id", row.entry.id);
+  if(!error){
+    await loadAll();
+    showToast(`✓ ${p.name} updated for audit`);
+  } else {
+    showToast("Error: " + error.message);
+  }
+}
+
+function updateRowInState(entryId, updates){
+  const i = stockEntries.findIndex(e => e.id === entryId);
+  if(i < 0) return;
+  stockEntries[i] = { ...stockEntries[i], ...updates };
+}
+
+function wireStockTable(tbodyEl, context){
+  tbodyEl.querySelectorAll("[data-product], [data-notes], [data-expiry], [data-reason]").forEach(inp => {
+    inp.addEventListener("keydown", (e) => {
+      if(e.key === "Enter"){
+        e.preventDefault();
+        const btn = tbodyEl.querySelector(`[data-save="${inp.dataset.product || inp.dataset.notes || inp.dataset.expiry || inp.dataset.reason}"]`);
+        if(btn) btn.click();
+      }
+    });
+  });
+
   tbodyEl.querySelectorAll("[data-save]").forEach(btn => {
     btn.onclick = async () => {
       const pid = btn.dataset.save;
-      const qty = parseInt(tbodyEl.querySelector(`[data-product="${pid}"]`).value || "0", 10);
-      const expiry = tbodyEl.querySelector(`[data-expiry="${pid}"]`).value || null;
-      const notes = tbodyEl.querySelector(`[data-notes="${pid}"]`).value || null;
-      const reasonCode = tbodyEl.querySelector(`[data-reason="${pid}"]`).value || "manual_adjustment";
-
+      const row = getEditableRowForProduct(tbodyEl, pid);
+      if(!row) return;
       btn.disabled = true; btn.textContent = "Saving...";
-      const { error } = await sb.from("stock_entries").upsert({
-        vendor_id: vendorId, product_id: pid, quantity: qty, expiry_date: expiry, notes: notes
-      }, { onConflict: "vendor_id,product_id" });
-      
+
+      const root = tbodyEl.querySelector(`tr[data-pid="${pid}"]`) || btn.closest("tr");
+      const qtyEl = tbodyEl.querySelector(`[data-product="${pid}"]`);
+      const reasonEl = tbodyEl.querySelector(`[data-reason="${pid}"]`);
+      const expiryEl = tbodyEl.querySelector(`[data-expiry="${pid}"]`);
+      const notesEl = tbodyEl.querySelector(`[data-notes="${pid}"]`);
+      const batchEl = tbodyEl.querySelector(`[data-batch="${pid}"]`);
+
+      const changes = {
+        quantity: parseFloat(qtyEl ? qtyEl.value : row.entry.quantity) ?? row.entry.quantity,
+        reason_code: reasonEl ? reasonEl.value : row.entry.reason_code,
+        notes: notesEl ? notesEl.value : row.entry.notes
+      };
+      if(expiryEl) changes.expiry = expiryEl.value || null;
+      if(batchEl){
+        const text = batchEl.value.trim();
+        if(text){
+          const matching = productBatches.find(b =>
+            b.product_id === pid &&
+            (b.batch_number.toLowerCase() === text.toLowerCase() ||
+             b.id.toLowerCase() === text.toLowerCase())
+          );
+          if(matching){
+            changes.batch_id = matching.id;
+          } else {
+            changes.batch_id = null;
+            showToast("⚠️ Batch not found — stock will show unlinked until a matching batch is added");
+          }
+        }
+      }
+      await persistStockEntry(row, changes);
       btn.disabled = false; btn.textContent = "Save";
-      if(error){ showToast("Error: " + error.message); }
-      else { showToast(`Saved (${reasonCode.replace('_',' ')})`); await loadAll(); afterSave(); }
     };
   });
+
+  tbodyEl.querySelectorAll("[data-history]").forEach(btn => {
+    btn.onclick = () => openHistoryModal(btn.dataset.history, context === "admin" ? null : vendorRow.id);
+  });
+
   tbodyEl.querySelectorAll("[data-reorder]").forEach(btn => {
-    btn.onclick = () => openReorderModal(btn.dataset.reorder, vendorId);
+    btn.onclick = async () => {
+      const count = (await sb.from("reorder_requests").select("id").eq("product_id", btn.dataset.reorder).eq("vendor_id", vendorRow.id).eq("status", "pending")).data?.length || 0;
+      if(count > 0){ showToast("A reorder request for this product is already pending"); return; }
+      openReorderModal(btn.dataset.reorder);
+    };
   });
-  tbodyEl.querySelectorAll("[data-hist-vendor]").forEach(btn => {
-    btn.onclick = () => openHistoryModal(btn.dataset.histVendor, btn.dataset.histProduct, btn.dataset.histName);
-  });
+}
+
+function getEditableRowForProduct(tbodyEl, pid){
+  const rows = tbodyEl.__cfRows || [];
+  return rows.find(r => r.product.id === pid);
 }
 
 /* ============================================================
-   9. VENDOR VIEW & BATCH RECALL ALERTS
+   11. VENDOR VIEW
    ============================================================ */
-function activeUnreadAnnouncements(){
-  if(!vendorRow) return [];
-  const readIds = new Set(announcementReads.filter(r => r.vendor_id === vendorRow.id).map(r => r.announcement_id));
-  return announcements.filter(a => a.is_active && !readIds.has(a.id));
-}
-
 function renderVendorView(){
-  const main = document.getElementById("main");
+  const childId = "vendorView";
+  let child = document.getElementById(childId);
+  if(child) child.remove();
+  child = document.createElement("div");
+  child.id = childId;
+  document.getElementById("main").appendChild(child);
+
+  const stats = computeVendorStats(vendorRow.id);
   const unread = activeUnreadAnnouncements();
-  const recalledBatches = productBatches.filter(b => b.status === 'recalled');
 
-  const rows = computeVendorRows(vendorRow.id, true);
-  const lowCount = rows.filter(x => x.entry.quantity <= x.product.low_stock_threshold).length;
-  const expiringCount = rows.filter(x => { const d = daysUntil(x.entry.expiry_date); return d !== null && d <= 30; }).length;
-  const myRequests = reorderRequests.filter(r => r.vendor_id === vendorRow.id);
-
-  main.innerHTML = `
-    ${recalledBatches.length ? `
-    <div class="banner banner-recall">
-      <div class="banner-head">
-        <h3>🛑 URGENT PHARMACEUTICAL BATCH RECALL NOTICE (${recalledBatches.length})</h3>
-      </div>
-      ${recalledBatches.map(b => {
-        const prod = products.find(p => p.id === b.product_id);
-        return `<div class="banner-item"><span><strong>${esc(prod?.name)} (Batch: ${esc(b.batch_number)})</strong> — Flagged for immediate quarantine and return. Do not dispense.</span></div>`;
-      }).join("")}
-    </div>` : ""}
-
+  child.innerHTML = `
     ${unread.length ? `
-    <div class="banner banner-info" id="annBanner">
-      <div class="banner-head">
-        <h3>📣 ${unread.length} announcement${unread.length>1?'s':''}</h3>
-        <button class="dismiss-btn" id="dismissAllAnn">Dismiss all</button>
-      </div>
-      ${unread.map(a => `
-        <div class="banner-item">
-          <span><strong>${esc(a.title)}</strong> — ${esc(a.message)}</span>
-          <button class="dismiss-btn" data-dismiss-ann="${a.id}">Dismiss</button>
+      <div class="announcement-banner" id="annBanner">
+        <strong>📣 ${esc(unread[0].title)}</strong> — ${esc(unread[0].message)}
+        <div style="margin-top:8px;display:flex;gap:10px;">
+          ${unread.length > 1 ? `<button class="dismiss-btn btn-mini" id="dismissAllAnn">Dismiss all (${unread.length})</button>` : ""}
+          <button class="dismiss-btn btn-mini" id="dismissOneAnn">Dismiss</button>
         </div>
-      `).join("")}
-    </div>` : ""}
+      </div>` : ""}
+    <div class="stats-row">
+      <div class="stat-card"><p class="stat-num ${stats.totalQty === 0 ? 'danger-text' : (stats.totalQty < 100 ? 'warn-text' : '')}" id="statQty">${stats.totalQty}</p><p class="stat-label">Total Units on Hand</p></div>
+      <div class="stat-card"><p class="stat-num">${stats.totalProducts}</p><p class="stat-label">Unique Products</p></div>
+      <div class="stat-card"><p class="stat-num ${stats.expiringSoon || stats.expired ? 'danger-text' : ''}">${stats.expiringSoon + stats.expired}</p><p class="stat-label">Expiring / Expired Batches</p></div>
+      <div class="stat-card"><p class="stat-num ${stats.value !== 0 ? '' : 'muted'}">₹${formatCurrency(stats.value)}</p><p class="stat-label">Estimated Stock Value</p></div>
+    </div>
 
-    <div class="stat-row">
-      <div class="stat"><div class="num">${rows.length}</div><div class="lbl">Products tracked</div></div>
-      <div class="stat warn"><div class="num">${lowCount}</div><div class="lbl">Low / out of stock</div></div>
-      <div class="stat alert"><div class="num">${expiringCount}</div><div class="lbl">Expiring ≤ 30 days</div></div>
-    </div>
     <div class="panel">
-      <div class="panel-head"><h2>Your stock — ${esc(vendorRow.state)}</h2></div>
-      <table>
-        <thead><tr><th>Product / Barcode</th><th>Quantity</th><th>Reason Code</th><th>Expiry date</th><th>Notes</th><th>Status</th><th></th></tr></thead>
-        <tbody id="stockBody"></tbody>
-      </table>
-      ${rows.length === 0 ? `<div class="empty">No products assigned yet.</div>` : ""}
+      <div class="panel-head">
+        <h2>Stock Inventory</h2>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <input class="search-input" id="vendorSearchInput" placeholder="🔍 Search product or SKU…">
+          <button class="scan-btn-mobile no-print" id="vendorScanBtn">📷 Scan</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="ftable">
+          <thead>
+            <tr>
+              <th>Product</th><th>Status</th><th>Quantity</th><th>Adjustment Reason</th>
+              <th>Batch</th><th>Expiry Date</th><th>Audit Notes</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="stockBody"></tbody>
+        </table>
+      </div>
+      <p class="panel-note"><strong>Save</strong> logs a stock adjustment to the audit trail with reason. <strong>Request Reorder</strong> notifies admin to replenish stock.</p>
     </div>
+
     <div class="panel">
-      <div class="panel-head"><h2>Your reorder requests</h2></div>
-      <table>
-        <thead><tr><th>Product</th><th>Qty requested</th><th>Note</th><th>Status</th><th>Requested</th></tr></thead>
-        <tbody id="reqBody"></tbody>
-      </table>
-      ${myRequests.length === 0 ? `<div class="empty">No reorder requests yet.</div>` : ""}
+      <div class="panel-head"><h2>My Reorder Requests</h2><span class="mini-stat" id="reqCount">0 pending</span></div>
+      <table class="ftable" id="reqTableWrap"></table>
     </div>
   `;
 
-  if(unread.length){
-    document.getElementById("dismissAllAnn").onclick = async () => {
-      await sb.from("announcement_reads").upsert(
-        unread.map(a => ({ announcement_id: a.id, vendor_id: vendorRow.id })),
-        { onConflict: "announcement_id,vendor_id" }
-      );
-      await loadAll(); renderVendorView();
-    };
-    main.querySelectorAll("[data-dismiss-ann]").forEach(btn => {
+  document.getElementById("vendorSearchInput").value = vendorSearch;
+  const drawVendorStock = () => {
+    const rows = computeVendorRows(vendorRow.id);
+    const filtered = vendorSearch.trim()
+      ? rows.filter(r => (r.product.name || "").toLowerCase().includes(vendorSearch.toLowerCase()) || (r.product.sku || "").toLowerCase().includes(vendorSearch.toLowerCase()))
+      : rows;
+    const tbody = document.getElementById("stockBody");
+    tbody.innerHTML = filtered.length
+      ? stockTableRowsHTML(filtered, "vendor")
+      : `<tr><td colspan="8" style="text-align:center;color:#6B7280;padding:28px;">No matching stock. ${vendorSearch ? 'Try a different search term.' : ''}</td></tr>`;
+    tbody.__cfRows = filtered;
+    wireStockTable(tbody, "vendor");
+  };
+  drawVendorStock();
+
+  document.getElementById("vendorSearchInput").addEventListener("input", (e) => {
+    vendorSearch = e.target.value;
+    drawVendorStock();
+  });
+
+  document.getElementById("vendorScanBtn").onclick = openBarcodeScannerModal;
+
+  const drawReqs = () => {
+    const mine = reorderRequests.filter(r => r.vendor_id === vendorRow.id).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+    document.getElementById("reqCount").textContent = `${mine.filter(r => r.status === "pending").length} pending`;
+    const wrap = document.getElementById("reqTableWrap");
+    if(!mine.length){
+      wrap.outerHTML = `<p class="panel-note empty-note">No reorder requests yet.</p>`;
+      return;
+    }
+    let html = `<thead><tr><th>Product</th><th>Requested Qty</th><th>Note</th><th>Status</th><th>Date</th><th>Action</th></tr></thead><tbody>`;
+    mine.forEach(r => {
+      const p = products.find(pr => pr.id === r.product_id);
+      const statusBadge = r.status === "fulfilled" ? "badge-ok" : (r.status === "cancelled" ? "badge-muted" : "badge-warn");
+      html += `<tr>
+        <td><strong>${esc(p?.name || "—")}</strong><br><span class="muted">${esc(p?.sku || "")}</span></td>
+        <td>${r.requested_qty}</td>
+        <td>${esc(r.note || "—")}</td>
+        <td><span class="badge ${statusBadge}">${r.status}</span></td>
+        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+        <td>${r.status === "pending" ? `<button class="link-btn danger-link" data-cancel-vreq="${r.id}">Cancel request</button>` : "—"}</td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    wrap.innerHTML = html;
+    wrap.querySelectorAll("[data-cancel-vreq]").forEach(btn => {
       btn.onclick = async () => {
-        await sb.from("announcement_reads").upsert(
-          [{ announcement_id: btn.dataset.dismissAnn, vendor_id: vendorRow.id }],
-          { onConflict: "announcement_id,vendor_id" }
-        );
-        await loadAll(); renderVendorView();
+        await sb.from("reorder_requests").update({ status: "cancelled", resolved_at: new Date().toISOString() }).eq("id", btn.dataset.cancelVreq);
+        await loadAll(); drawReqs();
       };
     });
+  };
+  drawReqs();
+
+  if(unread.length){
+    document.getElementById("dismissOneAnn").onclick = async () => {
+      await markAnnouncementRead(unread[0].id);
+      await loadAll(); renderVendorView(); updateHeaderBell();
+    };
+    const dismissAll = document.getElementById("dismissAllAnn");
+    if(dismissAll){
+      dismissAll.onclick = async () => {
+        for(const a of unread){ await markAnnouncementRead(a.id); }
+        await loadAll(); renderVendorView(); updateHeaderBell();
+      };
+    }
   }
-
-  const body = document.getElementById("stockBody");
-  body.innerHTML = stockTableRowsHTML(rows);
-  wireStockTable(body, vendorRow.id, () => renderVendorView());
-
-  const reqBody = document.getElementById("reqBody");
-  myRequests.forEach(r => {
-    const product = products.find(p => p.id === r.product_id);
-    const tr = document.createElement("tr");
-    const statusBadge = r.status === "fulfilled" ? "ok" : r.status === "cancelled" ? "info" : "warn";
-    tr.innerHTML = `
-      <td>${product ? esc(product.name) : "—"}</td>
-      <td>${r.requested_qty}</td>
-      <td>${esc(r.note) || "—"}</td>
-      <td><span class="badge ${statusBadge}">${r.status}</span></td>
-      <td class="sku">${new Date(r.created_at).toLocaleDateString()}</td>
-    `;
-    reqBody.appendChild(tr);
-  });
 }
 
-function openReorderModal(productId, vendorId){
-  vendorId = vendorId || vendorRow.id;
+function computeVendorStats(vendorId){
+  const rows = computeVendorRows(vendorId);
+  let totalQty = 0, value = 0;
+  const today = new Date();
+  let expiringSoon = 0, expired = 0;
+  rows.forEach(r => {
+    totalQty += r.entry.quantity;
+    value += r.entry.quantity * (r.product.selling_price || 0);
+    if(r.batch?.expiry_date){
+      const diff = daysUntil(r.batch.expiry_date);
+      if(diff < 0) expired++;
+      else if(diff <= 180) expiringSoon++;
+    }
+  });
+  return {
+    totalQty,
+    totalProducts: rows.length,
+    expiringSoon,
+    expired,
+    value
+  };
+}
+
+/* ============================================================
+   12. REORDER REQUEST MODAL
+   ============================================================ */
+function openReorderModal(productId){
   const product = products.find(p => p.id === productId);
+  if(!product) return;
+  const myRow = computeVendorRows(vendorRow.id).find(r => r.product.id === productId);
+  const current = myRow ? myRow.entry.quantity : 0;
+  const suggested = Math.max(product.reorder_threshold * 2 - current, product.reorder_threshold);
+  const latestBatch = productBatches
+    .filter(b => b.product_id === productId)
+    .sort((a,b) => (b.expiry_date || "9999").localeCompare(a.expiry_date || "9999"))[0];
+
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="overlay">
       <div class="modal">
         <button class="modal-close" id="closeX">×</button>
-        <h3>Request stock reorder</h3>
-        <p class="modal-sub">${esc(product.name)} · ${esc(product.sku)}</p>
-        <label>Quantity needed</label>
-        <input type="number" id="reqQty" min="1" value="${product.low_stock_threshold * 2}">
-        <label>Note (optional)</label>
-        <textarea id="reqNote" rows="2" placeholder="e.g. urgent, surge in demand"></textarea>
+        <h3>📦 Reorder — ${esc(product.name)}</h3>
+        <p class="modal-sub">${esc(product.sku)} · Current stock ${current} · Threshold ${product.reorder_threshold}</p>
+        <label>Quantity to request</label>
+        <input id="reqQty" type="number" min="1" value="${suggested}">
+        <p class="mini-stat-note">Suggested: ${suggested} units (${product.reorder_threshold * 2} − current ${current})</p>
+        ${latestBatch ? `<p class="mini-stat-note">Latest batch on file: <strong>${esc(latestBatch.batch_number)}</strong> (exp ${latestBatch.expiry_date ? latestBatch.expiry_date.slice(0,10) : "—"})</p>` : `<p class="mini-stat-note">No batch on file yet.</p>`}
+        <label>Note for admin (optional)</label>
+        <input id="reqNote" type="text" placeholder="e.g. Urgent — high daily demand">
         <div class="modal-actions">
           <button class="btn-secondary" id="cancelReq">Cancel</button>
-          <button class="btn-primary" style="width:auto;" id="submitReq">Submit request</button>
+          <button class="btn-primary" style="width:auto;" id="sendReq">Send Reorder Request</button>
         </div>
       </div>
     </div>
   `;
-  document.getElementById("closeX").onclick = closeModal;
-  document.getElementById("cancelReq").onclick = closeModal;
-  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
-  document.getElementById("submitReq").onclick = async () => {
-    const qty = parseInt(document.getElementById("reqQty").value || "0", 10);
-    const note = document.getElementById("reqNote").value || null;
-    const { error } = await sb.from("reorder_requests").insert({
-      vendor_id: vendorId, product_id: productId, requested_qty: qty, note
-    });
-    if(error){ showToast("Error: " + error.message); }
-    else { showToast("Reorder request submitted"); closeModal(); await loadAll(); refreshCurrentView(); }
+  bindModalClose(["closeX","cancelReq"]);
+
+  document.getElementById("sendReq").onclick = async () => {
+    const qty = parseInt(document.getElementById("reqQty").value, 10);
+    const note = document.getElementById("reqNote").value.trim() || null;
+    if(!qty || qty < 1){ showToast("Enter a valid quantity (minimum 1)"); return; }
+    const payload = {
+      vendor_id: vendorRow.id,
+      product_id: productId,
+      batch_id: latestBatch?.batch_id || null,
+      requested_qty: qty,
+      note,
+      status: "pending"
+    };
+    if(!isOnlineNow()){
+      queueOfflineOp({ type: "reorder", payload });
+      showToast("📴 Offline — reorder queued, will auto-send when online");
+      closeModal();
+      return;
+    }
+    const { error } = await sb.from("reorder_requests").insert(payload);
+    if(error){ showToast("Error: " + error.message); return; }
+    showToast("✓ Reorder request sent to admin");
+    closeModal();
+    await loadAll(); updateHeaderBell();
   };
 }
 
 /* ============================================================
-   10. ADMIN VIEW — TAB DISPATCHER & DEDICATED VENDOR TABS
+   13. ADMIN VIEW — TAB DISPATCHER
    ============================================================ */
 function renderAdminView(){
-  const main = document.getElementById("main");
-  main.innerHTML = `
-    <div class="admin-tabs">
-      <button class="tab-btn ${adminTab==='dashboard'?'active':''}" data-tab="dashboard">📊 Master Dashboard</button>
-      <button class="tab-btn ${adminTab==='vendors'?'active':''}" data-tab="vendors">🏢 Vendors Management</button>
-      <button class="tab-btn ${adminTab==='allstock'?'active':''}" data-tab="allstock">📦 All Stock</button>
-      <button class="tab-btn ${adminTab==='batches'?'active':''}" data-tab="batches">💊 Batches & Recalls</button>
-      <button class="tab-btn ${adminTab==='financials'?'active':''}" data-tab="financials">💰 Valuation & Audit Logs</button>
-      <button class="tab-btn ${adminTab==='products'?'active':''}" data-tab="products">🛒 Products</button>
-      <button class="tab-btn ${adminTab==='announcements'?'active':''}" data-tab="announcements">📣 Announcements</button>
-    </div>
-    <div id="adminTabBody"></div>
-  `;
-  main.querySelectorAll("[data-tab]").forEach(b => {
-    b.onclick = () => { adminTab = b.dataset.tab; renderAdminView(); };
-  });
-
-  if(adminTab === "dashboard") renderAdminDashboardTab();
-  else if(adminTab === "vendors") renderAdminByVendorTab();
-  else if(adminTab === "allstock") renderAdminAllStockTab();
-  else if(adminTab === "batches") renderAdminBatchesTab();
-  else if(adminTab === "financials") renderAdminFinancialsTab();
-  else if(adminTab === "products") renderAdminProductsTab();
-  else if(adminTab === "announcements") renderAdminAnnouncementsTab();
-}
-
-/* ---- 10a. MASTER DASHBOARD TAB ---- */
-function destroyDashboardCharts(){
-  Object.values(dashboardCharts).forEach(c => { if(c) c.destroy(); });
-  dashboardCharts = {};
-}
-
-function renderAdminDashboardTab(){
-  const container = document.getElementById("adminTabBody");
-  destroyDashboardCharts();
-
-  const rows = stockEntries.map(e => {
-    const product = products.find(p => p.id === e.product_id);
-    const vendor = vendors.find(v => v.id === e.vendor_id);
-    return { entry: e, product, vendor };
-  }).filter(r => r.product && r.vendor);
-
-  const nonAdminVendors = vendors.filter(v => !v.is_admin);
-  const lowCount = rows.filter(r => r.entry.quantity <= r.product.low_stock_threshold).length;
-  const expiringCount = rows.filter(r => { const d = daysUntil(r.entry.expiry_date); return d !== null && d <= 30 && d >= 0; }).length;
-  const pendingRequests = reorderRequests.filter(r => r.status === "pending");
-
-  let totalCostValuation = 0;
-  rows.forEach(r => {
-    totalCostValuation += (r.entry.quantity * (r.product.cost_price || 0));
-  });
-
-  container.innerHTML = `
-    <div class="stat-row">
-      <div class="stat"><div class="num">${nonAdminVendors.length}</div><div class="lbl">Registered Vendors</div></div>
-      <div class="stat"><div class="num">${products.length}</div><div class="lbl">Catalog Products</div></div>
-      <div class="stat warn"><div class="num">${lowCount}</div><div class="lbl">Low / Out of Stock</div></div>
-      <div class="stat alert"><div class="num">${expiringCount}</div><div class="lbl">Expiring ≤ 30 Days</div></div>
-      <div class="stat purple"><div class="num">${formatCurrency(totalCostValuation)}</div><div class="lbl">Total Inventory Valuation</div></div>
-    </div>
-
-    ${pendingRequests.length ? `
-    <div class="panel">
-      <div class="panel-head"><h2>Reorder Requests — ${pendingRequests.length} Pending Approval</h2></div>
-      <table>
-        <thead><tr><th>Vendor</th><th>Product</th><th>Qty</th><th>Note</th><th>Requested</th><th></th></tr></thead>
-        <tbody id="reorderBody"></tbody>
-      </table>
-    </div>` : ""}
-
-    <div class="stat-row">
-      <div class="panel chart-card"><h3>Low Stock by Vendor</h3><canvas id="chartLowByVendor" height="200"></canvas></div>
-      <div class="panel chart-card"><h3>Global Expiry Outlook</h3><canvas id="chartExpiry" height="200"></canvas></div>
-    </div>
-  `;
-
-  if(pendingRequests.length){
-    const reorderBody = document.getElementById("reorderBody");
-    pendingRequests.forEach(r => {
-      const vendor = vendors.find(v => v.id === r.vendor_id);
-      const product = products.find(p => p.id === r.product_id);
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td><strong>${esc(vendor?.name) || "—"}</strong><br><span class="state-tag">${esc(vendor?.state)}</span></td>
-        <td>${esc(product?.name) || "—"}</td>
-        <td>${r.requested_qty}</td>
-        <td>${esc(r.note) || "—"}</td>
-        <td class="sku">${new Date(r.created_at).toLocaleDateString()}</td>
-        <td><button class="save-btn" data-fulfill="${r.id}">Mark fulfilled</button></td>
-      `;
-      reorderBody.appendChild(tr);
-    });
-    reorderBody.querySelectorAll("[data-fulfill]").forEach(btn => {
-      btn.onclick = async () => {
-        btn.disabled = true; btn.textContent = "Saving...";
-        const { error } = await sb.from("reorder_requests").update({ status: "fulfilled", resolved_at: new Date().toISOString() }).eq("id", btn.dataset.fulfill);
-        if(error){ showToast("Error: " + error.message); btn.disabled = false; }
-        else { showToast("Marked fulfilled"); await loadAll(); renderAdminDashboardTab(); }
-      };
-    });
+  const tabs = [
+    ["dashboard", "📊 Dashboard"],
+    ["vendors", "🏢 Vendors"],
+    ["allstock", "📦 All Stock"],
+    ["batches", "🧪 Batches"],
+    ["financials", "💰 Financials"],
+    ["products", "🧬 Products"],
+    ["announcements", "📣 Announcements"]
+  ];
+  const child = document.createElement("div");
+  child.id = "adminView";
+  if(!document.getElementById("adminView")){
+    document.getElementById("main").appendChild(child);
   }
-
-  const cGold = "#B8935A", cDanger = "#B3261E", cWarn = "#B8722A", cOk = "#2F6B4F";
-  const lowByVendor = nonAdminVendors.map(v => rows.filter(r => r.vendor.id === v.id && r.entry.quantity <= r.product.low_stock_threshold).length);
-
-  dashboardCharts.lowByVendor = new Chart(document.getElementById("chartLowByVendor").getContext("2d"), {
-    type: "bar",
-    data: { labels: nonAdminVendors.map(v => v.name), datasets: [{ label: "Low stock items", data: lowByVendor, backgroundColor: cGold }] },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-  });
-  
-  dashboardCharts.expiry = new Chart(document.getElementById("chartExpiry").getContext("2d"), {
-    type: "doughnut",
-    data: { labels: ["Low Stock","Expiring ≤30d","Healthy"], datasets: [{ data: [lowCount, expiringCount, rows.length - lowCount - expiringCount], backgroundColor: [cDanger, cWarn, cOk] }] },
-    options: { responsive: true, plugins: { legend: { position: "bottom" } } }
-  });
-}
-
-/* ---- 10b. DEDICATED VENDORS TAB ---- */
-function renderAdminByVendorTab(){
-  const container = document.getElementById("adminTabBody");
-  const nonAdminVendors = vendors.filter(v => !v.is_admin);
-
-  if(nonAdminVendors.length === 0){
-    container.innerHTML = `
-      <div class="panel">
-        <div class="panel-head">
-          <h2>Registered Vendors</h2>
-          <button class="btn-add-vendor" id="addVendorTabBtn">+ Add Vendor Account</button>
-        </div>
-        <div class="empty">No vendor accounts registered yet. Click "+ Add Vendor Account" to create your first vendor login.</div>
-      </div>
-    `;
-    document.getElementById("addVendorTabBtn").onclick = openAddVendorModal;
-    return;
-  }
-
-  if(!adminVendorTabId || !nonAdminVendors.find(v => v.id === adminVendorTabId)){
-    adminVendorTabId = nonAdminVendors[0].id;
-  }
-  const activeVendor = nonAdminVendors.find(v => v.id === adminVendorTabId);
-  const rows = computeVendorRows(activeVendor.id, false);
-
-  const vendorLow = rows.filter(r => r.entry.quantity <= r.product.low_stock_threshold).length;
-  const vendorExpiring = rows.filter(r => { const d = daysUntil(r.entry.expiry_date); return d !== null && d <= 30 && d >= 0; }).length;
-  const vendorRequests = reorderRequests.filter(r => r.vendor_id === activeVendor.id);
-  const vendorAudits = stockAdjustments.filter(a => a.vendor_id === activeVendor.id);
-
-  let vendorValuation = 0;
-  rows.forEach(r => {
-    vendorValuation += (r.entry.quantity * (r.product.cost_price || 0));
-  });
-
-  container.innerHTML = `
-    <div class="panel" style="margin-bottom:16px;">
-      <div class="panel-head">
-        <h2>🏢 Vendor Portal Inspector</h2>
-        <button class="btn-add-vendor" id="addVendorTabBtn">+ Add New Vendor Account</button>
-      </div>
-      <div class="panel-body" style="padding:14px 20px;">
-        <div class="filters">
-          <strong style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-right:6px;">Select Vendor Tab:</strong>
-          ${nonAdminVendors.map(v => `
-            <span class="chip ${v.id===adminVendorTabId?'active':''}" data-vendortab="${v.id}">
-              🏛️ ${esc(v.name)} (${esc(v.state)})
-            </span>
-          `).join("")}
-        </div>
-      </div>
+  const existing = document.getElementById("adminView");
+  existing.innerHTML = `
+    <div class="tab-bar no-print">
+      ${tabs.map(([key,label]) => `<button class="tab-btn ${adminTab === key ? 'active' : ''}" data-tab="${key}">${label}</button>`).join("")}
     </div>
-
-    <div class="stat-row">
-      <div class="stat"><div class="num">${rows.length}</div><div class="lbl">Products Tracked</div></div>
-      <div class="stat warn"><div class="num">${vendorLow}</div><div class="lbl">Low / Out of Stock</div></div>
-      <div class="stat alert"><div class="num">${vendorExpiring}</div><div class="lbl">Expiring ≤ 30 Days</div></div>
-      <div class="stat purple"><div class="num">${formatCurrency(vendorValuation)}</div><div class="lbl">${esc(activeVendor.name)} Valuation</div></div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head">
-        <h2>Dedicated Inventory — ${esc(activeVendor.name)} (${esc(activeVendor.state)})</h2>
-        <span class="state-tag">Phone: ${esc(activeVendor.contact_phone || 'Not Provided')}</span>
-      </div>
-      <table>
-        <thead><tr><th>Product / Barcode</th><th>Quantity</th><th>Reason Code</th><th>Expiry date</th><th>Notes</th><th>Status</th><th></th></tr></thead>
-        <tbody id="stockBody"></tbody>
-      </table>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head"><h2>Reorder Requests for ${esc(activeVendor.name)}</h2></div>
-      <table>
-        <thead><tr><th>Product</th><th>Qty requested</th><th>Note</th><th>Status</th><th>Requested Date</th></tr></thead>
-        <tbody id="vendorReqBody"></tbody>
-      </table>
-      ${vendorRequests.length === 0 ? `<div class="empty">No reorder requests submitted by this vendor.</div>` : ""}
-    </div>
-
-    <div class="panel">
-      <div class="panel-head"><h2>Audit Logs for ${esc(activeVendor.name)}</h2></div>
-      <table>
-        <thead><tr><th>Date & Time</th><th>Product</th><th>Old Qty</th><th>New Qty</th><th>Delta</th><th>Reason Code</th><th>Notes</th></tr></thead>
-        <tbody id="vendorAuditBody"></tbody>
-      </table>
-      ${vendorAudits.length === 0 ? `<div class="empty">No audit adjustments recorded for this vendor.</div>` : ""}
-    </div>
+    <div id="tabContent"></div>
   `;
 
-  document.getElementById("addVendorTabBtn").onclick = openAddVendorModal;
-
-  container.querySelectorAll("[data-vendortab]").forEach(chip => {
-    chip.onclick = () => { adminVendorTabId = chip.dataset.vendortab; renderAdminByVendorTab(); };
-  });
-
-  const body = document.getElementById("stockBody");
-  body.innerHTML = stockTableRowsHTML(rows);
-  wireStockTable(body, activeVendor.id, () => renderAdminByVendorTab());
-
-  const vReqBody = document.getElementById("vendorReqBody");
-  vendorRequests.forEach(r => {
-    const product = products.find(p => p.id === r.product_id);
-    const tr = document.createElement("tr");
-    const statusBadge = r.status === "fulfilled" ? "ok" : r.status === "cancelled" ? "info" : "warn";
-    tr.innerHTML = `
-      <td>${product ? esc(product.name) : "—"}</td>
-      <td>${r.requested_qty}</td>
-      <td>${esc(r.note) || "—"}</td>
-      <td><span class="badge ${statusBadge}">${r.status}</span></td>
-      <td class="sku">${new Date(r.created_at).toLocaleDateString()}</td>
-    `;
-    vReqBody.appendChild(tr);
-  });
-
-  const vAuditBody = document.getElementById("vendorAuditBody");
-  vendorAudits.forEach(a => {
-    const prod = products.find(p => p.id === a.product_id);
-    const deltaStr = a.change_qty > 0 ? `+${a.change_qty}` : `${a.change_qty}`;
-    const badgeClass = a.change_qty > 0 ? 'ok' : 'danger';
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="sku">${formatDate(a.created_at, true)}</td>
-      <td>${esc(prod?.name || "—")}</td>
-      <td>${a.previous_qty}</td>
-      <td>${a.new_qty}</td>
-      <td><span class="badge ${badgeClass}">${deltaStr}</span></td>
-      <td><span class="badge info">${esc(a.reason_code)}</span></td>
-      <td class="sku">${esc(a.notes) || "—"}</td>
-    `;
-    vAuditBody.appendChild(tr);
-  });
-}
-
-/* ---- 10c. ALL STOCK TAB ---- */
-function renderAdminAllStockTab(){
-  const container = document.getElementById("adminTabBody");
-  const rows = stockEntries.map(e => {
-    const product = products.find(p => p.id === e.product_id);
-    const vendor = vendors.find(v => v.id === e.vendor_id);
-    return { entry: e, product, vendor };
-  }).filter(r => r.product && r.vendor);
-
-  let filtered = rows;
-  if(adminSearch.trim()){
-    const q = adminSearch.trim().toLowerCase();
-    filtered = filtered.filter(r =>
-      r.vendor.name.toLowerCase().includes(q) || r.vendor.state.toLowerCase().includes(q) ||
-      r.product.name.toLowerCase().includes(q) || r.product.sku.toLowerCase().includes(q) ||
-      (r.product.barcode && r.product.barcode.toLowerCase().includes(q))
-    );
-  }
-
-  container.innerHTML = `
-    <div class="panel">
-      <div class="panel-head">
-        <h2>All State Inventory</h2>
-        <div class="filters">
-          <input class="search-input" id="searchInput" type="text" placeholder="Search SKU, Barcode, Vendor" value="${esc(adminSearch)}">
-          <button class="export-btn" id="exportBtn">⬇ Export CSV</button>
-        </div>
-      </div>
-      <table>
-        <thead><tr>
-          <th>Vendor / State</th>
-          <th>Product</th>
-          <th>Quantity</th>
-          <th>Cost Valuation</th>
-          <th>Expiry</th>
-          <th>Status</th>
-          <th></th>
-        </tr></thead>
-        <tbody id="adminBody"></tbody>
-      </table>
-    </div>
-  `;
-
-  const body = document.getElementById("adminBody");
-  filtered.forEach(({entry, product, vendor}) => {
-    const flags = stockStatus(entry, product);
-    const costVal = (entry.quantity * (product.cost_price || 0));
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><strong>${esc(vendor.name)}</strong><br><span class="state-tag">${esc(vendor.state)}</span></td>
-      <td>${esc(product.name)}<br><span class="sku">${esc(product.sku)} ${product.barcode ? '· 🏷️ ' + esc(product.barcode) : ''}</span></td>
-      <td>${entry.quantity}</td>
-      <td><strong>${formatCurrency(costVal)}</strong></td>
-      <td>${entry.expiry_date || "—"}</td>
-      <td>${flags.map(f=>`<span class="badge ${f.level}">${f.text}</span>`).join(" ") || `<span class="badge ok">Good</span>`}</td>
-      <td><button class="link-btn" data-hist-vendor="${vendor.id}" data-hist-product="${product.id}" data-hist-name="${esc(product.name)}">History</button></td>
-    `;
-    body.appendChild(tr);
-  });
-
-  const searchInput = document.getElementById("searchInput");
-  searchInput.oninput = (e) => {
-    adminSearch = e.target.value;
-    renderAdminAllStockTab();
-  };
-  document.getElementById("exportBtn").onclick = () => exportCSV(filtered);
-}
-
-/* ---- 10d. PHARMACEUTICAL BATCHES & RECALLS TAB ---- */
-function renderAdminBatchesTab(){
-  const container = document.getElementById("adminTabBody");
-  
-  container.innerHTML = `
-    <div class="panel">
-      <div class="panel-head">
-        <h2>💊 Pharmaceutical Batches & Lot Management</h2>
-        <div class="filters">
-          <button class="save-btn" id="createBatchBtn">+ Create Batch</button>
-        </div>
-      </div>
-      <table>
-        <thead><tr>
-          <th>Batch Number</th>
-          <th>Product</th>
-          <th>Mfg Date</th>
-          <th>Expiry Date</th>
-          <th>Cost Price</th>
-          <th>Selling Price</th>
-          <th>Initial Qty</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr></thead>
-        <tbody id="batchesBody"></tbody>
-      </table>
-      ${productBatches.length === 0 ? `<div class="empty">No batches registered yet. Click "+ Create Batch" to add lot numbers.</div>` : ""}
-    </div>
-  `;
-
-  const body = document.getElementById("batchesBody");
-  productBatches.forEach(b => {
-    const prod = products.find(p => p.id === b.product_id);
-    const isRecalled = b.status === 'recalled';
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><strong>${esc(b.batch_number)}</strong></td>
-      <td>${esc(prod?.name || "—")}<br><span class="sku">${esc(prod?.sku || "")}</span></td>
-      <td class="sku">${b.mfg_date || '—'}</td>
-      <td><strong>${b.expiry_date}</strong></td>
-      <td>${formatCurrency(b.cost_price)}</td>
-      <td>${formatCurrency(b.selling_price)}</td>
-      <td>${b.initial_quantity}</td>
-      <td><span class="badge ${isRecalled ? 'danger' : 'ok'}">${b.status.toUpperCase()}</span></td>
-      <td>
-        ${!isRecalled ? `<button class="link-btn danger-link" data-recall="${b.id}">🛑 Recall Batch</button>` : `<span class="badge danger">RECALLED</span>`}
-      </td>
-    `;
-    body.appendChild(tr);
-  });
-
-  document.getElementById("createBatchBtn").onclick = openCreateBatchModal;
-  body.querySelectorAll("[data-recall]").forEach(btn => {
-    btn.onclick = async () => {
-      if(!confirm("Are you sure you want to trigger a RECALL for this batch? This will alert all vendors immediately.")) return;
-      const { error } = await sb.from("product_batches").update({ status: "recalled" }).eq("id", btn.dataset.recall);
-      if(error) showToast("Error: " + error.message);
-      else { showToast("🛑 Batch Recalled & Flagged"); await loadAll(); renderAdminBatchesTab(); }
+  existing.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.onclick = () => {
+      adminTab = btn.dataset.tab;
+      renderAdminView();
     };
   });
+
+  const content = document.getElementById("tabContent");
+  switch(adminTab){
+    case "vendors": renderAdminByVendorTab(content); break;
+    case "allstock": renderAdminAllStockTab(content); break;
+    case "batches": renderAdminBatchesTab(content); break;
+    case "financials": renderAdminFinancialsTab(content); break;
+    case "products": renderAdminProductsTab(content); break;
+    case "announcements": renderAdminAnnouncementsTab(content); break;
+    default: renderAdminDashboardTab(content);
+  }
+}
+
+/* ---- 13a. Admin Dashboard Tab ---- */
+function destroyDashboardCharts(){
+  ["chartLowVendor","chartExpiry","chartTrend","chartValueTop"].forEach(id => {
+    const canvas = document.getElementById(id);
+    if(canvas && dashboardCharts[id]){ dashboardCharts[id].destroy(); dashboardCharts[id] = null; }
+  });
+}
+
+async function renderAdminDashboardTab(content){
+  content.innerHTML = `<div style="padding:40px;text-align:center;color:#6B7280;">Crunching numbers…</div>`;
+  await loadAll();
+  destroyDashboardCharts();
+
+  const pending = reorderRequests.filter(r => r.status === "pending");
+  const rows = computeVendorRowsAll().filter(r => r.entry.quantity <= r.product.low_stock_threshold);
+  const expiring = [];
+  productBatches.forEach(b => {
+    if(!b.expiry_date) return;
+    const diff = daysUntil(b.expiry_date);
+    if(b.status === "recalled") return;
+    if(diff < 0 || diff <= 180) expiring.push({ batch: b, product: products.find(p => p.id === b.product_id), diff });
+  });
+  expiring.sort((a,b) => a.diff - b.diff);
+
+  const totalQty = stockEntries.reduce((s,e) => s + e.quantity, 0);
+  const totalValue = stockEntries.reduce((s,e) => {
+    const p = products.find(pr => pr.id === e.product_id);
+    return s + e.quantity * (p?.selling_price || 0);
+  }, 0);
+  const initialValue = stockEntries.reduce((s,e) => {
+    const p = products.find(pr => pr.id === e.product_id);
+    return s + (p?.selling_price || 0);
+  }, 0);
+
+  content.innerHTML = `
+    <div class="stats-row">
+      <div class="stat-card"><p class="stat-num">${vendors.length}</p><p class="stat-label">Vendor Accounts</p></div>
+      <div class="stat-card"><p class="stat-num">${stockEntries.length}</p><p class="stat-label">Stock Lines</p></div>
+      <div class="stat-card"><p class="stat-num">${totalQty.toLocaleString()}</p><p class="stat-label">Total Units</p></div>
+      <div class="stat-card"><p class="stat-num">₹${formatCurrency(totalValue)}</p><p class="stat-label">Estimated Stock Value</p></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>⏳ Pending Reorder Requests (${pending.length})</h2></div>
+      ${pending.length ? `<table class="ftable" id="pendingReqTbl"></table>` : `<p class="panel-note empty-note">No pending reorder requests — all clear.</p>`}
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>⚠️ Low Stock Across States (${rows.length})</h2>
+        <button class="export-btn no-print" id="exportLowBtn">⬇ Export CSV</button></div>
+      ${rows.length ? `<table class="ftable" id="lowStockTbl"></table>` : `<p class="panel-note empty-note">No low-stock lines.</p>`}
+    </div>
+
+    <div class="panel" style="margin-top:16px;">
+      <div class="panel-head"><h2>⏰ Expiring / Expired Batches (${expiring.length})</h2></div>
+      ${expiring.length ? `<table class="ftable" id="expiryTbl"></table>` : `<p class="panel-note empty-note">No expiring batches in the next 180 days.</p>`}
+    </div>
+
+    <div class="chart-grid" style="margin-top:16px;">
+      <div class="panel chart-panel">
+        <div class="panel-head"><h2 style="font-size:14px;">Low Stock by Vendor</h2></div>
+        <canvas id="chartLowVendor" height="180"></canvas>
+      </div>
+      <div class="panel chart-panel">
+        <div class="panel-head"><h2 style="font-size:14px;">Batch Expiry Distribution</h2></div>
+        <canvas id="chartExpiry" height="180"></canvas>
+      </div>
+      <div class="panel chart-panel">
+        <div class="panel-head"><h2 style="font-size:14px;">Stock Trend — Last 14 Days</h2></div>
+        <canvas id="chartTrend" height="180"></canvas>
+      </div>
+      <div class="panel chart-panel">
+        <div class="panel-head"><h2 style="font-size:14px;">Top Products by Value</h2></div>
+        <canvas id="chartValueTop" height="180"></canvas>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:16px;">
+      <div class="panel-head"><h2>📋 Recent Stock Adjustments</h2>
+        <button class="export-btn no-print" id="exportAdjBtn">⬇ Export Audit CSV</button></div>
+      <p class="panel-note" id="adjNote"></p>
+      <table class="ftable" id="adjTbl"></table>
+    </div>
+  `;
+
+  const drawPending = () => {
+    const tbl = document.getElementById("pendingReqTbl");
+    if(!tbl) return;
+    let html = `<thead><tr><th>Vendor</th><th>Product</th><th>Qty</th><th>Note</th><th>Requested</th><th>Action</th></tr></thead><tbody>`;
+    pending.slice(0, 25).forEach(r => {
+      const v = vendors.find(vd => vd.id === r.vendor_id);
+      const p = products.find(pr => pr.id === r.product_id);
+      html += `<tr>
+        <td><strong>${esc(v?.name || "—")}</strong><br><span class="muted">${esc(v?.state || "")}</span></td>
+        <td>${esc(p?.name || "—")}<br><span class="muted">${esc(p?.sku || "")}</span></td>
+        <td>${r.requested_qty}</td>
+        <td>${esc(r.note || "—")}</td>
+        <td>${new Date(r.created_at).toLocaleString()}</td>
+        <td class="row-actions">
+          <button class="save-btn" data-pfulfill="${r.id}">Fulfill</button>
+          <button class="link-btn danger-link" data-pcancel="${r.id}">Cancel</button>
+        </td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    tbl.innerHTML = html;
+    tbl.querySelectorAll("[data-pfulfill]").forEach(btn => {
+      btn.onclick = async () => {
+        await sb.from("reorder_requests").update({ status: "fulfilled", resolved_at: new Date().toISOString() }).eq("id", btn.dataset.pfulfill);
+        await loadAll(); renderAdminDashboardTab(content);
+      };
+    });
+    tbl.querySelectorAll("[data-pcancel]").forEach(btn => {
+      btn.onclick = async () => {
+        await sb.from("reorder_requests").update({ status: "cancelled", resolved_at: new Date().toISOString() }).eq("id", btn.dataset.pcancel);
+        await loadAll(); renderAdminDashboardTab(content);
+      };
+    });
+  };
+  drawPending();
+
+  const drawLow = () => {
+    const tbl = document.getElementById("lowStockTbl");
+    if(!tbl) return;
+    let html = `<thead><tr><th>Product</th><th>Vendor</th><th>Qty</th><th>Low Stock Threshold</th><th>Reorder Level</th></tr></thead><tbody>`;
+    rows.slice(0, 30).forEach(r => {
+      html += `<tr>
+        <td><strong>${esc(r.product.name)}</strong><br><span class="muted">${esc(r.product.sku)}</span></td>
+        <td>${esc(r.entry.vendor_id ? (vendors.find(v => v.id === r.entry.vendor_id)?.name || "—") : "—")}</td>
+        <td><strong class="${r.entry.quantity <= 0 ? 'danger-text' : 'warn-text'}">${r.entry.quantity}</strong></td>
+        <td>${r.product.low_stock_threshold}</td>
+        <td>${r.product.reorder_threshold}</td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    tbl.innerHTML = html;
+    document.getElementById("exportLowBtn").onclick = () => {
+      const data = rows.map(r => ({
+        SKU: r.product.sku, Product: r.product.name,
+        Vendor: r.entry.vendor_id ? (vendors.find(v => v.id === r.entry.vendor_id)?.name || "") : "",
+        Quantity: r.entry.quantity, "Low Stock Threshold": r.product.low_stock_threshold,
+        "Reorder Level": r.product.reorder_threshold
+      }));
+      exportCSV(`low-stock-report-${new Date().toISOString().slice(0,10)}.csv`, data);
+    };
+  };
+  drawLow();
+
+  const drawExpiry = () => {
+    const tbl = document.getElementById("expiryTbl");
+    if(!tbl) return;
+    let html = `<thead><tr><th>Batch</th><th>Product</th><th>Expiry Date</th><th>Days Left</th><th>Status</th></tr></thead><tbody>`;
+    expiring.slice(0, 40).forEach(r => {
+      const status = r.diff < 0 ? "Expired" : (r.diff <= 30 ? "Expiring soon" : "Watch");
+      const cls = r.diff < 0 ? "badge-danger" : (r.diff <= 30 ? "badge-warn" : "badge-ok");
+      html += `<tr>
+        <td><strong>${esc(r.batch.batch_number)}</strong></td>
+        <td>${esc(r.product?.name || "—")}</td>
+        <td>${r.batch.expiry_date.slice(0,10)}</td>
+        <td>${r.diff < 0 ? Math.abs(r.diff) + " days ago" : r.diff + " days"}</td>
+        <td><span class="badge ${cls}">${status}</span></td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    tbl.innerHTML = html;
+  };
+  drawExpiry();
+
+  /* ---- Charts ---- */
+  const chartLowData = vendors.map(v => {
+    const count = rows.filter(r => r.entry.vendor_id === v.id).length;
+    return { label: (v.state || v.name).slice(0, 14), count };
+  }).filter(d => d.count > 0);
+
+  const now = new Date();
+  const expBuckets = { "Expired": 0, "0-30d": 0, "31-90d": 0, "91-180d": 0, "Safe (>180d)": 0 };
+  productBatches.forEach(b => {
+    if(!b.expiry_date || b.status === "recalled"){ return; }
+    const diff = daysUntil(b.expiry_date);
+    if(diff < 0) expBuckets["Expired"]++;
+    else if(diff <= 30) expBuckets["0-30d"]++;
+    else if(diff <= 90) expBuckets["31-90d"]++;
+    else if(diff <= 180) expBuckets["91-180d"]++;
+    else expBuckets["Safe (>180d)"]++;
+  });
+
+  const trendData = [];
+  for(let i = 13; i >= 0; i--){
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    trendData.push({ key, date: d, total: 0 });
+  }
+  const dayIndex = {};
+  trendData.forEach((t, i) => { dayIndex[t.key] = i; });
+  const histByKey = {};
+  stockHistory.forEach(h => {
+    const k = h.vendor_id + "|" + h.product_id;
+    if(!histByKey[k]) histByKey[k] = [];
+    histByKey[k].push(h);
+  });
+  Object.values(histByKey).forEach(seq => {
+    seq.sort((a,b) => new Date(a.recorded_at) - new Date(b.recorded_at));
+    seq.forEach((h, i) => {
+      if(!h.recorded_at) return;
+      const key = h.recorded_at.slice(0, 10);
+      if(!(key in dayIndex)) return;
+      const delta = (i === 0) ? h.quantity : h.quantity - seq[i-1].quantity;
+      trendData[dayIndex[key]].total += delta;
+    });
+  });
+
+  const topValue = stockEntries
+    .map(e => ({ entry: e, product: products.find(p => p.id === e.product_id) }))
+    .filter(r => r.product)
+    .reduce((acc, r) => {
+      const existing = acc.find(a => a.product.id === r.product.id);
+      if(existing) existing.value += r.entry.quantity * (r.product.selling_price || 0);
+      else acc.push({ product: r.product, value: r.entry.quantity * (r.product.selling_price || 0) });
+      return acc;
+    }, [])
+    .sort((a,b) => b.value - a.value)
+    .slice(0, 8);
+
+  const palette = ["#0F1F3D","#B3261E","#C9A227","#2E7D5B","#6B7280","#8B5CF6","#0E7490","#B45309"];
+
+  try {
+    if(chartLowData.length){
+      dashboardCharts.chartLowVendor = new Chart(document.getElementById("chartLowVendor"), {
+        type: "bar",
+        data: { labels: chartLowData.map(d => d.label), datasets: [{ label: "Low stock lines", data: chartLowData.map(d => d.count), backgroundColor: "#C9A227" }] },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+      });
+    }
+
+    dashboardCharts.chartExpiry = new Chart(document.getElementById("chartExpiry"), {
+      type: "doughnut",
+      data: { labels: Object.keys(expBuckets), datasets: [{ data: Object.values(expBuckets), backgroundColor: ["#B3261E","#E8612D","#C9A227","#8B5CF6","#2E7D5B"] }] },
+      options: { responsive: true, plugins: { legend: { position: "right", labels: { font: { size: 11, family: "Inter" } } } } }
+    });
+
+    dashboardCharts.chartTrend = new Chart(document.getElementById("chartTrend"), {
+      type: "line",
+      data: {
+        labels: trendData.map(t => `${t.date.getDate()}/${t.date.getMonth()+1}`),
+        datasets: [{ label: "Net stock change", data: trendData.map(t => t.total), borderColor: "#0F1F3D", backgroundColor: "rgba(15,31,61,0.08)", fill: true, tension: 0.35, pointRadius: 2 }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    if(topValue.length){
+      dashboardCharts.chartValueTop = new Chart(document.getElementById("chartValueTop"), {
+        type: "bar",
+        data: { labels: topValue.map(t => t.product.name.length > 16 ? t.product.name.slice(0,16) + "…" : t.product.name), datasets: [{ label: "Value (₹)", data: topValue.map(t => t.value), backgroundColor: topValue.map((_,i) => palette[i % palette.length]) }] },
+        options: { responsive: true, indexAxis: "y", plugins: { legend: { display: false } } }
+      });
+    }
+  } catch(e) {
+    console.error("Chart render error:", e);
+  }
+
+  /* ---- Recent adjustments ---- */
+  const adjEl = document.getElementById("adjTbl");
+  const adjNote = document.getElementById("adjNote");
+  const recent = [...stockAdjustments].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 25);
+  adjNote.textContent = recent.length ? "Latest vendor-invoked stock adjustments." : "No adjustments recorded yet.";
+  if(recent.length){
+    let html = `<thead><tr><th>Date</th><th>Product</th><th>Vendor</th><th>Reason</th><th>Old Qty</th><th>New Qty</th><th>Notes</th></tr></thead><tbody>`;
+    recent.forEach(a => {
+      const p = products.find(pr => pr.id === a.product_id);
+      const v = vendors.find(vd => vd.id === a.vendor_id);
+      html += `<tr>
+        <td>${new Date(a.created_at).toLocaleString()}</td>
+        <td>${esc(p?.name || "—")}</td>
+        <td>${esc(v?.name || "—")}</td>
+        <td>${labelForReason(a.reason_code)}</td>
+        <td>${a.previous_qty}</td>
+        <td>${a.new_qty}</td>
+        <td>${esc(a.notes || "—")}</td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    adjEl.innerHTML = html;
+  }
+  document.getElementById("exportAdjBtn").onclick = () => exportAuditCSV();
+}
+
+function computeVendorRowsAll(){
+  const rows = [];
+  stockEntries.forEach(e => {
+    const product = products.find(p => p.id === e.product_id);
+    const vendor = vendors.find(v => v.id === e.vendor_id);
+    if(!product || !vendor || !e.batch_id) return;
+    const batch = productBatches.find(b => b.id === e.batch_id);
+    rows.push({ entry: e, product, vendor, batch });
+  });
+  return rows;
+}/* ---- 13b. Admin: Per-Vendor Tab ---- */
+function renderAdminByVendorTab(content){
+  const vendor = vendors.find(v => v.id === adminVendorTabId) || vendors[0];
+  if(!vendor){
+    content.innerHTML = `<div class="panel"><p class="panel-note">No vendors created yet. Use “+ Add Vendor Account” in the header.</p></div>`;
+    return;
+  }
+  adminVendorTabId = vendor.id;
+
+  const stats = computeVendorStats(vendor.id);
+  const rows = computeVendorRows(vendor.id);
+  const vendorReqs = reorderRequests.filter(r => r.vendor_id === vendor.id).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+  content.innerHTML = `
+    <div class="chips-row">
+      ${vendors.map(v => `<button class="chip ${v.id === vendor.id ? "active" : ""}" data-vendortab="${v.id}">${esc(v.state || v.name)}</button>`).join("")}
+    </div>
+
+    <div class="stats-row" style="margin-top:14px;">
+      <div class="stat-card"><p class="stat-num">${stats.totalQty}</p><p class="stat-label">Total Units</p></div>
+      <div class="stat-card"><p class="stat-num">${stats.totalProducts}</p><p class="stat-label">Unique Products</p></div>
+      <div class="stat-card"><p class="stat-num ${stats.expiringSoon + stats.expired ? 'danger-text' : ''}">${stats.expiringSoon + stats.expired}</p><p class="stat-label">Expiring / Expired</p></div>
+      <div class="stat-card"><p class="stat-num">₹${formatCurrency(stats.value)}</p><p class="stat-label">Vendor Stock Value</p></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>🏢 ${esc(vendor.name)} <span class="mini-stat">${esc(vendor.state)}</span></h2>
+        <div style="display:flex;gap:10px;">
+          <button class="export-btn no-print" id="editVendorBtn">✏️ Edit</button>
+          <button class="export-btn alt no-print" id="deleteVendorBtn">🗑 Delete</button>
+        </div>
+      </div>
+      <p class="panel-note">Login: <strong>${esc(vendor.email || "—")}</strong> · Phone: ${esc(vendor.contact_phone || "—")} · Created ${new Date(vendor.created_at).toLocaleDateString()}</p>
+      <table class="ftable" id="adminVendorStockTbl"></table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Reorder Requests</h2></div>
+      <table class="ftable" id="vendorReqTbl"></table>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Audit Log — ${esc(vendor.name)}</h2>
+        <button class="export-btn no-print" id="exportVendorAuditBtn">⬇ Export CSV</button></div>
+      <table class="ftable" id="vendorAuditTbl"></table>
+    </div>
+  `;
+
+  content.querySelectorAll("[data-vendortab]").forEach(chip => {
+    chip.onclick = () => { adminVendorTabId = chip.dataset.vendortab; renderAdminByVendorTab(content); };
+  });
+
+  document.getElementById("editVendorBtn").onclick = () => openEditVendorModal(vendor);
+  document.getElementById("deleteVendorBtn").onclick = () => deleteVendor(vendor);
+
+  const drawStock = () => {
+    const tbl = document.getElementById("adminVendorStockTbl");
+    tbl.innerHTML = rows.length
+      ? `<thead><tr><th>Product</th><th>Status</th><th>Quantity</th><th>Reason</th><th>Batch</th><th>Expiry</th><th>Notes</th><th>Actions</th></tr></thead><tbody>${stockTableRowsHTML(rows, "admin")}</tbody>`
+      : `<p class="panel-note empty-note" style="display:block;border:0;">No stock lines for this vendor.</p>`;
+    const tb = tbl.querySelector("tbody");
+    if(tb){ tb.__cfRows = rows; }
+    wireStockTable(tb || tbl, "admin");
+  };
+  drawStock();
+
+  const drawReqs = () => {
+    const tbl = document.getElementById("vendorReqTbl");
+    if(!vendorReqs.length){
+      tbl.outerHTML = `<p class="panel-note empty-note">No reorder requests from this vendor.</p>`;
+      return;
+    }
+    let html = `<thead><tr><th>Product</th><th>Qty</th><th>Note</th><th>Status</th><th>Date</th><th>Action</th></tr></thead><tbody>`;
+    vendorReqs.forEach(r => {
+      const p = products.find(pr => pr.id === r.product_id);
+      const cls = r.status === "fulfilled" ? "badge-ok" : (r.status === "cancelled" ? "badge-muted" : "badge-warn");
+      html += `<tr>
+        <td>${esc(p?.name || "—")}<br><span class="muted">${esc(p?.sku || "")}</span></td>
+        <td>${r.requested_qty}</td>
+        <td>${esc(r.note || "—")}</td>
+        <td><span class="badge ${cls}">${r.status}</span></td>
+        <td>${new Date(r.created_at).toLocaleString()}</td>
+        <td class="row-actions">
+          ${r.status === "pending" ? `
+            <button class="save-btn" data-afull="${r.id}">Fulfill</button>
+            <button class="link-btn danger-link" data-acancel="${r.id}">Cancel</button>` : "—"}
+        </td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    tbl.innerHTML = html;
+
+    tbl.querySelectorAll("[data-afull]").forEach(btn => {
+      btn.onclick = async () => {
+        await sb.from("reorder_requests").update({ status: "fulfilled", resolved_at: new Date().toISOString() }).eq("id", btn.dataset.afull);
+        await loadAll(); renderAdminByVendorTab(content); updateHeaderBell();
+      };
+    });
+    tbl.querySelectorAll("[data-acancel]").forEach(btn => {
+      btn.onclick = async () => {
+        await sb.from("reorder_requests").update({ status: "cancelled", resolved_at: new Date().toISOString() }).eq("id", btn.dataset.acancel);
+        await loadAll(); renderAdminByVendorTab(content); updateHeaderBell();
+      };
+    });
+  };
+  drawReqs();
+
+  const drawAudit = () => {
+    const tbl = document.getElementById("vendorAuditTbl");
+    const history = stockAdjustments.filter(a => a.vendor_id === vendor.id).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+    if(!history.length){
+      tbl.outerHTML = `<p class="panel-note empty-note">No audit adjustments recorded for this vendor yet.</p>`;
+      return;
+    }
+    let html = `<thead><tr><th>Date</th><th>Product</th><th>Reason</th><th>Old → New</th><th>Notes</th></tr></thead><tbody>`;
+    history.slice(0, 60).forEach(a => {
+      const p = products.find(pr => pr.id === a.product_id);
+      html += `<tr>
+        <td>${new Date(a.created_at).toLocaleString()}</td>
+        <td>${esc(p?.name || "—")}<br><span class="muted">${esc(p?.sku || "")}</span></td>
+        <td>${labelForReason(a.reason_code)}</td>
+        <td>${a.previous_qty} → <strong>${a.new_qty}</strong></td>
+        <td>${esc(a.notes || "—")}</td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    tbl.innerHTML = html;
+  };
+  drawAudit();
+
+  document.getElementById("exportVendorAuditBtn").onclick = () => {
+    const history = stockAdjustments.filter(a => a.vendor_id === vendor.id);
+    exportCSV(`audit-${vendor.name.replace(/\s+/g,"-").toLowerCase()}.csv`, history.map(a => {
+      const p = products.find(pr => pr.id === a.product_id);
+      return { Date: new Date(a.created_at).toLocaleString(), Product: p?.name || "", SKU: p?.sku || "", Reason: labelForReason(a.reason_code), "Old Qty": a.previous_qty, "New Qty": a.new_qty, Notes: a.notes || "" };
+    }));
+  };
+}
+
+function openEditVendorModal(vendor){
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeX">×</button>
+        <h3>✏️ Edit Vendor — ${esc(vendor.name)}</h3>
+        <label>Business / Store Name</label>
+        <input id="evName" type="text" value="${esc(vendor.name)}">
+        <label>State / Region</label>
+        <input id="evState" type="text" value="${esc(vendor.state)}">
+        <label>Contact Phone</label>
+        <input id="evPhone" type="tel" value="${esc(vendor.contact_phone || "")}">
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelEv">Cancel</button>
+          <button class="btn-primary" style="width:auto;" id="saveEv">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  `;
+  bindModalClose(["closeX","cancelEv"]);
+
+  document.getElementById("saveEv").onclick = async () => {
+    const name = document.getElementById("evName").value.trim();
+    const state = document.getElementById("evState").value.trim();
+    const phone = document.getElementById("evPhone").value.trim() || null;
+    if(!name || !state){ showToast("Name and State are required"); return; }
+    const { error } = await sb.from("vendors").update({ name, state, contact_phone: phone }).eq("id", vendor.id);
+    if(error){ showToast("Error: " + error.message); return; }
+    showToast("✓ Vendor updated");
+    closeModal();
+    await loadAll();
+    renderAdminByVendorTab(document.getElementById("tabContent"));
+  };
+}
+
+async function deleteVendor(vendor){
+  const hasStock = stockEntries.some(e => e.vendor_id === vendor.id);
+  const msg = hasStock
+    ? `"${vendor.name}" still has stock lines on record. Deleting will remove vendor access. Stock history remains in the immutable audit log.`
+    : `"${vendor.name}" has no stock lines. Deleting removes vendor access and their profile.`;
+  if(!confirm(`Delete vendor account "${vendor.name}"?\n\n${msg}\n\nTo fully remove the login, also delete the Supabase Auth user for ${vendor.email || "this vendor"} from Dashboard → Authentication → Users.`)) return;
+
+  const { error } = await sb.from("vendors").delete().eq("id", vendor.id);
+  if(error){ showToast("Error: " + error.message); return; }
+  showToast("✓ Vendor deleted");
+  await loadAll();
+  adminVendorTabId = vendors[0]?.id || null;
+  renderAdminView();
+}
+
+/* ---- 13c. Admin: All Stock Tab ---- */
+function allStockRowsCombined(){
+  const rows = [];
+  stockEntries.forEach(e => {
+    const product = products.find(p => p.id === e.product_id);
+    const vendor = vendors.find(v => v.id === e.vendor_id);
+    if(!product || !vendor) return;
+    const batch = e.batch_id ? productBatches.find(b => b.id === e.batch_id) : null;
+    rows.push({ entry: e, product, vendor, batch });
+  });
+  return rows;
+}
+
+function sortableThRow(sortedRows, hasCategory){
+  return `
+    <tr>
+      <th>#</th>
+      <th class="sortable" data-sort="name">Product ${sortKey === "name" ? (sortDir === "asc" ? "▲" : "▼") : ""}</th>
+      ${hasCategory ? `<th class="sortable" data-sort="category">Category ${sortKey === "category" ? (sortDir === "asc" ? "▲" : "▼") : ""}</th>` : ""}
+      <th>Vendor</th>
+      <th class="sortable" data-sort="qty">Quantity ${sortKey === "qty" ? (sortDir === "asc" ? "▲" : "▼") : ""}</th>
+      <th>Reason</th>
+      <th>Batch</th>
+      <th class="sortable" data-sort="expiry">Expiry ${sortKey === "expiry" ? (sortDir === "asc" ? "▲" : "▼") : ""}</th>
+      <th>Notes</th>
+      <th>History</th>
+    </tr>
+  `;
+}
+
+function renderAdminAllStockTab(content){
+  content.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <h2>All Stock — ${categoryFilter === "all" ? "All Categories" : categoryFilter}</h2>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <input class="search-input" id="allSearchInput" placeholder="🔍 Search product, SKU, vendor, batch…" value="">
+          <select id="categoryFilterSel" class="reason-select" style="width:auto;">
+            <option value="all">All Categories</option>
+            <option value="vitamins">Vitamins & Supplements</option>
+            <option value="medicines">Medicines</option>
+            <option value="herbal">Herbal & Ayurvedic</option>
+            <option value="personal">Personal Care</option>
+          </select>
+          <button class="export-btn no-print" id="exportCsvBtn">⬇ CSV</button>
+          <button class="export-btn no-print" id="exportXlsxBtn">⬇ Excel</button>
+          <button class="export-btn alt no-print" id="exportPrintBtn">🖨 Print</button>
+        </div>
+      </div>
+      <div class="chips-row">
+        <button class="chip ${activeFilter === "all" ? "active" : ""}" data-filter="all">All</button>
+        <button class="chip ${activeFilter === "instock" ? "active" : ""}" data-filter="instock">In Stock</button>
+        <button class="chip ${activeFilter === "out" ? "active" : ""}" data-filter="out">Out of Stock</button>
+        <button class="chip ${activeFilter === "low" ? "active" : ""}" data-filter="low">Low Stock</button>
+        <button class="chip ${activeFilter === "expiring" ? "active" : ""}" data-filter="expiring">Expiring ≤180d</button>
+        <button class="chip ${activeFilter === "expired" ? "active" : ""}" data-filter="expired">Expired</button>
+      </div>
+      <p class="mini-stat-note" id="allStockCount"></p>
+      <div style="overflow-x:auto;">
+        <table class="ftable" id="allStockTbl"></table>
+      </div>
+    </div>
+  `;
+
+  content.querySelectorAll("[data-filter]").forEach(chip => {
+    chip.onclick = () => {
+      activeFilter = chip.dataset.filter;
+      renderAdminAllStockTab(content);
+    };
+  });
+
+  document.getElementById("allSearchInput").value = adminSearch;
+  document.getElementById("categoryFilterSel").value = categoryFilter;
+
+  const draw = () => {
+    let rows = allStockRowsCombined();
+    if(categoryFilter !== "all") rows = rows.filter(r => (r.product.category || "") === categoryFilter);
+    if(activeFilter === "instock") rows = rows.filter(r => r.entry.quantity > r.product.low_stock_threshold);
+    else if(activeFilter === "out") rows = rows.filter(r => r.entry.quantity <= 0);
+    else if(activeFilter === "low") rows = rows.filter(r => r.entry.quantity > 0 && r.entry.quantity <= r.product.low_stock_threshold);
+    else if(activeFilter === "expiring") rows = rows.filter(r => r.batch?.expiry_date && daysUntil(r.batch.expiry_date) >= 0 && daysUntil(r.batch.expiry_date) <= 180);
+    else if(activeFilter === "expired") rows = rows.filter(r => r.batch?.expiry_date && daysUntil(r.batch.expiry_date) < 0);
+
+    const q = adminSearch.trim().toLowerCase();
+    if(q){
+      rows = rows.filter(r =>
+        (r.product.name || "").toLowerCase().includes(q) ||
+        (r.product.sku || "").toLowerCase().includes(q) ||
+        (r.vendor.name || "").toLowerCase().includes(q) ||
+        (r.vendor.state || "").toLowerCase().includes(q) ||
+        (r.batch?.batch_number || "").toLowerCase().includes(q)
+      );
+    }
+
+    switch(sortKey){
+      case "name": rows.sort((a,b) => (a.product.name || "").localeCompare(b.product.name || "")); break;
+      case "category": rows.sort((a,b) => (a.product.category || "").localeCompare(b.product.category || "")); break;
+      case "qty": rows.sort((a,b) => a.entry.quantity - b.entry.quantity); break;
+      case "expiry": rows.sort((a,b) => (a.batch?.expiry_date || "9999").localeCompare(b.batch?.expiry_date || "9999")); break;
+    }
+    if(sortDir === "desc") rows.reverse();
+
+    document.getElementById("allStockCount").textContent = `${rows.length} stock lines shown (of ${stockEntries.length} total).`;
+
+    const tbl = document.getElementById("allStockTbl");
+    const hasCategory = categoryFilter === "all";
+    if(!rows.length){
+      tbl.innerHTML = `${sortableThRow(rows, hasCategory)}<tbody><tr><td colspan="10" style="text-align:center;color:#6B7280;padding:28px;">No stock lines match the current filters.</td></tr></tbody>`;
+    } else {
+      let html = sortableThRow(rows, hasCategory) + `<tbody>`;
+      rows.forEach((r, i) => {
+        const status = stockStatus(r.product, r.entry.quantity);
+        const badge = status === "out" ? "badge-danger" : (status === "low" ? "badge-warn" : "badge-ok");
+        const statusLabel = status === "out" ? "Out of Stock" : (status === "low" ? "Low Stock" : "In Stock");
+        const expired = r.batch?.expiry_date && daysUntil(r.batch.expiry_date) < 0;
+        html += `<tr class="${expired ? 'row-danger' : ''}">
+          <td>${i + 1}</td>
+          <td><strong>${esc(r.product.name)}</strong><br><span class="muted">${esc(r.product.sku)}</span></td>
+          ${hasCategory ? `<td>${esc(r.product.category || "—")}</td>` : ""}
+          <td>${esc(r.vendor.name)}<br><span class="muted">${esc(r.vendor.state)}</span></td>
+          <td><span class="badge ${badge}">${statusLabel}</span><br><strong>${r.entry.quantity}</strong> units</td>
+          <td>${labelForReason(r.entry.reason_code)}</td>
+          <td>${r.batch ? `${esc(r.batch.batch_number)}${r.batch.status === "recalled" ? ' <span class="badge badge-danger">RECALLED</span>' : ""}` : '<span class="muted">Unlinked</span>'}</td>
+          <td>${r.batch?.expiry_date ? `${r.batch.expiry_date.slice(0,10)}${expired ? ' <span class="badge badge-danger">EXPIRED</span>' : ""}` : (r.entry.expiry_date ? r.entry.expiry_date.slice(0,10) : "—")}</td>
+          <td>${esc(r.entry.notes || "—")}</td>
+          <td><button class="link-btn" data-history="${r.entry.product_id}">History</button></td>
+        </tr>`;
+      });
+      html += "</tbody>";
+      tbl.innerHTML = html;
+    }
+
+    tbl.querySelectorAll("[data-sort]").forEach(th => {
+      th.onclick = () => {
+        const k = th.dataset.sort;
+        if(sortKey === k) sortDir = sortDir === "asc" ? "desc" : "asc";
+        else { sortKey = k; sortDir = "asc"; }
+        draw();
+      };
+    });
+    tbl.querySelectorAll("[data-history]").forEach(btn => {
+      btn.onclick = () => openHistoryModal(btn.dataset.history, null);
+    });
+  };
+  draw();
+
+  document.getElementById("allSearchInput").addEventListener("input", (e) => {
+    adminSearch = e.target.value;
+    draw();
+  });
+  document.getElementById("categoryFilterSel").addEventListener("change", (e) => {
+    categoryFilter = e.target.value;
+    renderAdminAllStockTab(content);
+  });
+
+  document.getElementById("exportCsvBtn").onclick = () => exportAllStockCSV();
+  document.getElementById("exportXlsxBtn").onclick = () => exportAllStockXLSX();
+  document.getElementById("exportPrintBtn").onclick = () => printReport();
+}
+
+/* ---- 13d. Admin: Batches Tab ---- */
+function renderAdminBatchesTab(content){
+  const batches = [...productBatches].sort((a,b) => (a.expiry_date || "9999").localeCompare(b.expiry_date || "9999"));
+  const linkedCount = new Set(stockEntries.filter(e => e.batch_id).map(e => e.batch_id)).size;
+
+  content.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <h2>🧪 Product Batches <span class="mini-stat">${batches.length} total · ${linkedCount} linked</span></h2>
+        <button class="export-btn no-print" id="addBatchBtn">+ Create Batch</button>
+      </div>
+      <p class="mini-stat-note">Batches with <strong>0 days left</strong> are auto-flagged and highlighted for immediate action. <span style="color:var(--ok);">✓</span> = linked to stock · <span style="color:var(--danger);">!</span> = recalled</p>
+      <div style="overflow-x:auto;">
+        <table class="ftable" id="batchTbl"></table>
+      </div>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#B3261E;"></span> Expired / recalled</span>
+        <span><span class="legend-dot" style="background:#E8612D;"></span> Expiring ≤ 30 days</span>
+        <span><span class="legend-dot" style="background:#C9A227;"></span> Expiring 31–180 days</span>
+        <span><span class="legend-dot" style="background:#2E7D5B;"></span> Safe (&gt; 180 days)</span>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("addBatchBtn").onclick = () => openCreateBatchModal();
+
+  const draw = () => {
+    const tbl = document.getElementById("batchTbl");
+    let html = `<thead><tr><th>Batch #</th><th>Product</th><th>Supplier</th><th>Manufacture</th><th>Expiry</th><th>Days Left</th><th>Status</th><th>Linked Lines</th><th>Actions</th></tr></thead><tbody>`;
+    batches.forEach(b => {
+      const p = products.find(pr => pr.id === b.product_id);
+      const status = batchDisplayStatus(b);
+      const badge = batchStatusBadge(status);
+      const linked = stockEntries.filter(e => e.batch_id === b.id).length;
+      let daysTxt = "—", daysCls = "";
+      if(b.expiry_date){
+        const diff = daysUntil(b.expiry_date);
+        daysTxt = diff < 0 ? Math.abs(diff) + "d ago" : diff + "d";
+        daysCls = diff < 0 ? "danger-text bold" : (diff <= 30 ? "warn-text bold" : (diff <= 180 ? "" : "ok-text"));
+      }
+      html += `<tr class="${status === 'Expired' || status === 'Recalled' ? 'row-danger' : (status === 'Expiring Soon' ? 'row-warn' : '')}">
+        <td><strong>${esc(b.batch_number)}</strong></td>
+        <td>${esc(p?.name || "—")}<br><span class="muted">${esc(p?.sku || "")}</span></td>
+        <td>${esc(b.supplier || "—")}</td>
+        <td>${b.mfg_date ? b.mfg_date.slice(0,10) : "—"}</td>
+        <td>${b.expiry_date ? b.expiry_date.slice(0,10) : "—"}</td>
+        <td class="${daysCls}">${daysTxt}</td>
+        <td><span class="badge ${badge}">${status}</span>${b.status === "recalled" ? ' <span class="badge badge-danger">RECALL</span>' : ""}</td>
+        <td>${linked ? `<span class="badge badge-ok">${linked} linked</span>` : `<span class="badge badge-muted">unused</span>`}</td>
+        <td class="row-actions">
+          <button class="save-btn" data-batch-manage="${b.id}">Manage</button>
+          ${b.status !== "recalled" ? `<button class="link-btn danger-link" data-batch-recall="${b.id}">Recall</button>` : `<button class="link-btn" data-batch-restore="${b.id}">Restore</button>`}
+        </td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    tbl.innerHTML = html;
+
+    tbl.querySelectorAll("[data-batch-manage]").forEach(btn => {
+      btn.onclick = () => openManageBatchModal(batches.find(b => b.id === btn.dataset.batchManage));
+    });
+    tbl.querySelectorAll("[data-batch-recall]").forEach(btn => {
+      btn.onclick = async () => {
+        const b = batches.find(x => x.id === btn.dataset.batchRecall);
+        if(!confirm(`Recall batch "${b.batch_number}"?\n\nRecalled batches can no longer be linked to stock and are surfaced as risk items.`)) return;
+        const { error } = await sb.from("product_batches").update({ status: "recalled" }).eq("id", b.id);
+        if(error){ showToast("Error: " + error.message); return; }
+        showToast("⚠️ Batch recalled");
+        await loadAll(); renderAdminBatchesTab(content);
+      };
+    });
+    tbl.querySelectorAll("[data-batch-restore]").forEach(btn => {
+      btn.onclick = async () => {
+        const b = batches.find(x => x.id === btn.dataset.batchRestore);
+        const { error } = await sb.from("product_batches").update({ status: "active" }).eq("id", b.id);
+        if(error){ showToast("Error: " + error.message); return; }
+        showToast("✓ Batch restored");
+        await loadAll(); renderAdminBatchesTab(content);
+      };
+    });
+  };
+  draw();
 }
 
 function openCreateBatchModal(){
@@ -1258,601 +2261,713 @@ function openCreateBatchModal(){
     <div class="modal-overlay" id="overlay">
       <div class="modal">
         <button class="modal-close" id="closeX">×</button>
-        <h3>Create Pharmaceutical Batch</h3>
-        <p class="modal-sub">Register lot number, manufacturing date, and batch expiry.</p>
+        <h3>➕ Create Product Batch</h3>
         <label>Product</label>
-        <select id="bProduct">
+        <select id="nbProduct">
           ${products.map(p => `<option value="${p.id}">${esc(p.name)} (${esc(p.sku)})</option>`).join("")}
         </select>
-        <label>Batch / Lot Number</label>
-        <input type="text" id="bNumber" placeholder="e.g. BATCH-2026-X9">
-        <label>Manufacturing Date</label>
-        <input type="date" id="bMfg">
-        <label>Expiry Date</label>
-        <input type="date" id="bExp">
-        <label>Cost Price (₹)</label>
-        <input type="number" step="0.01" id="bCost" value="0.00">
-        <label>Selling Price (₹)</label>
-        <input type="number" step="0.01" id="bSell" value="0.00">
-        <label>Initial Batch Quantity</label>
-        <input type="number" id="bQty" value="100">
-        <div class="modal-actions">
-          <button class="btn-secondary" id="cancelB">Cancel</button>
-          <button class="btn-primary" style="width:auto;" id="saveB">Create Batch</button>
-        </div>
-      </div>
-    </div>
-  `;
-  document.getElementById("closeX").onclick = closeModal;
-  document.getElementById("cancelB").onclick = closeModal;
-  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
-
-  document.getElementById("saveB").onclick = async () => {
-    const productId = document.getElementById("bProduct").value;
-    const batchNumber = document.getElementById("bNumber").value.trim();
-    const mfgDate = document.getElementById("bMfg").value || null;
-    const expDate = document.getElementById("bExp").value;
-    const cost = parseFloat(document.getElementById("bCost").value || "0");
-    const sell = parseFloat(document.getElementById("bSell").value || "0");
-    const qty = parseInt(document.getElementById("bQty").value || "0", 10);
-
-    if(!batchNumber || !expDate){ showToast("Batch number & Expiry date required"); return; }
-
-    const { error } = await sb.from("product_batches").insert({
-      product_id: productId, batch_number: batchNumber, mfg_date: mfgDate, expiry_date: expDate,
-      cost_price: cost, selling_price: sell, initial_quantity: qty, status: 'active'
-    });
-
-    if(error){ showToast("Error: " + error.message); }
-    else { showToast("Batch Created"); closeModal(); await loadAll(); renderAdminBatchesTab(); }
-  };
-}
-
-/* ---- 10e. FINANCIAL VALUATION & AUDIT LOGS TAB ---- */
-function renderAdminFinancialsTab(){
-  const container = document.getElementById("adminTabBody");
-  
-  let totalCostValuation = 0;
-  let totalRetailValuation = 0;
-  stockEntries.forEach(e => {
-    const prod = products.find(p => p.id === e.product_id);
-    if(prod){
-      totalCostValuation += (e.quantity * (prod.cost_price || 0));
-      totalRetailValuation += (e.quantity * (prod.selling_price || 0));
-    }
-  });
-
-  const grossProfit = totalRetailValuation - totalCostValuation;
-  const marginPct = totalRetailValuation > 0 ? ((grossProfit / totalRetailValuation) * 100).toFixed(1) : "0.0";
-
-  container.innerHTML = `
-    <div class="stat-row">
-      <div class="stat purple"><div class="num">${formatCurrency(totalCostValuation)}</div><div class="lbl">Total Inventory COGS (Valuation)</div></div>
-      <div class="stat"><div class="num">${formatCurrency(totalRetailValuation)}</div><div class="lbl">Potential Retail Revenue</div></div>
-      <div class="stat warn"><div class="num">${formatCurrency(grossProfit)}</div><div class="lbl">Projected Gross Profit</div></div>
-      <div class="stat"><div class="num">${marginPct}%</div><div class="lbl">Overall Margin %</div></div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head">
-        <h2>📋 Immutable Stock Audit Trail & Reason Logs</h2>
-        <div class="filters">
-          <select id="auditReasonFilter">
-            <option value="all">All Reason Codes</option>
-            <option value="manual_adjustment">Manual Adjustment</option>
-            <option value="physical_reconciliation">Physical Reconciliation</option>
-            <option value="damaged_goods">Damaged Goods</option>
-            <option value="expired_disposal">Expired Disposal</option>
-            <option value="qc_sample">QC Sample</option>
-          </select>
-        </div>
-      </div>
-      <table>
-        <thead><tr>
-          <th>Date & Time</th>
-          <th>Vendor</th>
-          <th>Product</th>
-          <th>Previous Qty</th>
-          <th>New Qty</th>
-          <th>Delta</th>
-          <th>Reason Code</th>
-          <th>Notes</th>
-        </tr></thead>
-        <tbody id="auditBody"></tbody>
-      </table>
-      ${stockAdjustments.length === 0 ? `<div class="empty">No audit adjustments logged yet. Adjustments are logged automatically when stock changes.</div>` : ""}
-    </div>
-  `;
-
-  let filteredAudits = stockAdjustments;
-  if(auditReasonFilter !== "all"){
-    filteredAudits = filteredAudits.filter(a => a.reason_code === auditReasonFilter);
-  }
-
-  const body = document.getElementById("auditBody");
-  filteredAudits.forEach(a => {
-    const vend = vendors.find(v => v.id === a.vendor_id);
-    const prod = products.find(p => p.id === a.product_id);
-    const deltaStr = a.change_qty > 0 ? `+${a.change_qty}` : `${a.change_qty}`;
-    const badgeClass = a.change_qty > 0 ? 'ok' : 'danger';
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="sku">${formatDate(a.created_at, true)}</td>
-      <td><strong>${esc(vend?.name || "—")}</strong></td>
-      <td>${esc(prod?.name || "—")}</td>
-      <td>${a.previous_qty}</td>
-      <td>${a.new_qty}</td>
-      <td><span class="badge ${badgeClass}">${deltaStr}</span></td>
-      <td><span class="badge info">${esc(a.reason_code)}</span></td>
-      <td class="sku">${esc(a.notes) || "—"}</td>
-    `;
-    body.appendChild(tr);
-  });
-
-  document.getElementById("auditReasonFilter").onchange = (e) => {
-    auditReasonFilter = e.target.value;
-    renderAdminFinancialsTab();
-  };
-}
-
-/* ---- 10f. PRODUCTS TAB WITH SMART BULK IMPORT ---- */
-function renderAdminProductsTab(){
-  const container = document.getElementById("adminTabBody");
-  container.innerHTML = `
-    <div class="panel">
-      <div class="panel-head">
-        <h2>Products Catalog</h2>
-        <div class="filters">
-          <button class="export-btn" id="bulkImportBtn">⬆ Bulk import (CSV / Excel)</button>
-          <button class="btn-secondary" id="addProductBtn" style="padding:7px 14px;font-size:12px;">+ Add product</button>
-        </div>
-      </div>
-      <table>
-        <thead><tr><th>Product</th><th>SKU / Barcode</th><th>Category</th><th>Cost (₹)</th><th>Selling (₹)</th><th>Threshold</th><th>Visibility</th><th></th></tr></thead>
-        <tbody id="productsBody"></tbody>
-      </table>
-    </div>
-  `;
-
-  const body = document.getElementById("productsBody");
-  products.forEach(p => {
-    const set = visibilityMap[p.id];
-    const restricted = !!(set && set.size > 0);
-    const visLabel = !restricted ? "All vendors" : `${set.size} vendor${set.size>1?'s':''} only`;
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><strong>${esc(p.name)}</strong></td>
-      <td class="sku">${esc(p.sku)} ${p.barcode ? '· 🏷️ ' + esc(p.barcode) : ''}</td>
-      <td>${esc(p.category) || "—"}</td>
-      <td>${formatCurrency(p.cost_price)}</td>
-      <td>${formatCurrency(p.selling_price)}</td>
-      <td>${p.low_stock_threshold}</td>
-      <td><span class="badge ${restricted ? 'warn' : 'ok'}">${visLabel}</span></td>
-      <td><button class="link-btn" data-editvis="${p.id}">Visibility</button></td>
-    `;
-    body.appendChild(tr);
-  });
-  body.querySelectorAll("[data-editvis]").forEach(btn => btn.onclick = () => openVisibilityModal(btn.dataset.editvis));
-  document.getElementById("bulkImportBtn").onclick = openBulkImportModal;
-  document.getElementById("addProductBtn").onclick = openAddProductModal;
-}
-
-function openAddProductModal(){
-  modalRoot.innerHTML = `
-    <div class="modal-overlay" id="overlay">
-      <div class="modal">
-        <button class="modal-close" id="closeX">×</button>
-        <h3>Add Product</h3>
-        <p class="modal-sub">Include master SKU, barcode, and financial unit pricing.</p>
-        <label>Name</label>
-        <input id="npName" type="text">
-        <label>SKU</label>
-        <input id="npSku" type="text">
-        <label>Barcode / EAN (Optional)</label>
-        <input id="npBarcode" type="text" placeholder="e.g. 8901234567890">
-        <label>Category</label>
-        <input id="npCategory" type="text" placeholder="Supplements">
-        <label>Cost Price (₹)</label>
-        <input id="npCost" type="number" step="0.01" value="0.00">
-        <label>Selling Price (₹)</label>
-        <input id="npSell" type="number" step="0.01" value="0.00">
-        <label>Low stock threshold</label>
-        <input id="npThreshold" type="number" min="0" value="10">
-        <div class="modal-actions">
-          <button class="btn-secondary" id="cancelNp">Cancel</button>
-          <button class="btn-primary" style="width:auto;" id="saveNp">Add product</button>
-        </div>
-      </div>
-    </div>
-  `;
-  document.getElementById("closeX").onclick = closeModal;
-  document.getElementById("cancelNp").onclick = closeModal;
-  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
-  document.getElementById("saveNp").onclick = async () => {
-    const name = document.getElementById("npName").value.trim();
-    const sku = document.getElementById("npSku").value.trim();
-    const barcode = document.getElementById("npBarcode").value.trim() || null;
-    const category = document.getElementById("npCategory").value.trim() || null;
-    const cost = safeNum(document.getElementById("npCost").value, 0.00);
-    const sell = safeNum(document.getElementById("npSell").value, 0.00);
-    const threshold = safeInt(document.getElementById("npThreshold").value, 10);
-
-    if(!name || !sku){ showToast("Name and SKU are required"); return; }
-    const btn = document.getElementById("saveNp");
-    btn.disabled = true; btn.textContent = "Saving...";
-
-    const { error } = await sb.from("products").insert({
-      name, sku, barcode, category, cost_price: cost, selling_price: sell, low_stock_threshold: threshold
-    });
-
-    if(error){ showToast("Error: " + error.message); btn.disabled = false; btn.textContent = "Add product"; }
-    else { showToast("Product added"); closeModal(); await loadAll(); refreshCurrentView(); }
-  };
-}
-
-function openVisibilityModal(productId){
-  const product = products.find(p => p.id === productId);
-  const nonAdminVendors = vendors.filter(v => !v.is_admin);
-  const set = visibilityMap[productId];
-  const restricted = !!(set && set.size > 0);
-
-  modalRoot.innerHTML = `
-    <div class="modal-overlay" id="overlay">
-      <div class="modal">
-        <button class="modal-close" id="closeX">×</button>
-        <h3>Visibility Configuration</h3>
-        <p class="modal-sub">${esc(product.name)} · ${esc(product.sku)}</p>
-        <label class="radio-row"><input type="radio" name="visMode" value="all" ${!restricted?'checked':''}> Visible to all vendors</label>
-        <label class="radio-row"><input type="radio" name="visMode" value="restrict" ${restricted?'checked':''}> Restrict to specific vendors</label>
-        <div id="vendorCheckboxes" style="margin:14px 0 6px;${restricted?'':'opacity:.4;pointer-events:none;'}">
-          ${nonAdminVendors.map(v => `
-            <label class="check-row">
-              <input type="checkbox" data-vendor-check="${v.id}" ${set?.has(v.id) ? 'checked':''}> ${esc(v.name)} — ${esc(v.state)}
-            </label>
-          `).join("")}
+        <label>Batch Number</label>
+        <input id="nbNumber" type="text" placeholder="e.g. BATCH-2026-A11">
+        <div class="inline-form-grid">
+          <div><label>Supplier</label><input id="nbSupplier" type="text" placeholder="e.g. Sunrise Pharma"></div>
+          <div><label>Manufacture Date</label><input id="nbMfg" type="date"></div>
+          <div><label>Expiry Date</label><input id="nbExp" type="date"></div>
         </div>
         <div class="modal-actions">
-          <button class="btn-secondary" id="cancelVis">Cancel</button>
-          <button class="btn-primary" style="width:auto;" id="saveVis">Save</button>
+          <button class="btn-secondary" id="cancelNb">Cancel</button>
+          <button class="btn-primary" style="width:auto;" id="saveNb">Create Batch</button>
         </div>
       </div>
     </div>
   `;
-  document.getElementById("closeX").onclick = closeModal;
-  document.getElementById("cancelVis").onclick = closeModal;
-  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+  bindModalClose(["closeX","cancelNb"]);
 
-  const checkboxWrap = document.getElementById("vendorCheckboxes");
-  modalRoot.querySelectorAll('input[name="visMode"]').forEach(radio => {
-    radio.onchange = () => {
-      const isRestrict = modalRoot.querySelector('input[name="visMode"]:checked').value === "restrict";
-      checkboxWrap.style.opacity = isRestrict ? "1" : ".4";
-      checkboxWrap.style.pointerEvents = isRestrict ? "auto" : "none";
-    };
-  });
-
-  document.getElementById("saveVis").onclick = async () => {
-    const mode = modalRoot.querySelector('input[name="visMode"]:checked').value;
-    const btn = document.getElementById("saveVis");
-    btn.disabled = true; btn.textContent = "Saving...";
-
-    await sb.from("product_visibility").delete().eq("product_id", productId);
-
-    if(mode === "restrict"){
-      const selected = [...modalRoot.querySelectorAll("[data-vendor-check]:checked")].map(c => c.dataset.vendorCheck);
-      if(selected.length){
-        await sb.from("product_visibility").insert(selected.map(vid => ({ product_id: productId, vendor_id: vid })));
-      }
-    }
-    showToast("Visibility updated");
+  document.getElementById("saveNb").onclick = async () => {
+    const product_id = document.getElementById("nbProduct").value;
+    const batch_number = document.getElementById("nbNumber").value.trim();
+    const supplier = document.getElementById("nbSupplier").value.trim() || null;
+    const mfg_date = document.getElementById("nbMfg").value || null;
+    const expiry_date = document.getElementById("nbExp").value || null;
+    if(!batch_number){ showToast("Batch number is required"); return; }
+    const dup = productBatches.find(b => b.batch_number.toLowerCase() === batch_number.toLowerCase());
+    if(dup){ showToast("That batch number already exists"); return; }
+    const { data, error } = await sb.from("product_batches").insert({
+      product_id, batch_number, supplier, mfg_date, expiry_date,
+      status: "active"
+    }).select().single();
+    if(error){ showToast("Error: " + error.message); return; }
+    showToast("✓ Batch created" + (expiry_date ? ` (${batch_number})` : ""));
     closeModal();
     await loadAll();
-    refreshCurrentView();
+    if(document.getElementById("tabContent")) renderAdminBatchesTab(document.getElementById("tabContent"));
   };
 }
 
-/* SMART HEADER-AWARE BULK IMPORT PARSER */
-function openBulkImportModal(){
+function openManageBatchModal(batch){
+  const linked = stockEntries.filter(e => e.batch_id === batch.id);
+  const p = products.find(pr => pr.id === batch.product_id);
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="overlay">
-      <div class="modal" style="max-width:750px;">
+      <div class="modal" style="max-width:640px;">
         <button class="modal-close" id="closeX">×</button>
-        <h3>Bulk Import Products</h3>
-        <p class="modal-sub">Upload CSV or Excel file (.csv, .xlsx, .xls). Auto-detects Shopify exports, CureForever templates, or custom catalogs.</p>
-        <input type="file" id="bulkFile" accept=".csv,.xlsx,.xls">
-        <div id="bulkPreviewWrap"></div>
+        <h3>⚙️ Manage Batch — ${esc(batch.batch_number)}</h3>
+        <p class="modal-sub">${esc(p?.name || "")} · ${esc(p?.sku || "")} · ${linked.length} linked stock line(s)</p>
+        <div class="inline-form-grid">
+          <div><label>Batch Number</label><input id="mbNumber" type="text" value="${esc(batch.batch_number)}"></div>
+          <div><label>Supplier</label><input id="mbSupplier" type="text" value="${esc(batch.supplier || "")}"></div>
+          <div><label>Manufacture Date</label><input id="mbMfg" type="date" value="${batch.mfg_date ? batch.mfg_date.slice(0,10) : ''}"></div>
+          <div><label>Expiry Date</label><input id="mbExp" type="date" value="${batch.expiry_date ? batch.expiry_date.slice(0,10) : ''}"></div>
+        </div>
+        <label>Assign this batch to unlinked stock lines</label>
+        <select id="mbAssign" style="margin-bottom:10px;">
+          <option value="">— Select unlinked stock line (product ${esc(p?.name || "")}) —</option>
+          ${stockEntries.filter(e => !e.batch_id && e.product_id === batch.product_id).map(e => {
+            const v = vendors.find(vd => vd.id === e.vendor_id);
+            return `<option value="${e.id}">${esc(v?.name || "?")} · ${e.quantity} units</option>`;
+          }).join("")}
+        </select>
+        ${linked.length ? `
+          <label>Delete batch permanently</label>
+          <p class="mini-stat-note" style="color:var(--danger);">${linked.length} stock line(s) are linked. Deleting unlinks them (stock remains, batch becomes “Unlinked”).</p>` : ""}
         <div class="modal-actions">
-          <button class="btn-secondary" id="cancelBulk">Cancel</button>
-          <button class="btn-primary" style="width:auto;" id="confirmBulk" disabled>Import</button>
+          <button class="btn-secondary" id="cancelMb">Cancel</button>
+          ${linked.length ? `<button class="export-btn alt" id="delMb">🗑 Delete Batch</button>` : ""}
+          <button class="btn-primary" style="width:auto;" id="saveMb">Save Changes</button>
         </div>
       </div>
     </div>
   `;
-  document.getElementById("closeX").onclick = closeModal;
-  document.getElementById("cancelBulk").onclick = closeModal;
-  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+  bindModalClose(["closeX","cancelMb"]);
 
-  let parsedValidRows = [];
+  const saveMb = document.getElementById("saveMb");
+  const delBtn = document.getElementById("delMb");
+  const assignSel = document.getElementById("mbAssign");
 
-  document.getElementById("bulkFile").onchange = async (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const previewWrap = document.getElementById("bulkPreviewWrap");
-    previewWrap.innerHTML = `<p class="modal-sub">Reading file…</p>`;
-    try{
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array" });
-      const sheetName = wb.SheetNames.includes("Products") ? "Products" : wb.SheetNames[0];
-      const sheet = wb.Sheets[sheetName];
-      const raw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-
-      if(!raw || raw.length === 0){
-        previewWrap.innerHTML = `<p class="err">File is empty.</p>`;
-        return;
-      }
-
-      // 1. Detect headers from row 0
-      const headerRow = (raw[0] || []).map(cell => String(cell || '').trim().toLowerCase());
-      
-      const findHeaderIndex = (keywords) => {
-        return headerRow.findIndex(h => keywords.some(k => h === k || h.includes(k)));
-      };
-
-      let idxTitle = findHeaderIndex(["title", "product name", "name"]);
-      if (idxTitle === -1) idxTitle = findHeaderIndex(["handle"]);
-      
-      let idxSku = findHeaderIndex(["variant sku", "sku", "item code", "code"]);
-      let idxCategory = findHeaderIndex(["product category", "category", "type", "product type"]);
-      let idxCost = findHeaderIndex(["cost per item", "cost price", "cost_price", "cost", "cogs"]);
-      let idxSell = findHeaderIndex(["variant price", "price", "selling price", "selling_price", "mrp"]);
-      let idxBarcode = findHeaderIndex(["variant barcode", "barcode", "ean", "upc"]);
-      let idxThreshold = findHeaderIndex(["low stock threshold", "threshold", "min qty"]);
-
-      // Fallbacks if no header match found (for simple 7-column positional CSVs)
-      if (idxTitle === -1) idxTitle = 0;
-      if (idxSku === -1) idxSku = 1;
-      if (idxCategory === -1) idxCategory = 2;
-      if (idxThreshold === -1) idxThreshold = 3;
-      if (idxCost === -1) idxCost = 4;
-      if (idxSell === -1) idxSell = 5;
-      if (idxBarcode === -1) idxBarcode = 6;
-
-      const seenSkus = new Set();
-      const parsed = [];
-
-      for(let i = 1; i < raw.length; i++){
-        const r = raw[i];
-        if(!r || r.every(c => String(c).trim() === "")) continue;
-
-        let name = String(r[idxTitle] ?? "").trim();
-        let sku = String(r[idxSku] ?? "").trim();
-        let category = String(r[idxCategory] ?? "").trim();
-        let barcode = String(r[idxBarcode] ?? "").trim() || null;
-
-        let threshold = safeInt(r[idxThreshold], 10);
-        let cost = safeNum(r[idxCost], 0.00);
-        let sell = safeNum(r[idxSell], 0.00);
-
-        // If Shopify CSV has empty SKU/Title on extra image attachment lines, skip them cleanly
-        if(!sku && !name) continue;
-        if(!sku && name){
-          // Auto-generate fallback SKU from title if missing
-          sku = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + i;
-        }
-
-        if(seenSkus.has(sku)){
-          // De-dupe: update existing entry with non-empty fields
-          const existing = parsed.find(item => item.sku === sku);
-          if(existing){
-            if(!existing.name && name) existing.name = name;
-            if(cost > 0) existing.cost = cost;
-            if(sell > 0) existing.sell = sell;
-            if(barcode) existing.barcode = barcode;
-          }
-          continue;
-        }
-
-        seenSkus.add(sku);
-        parsed.push({ name: name || sku, sku, category, threshold, cost, sell, barcode });
-      }
-
-      parsedValidRows = parsed;
-
-      const confirmBtn = document.getElementById("confirmBulk");
-      confirmBtn.disabled = parsedValidRows.length === 0;
-      confirmBtn.textContent = `Import ${parsedValidRows.length} products`;
-
-      previewWrap.innerHTML = `
-        <div class="preview-table-wrap">
-          <table>
-            <thead><tr><th>Product Name</th><th>SKU</th><th>Category</th><th>Cost (₹)</th><th>Selling (₹)</th><th>Barcode</th></tr></thead>
-            <tbody>
-              ${parsedValidRows.slice(0, 50).map(r => `
-                <tr>
-                  <td><strong>${esc(r.name)}</strong></td>
-                  <td class="sku">${esc(r.sku)}</td>
-                  <td>${esc(r.category) || '—'}</td>
-                  <td>${formatCurrency(r.cost)}</td>
-                  <td>${formatCurrency(r.sell)}</td>
-                  <td class="sku">${esc(r.barcode) || '—'}</td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        </div>
-        <p class="modal-sub" style="color:var(--ok);margin-top:8px;">✓ Ready to import ${parsedValidRows.length} valid product items.${parsedValidRows.length > 50 ? ' (Showing first 50 rows preview)' : ''}</p>
-      `;
-    } catch(err){
-      console.error("CSV Parse Error:", err);
-      previewWrap.innerHTML = `<p class="err" style="margin-top:10px;">Failed to parse file: ${esc(err.message)}</p>`;
-    }
+  assignSel.onchange = async () => {
+    if(!assignSel.value) return;
+    const { error } = await sb.from("stock_entries").update({ batch_id: batch.id }).eq("id", assignSel.value);
+    if(error){ showToast("Error: " + error.message); return; }
+    showToast("✓ Batch linked to stock line");
+    closeModal();
+    await loadAll();
+    renderAdminBatchesTab(document.getElementById("tabContent"));
   };
 
-  document.getElementById("confirmBulk").onclick = async () => {
-    if(parsedValidRows.length === 0) return;
-    const btn = document.getElementById("confirmBulk");
-    btn.disabled = true; btn.textContent = "Importing...";
+  saveMb.onclick = async () => {
+    const number = document.getElementById("mbNumber").value.trim();
+    const supplier = document.getElementById("mbSupplier").value.trim() || null;
+    const mfg_date = document.getElementById("mbMfg").value || null;
+    const expiry_date = document.getElementById("mbExp").value || null;
+    if(!number){ showToast("Batch number is required"); return; }
+    const dup = productBatches.find(b => b.batch_number.toLowerCase() === number.toLowerCase() && b.id !== batch.id);
+    if(dup){ showToast("That batch number already exists on another batch"); return; }
+    const { error } = await sb.from("product_batches").update({ batch_number: number, supplier, mfg_date, expiry_date }).eq("id", batch.id);
+    if(error){ showToast("Error: " + error.message); return; }
+    showToast("✓ Batch updated");
+    closeModal();
+    await loadAll();
+    renderAdminBatchesTab(document.getElementById("tabContent"));
+  };
 
-    const payload = parsedValidRows.map(r => ({
-      name: r.name || r.sku,
-      sku: r.sku,
-      category: r.category || null,
-      low_stock_threshold: safeInt(r.threshold, 10),
-      cost_price: safeNum(r.cost, 0.00),
-      selling_price: safeNum(r.sell, 0.00),
-      barcode: r.barcode || null
-    }));
-
-    const { error } = await sb.from("products").upsert(payload, { onConflict: "sku" });
-
-    if(error){
-      console.error("Supabase Import Error:", error);
-      showToast("Import failed: " + error.message);
-      btn.disabled = false;
-      btn.textContent = "Retry Import";
-    }
-    else {
-      showToast(`✓ Successfully imported ${parsedValidRows.length} products!`);
+  if(delBtn){
+    delBtn.onclick = async () => {
+      if(!confirm(`Permanently delete batch "${batch.batch_number}"?\n\nLinked stock lines will become "Unlinked". This cannot be undone.`)) return;
+      const { error } = await sb.from("product_batches").delete().eq("id", batch.id);
+      if(error){ showToast("Error: " + error.message); return; }
+      showToast("Batch deleted");
       closeModal();
       await loadAll();
-      refreshCurrentView();
+      renderAdminBatchesTab(document.getElementById("tabContent"));
+    };
+  }
+}/* ---- 13e. Admin: Financials / Audit Intelligence Tab ---- */
+function renderAdminFinancialsTab(content){
+  let audit = [...stockAdjustments].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+  const vendorOptions = audit.map(a => a.vendor_id).filter((v,i,arr) => arr.indexOf(v) === i);
+  const reasonOptions = REASONS.filter(r => REASON_LABELS[r]);
+
+  const totalQty = stockEntries.reduce((s,e) => s + e.quantity, 0);
+  const totalValue = stockEntries.reduce((s,e) => {
+    const p = products.find(pr => pr.id === e.product_id);
+    return s + e.quantity * (p?.selling_price || 0);
+  }, 0);
+  const avgDaily = stockHistory.length ? Math.round(totalQty / Math.max(1, Math.ceil((Date.now() - new Date(stockHistory[0].recorded_at).getTime()) / 86400000))) : 0;
+
+  content.innerHTML = `
+    <div class="stats-row">
+      <div class="stat-card"><p class="stat-num">${stockAdjustments.length}</p><p class="stat-label">Total Adjustments Logged</p></div>
+      <div class="stat-card"><p class="stat-num">₹${formatCurrency(totalValue)}</p><p class="stat-label">Total Stock Value</p></div>
+      <div class="stat-card"><p class="stat-num">${totalQty.toLocaleString()}</p><p class="stat-label">Total Units on Hand</p></div>
+      <div class="stat-card"><p class="stat-num">${avgDaily}</p><p class="stat-label">Avg Units / Day (Trend)</p></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>💰 Audit Trail — Stock Adjustments</h2>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <select id="finVendorFilter" class="reason-select" style="width:auto;">
+            <option value="all">All Vendors</option>
+            ${vendorOptions.map(vid => { const v = vendors.find(vd => vd.id === vid); return `<option value="${vid}">${esc(v?.name || "?")}</option>`; }).join("")}
+          </select>
+          <select id="finReasonFilter" class="reason-select" style="width:auto;">
+            <option value="all">All Reasons</option>
+            ${reasonOptions.map(r => `<option value="${r}">${REASON_LABELS[r] || r}</option>`).join("")}
+          </select>
+          <button class="export-btn no-print" id="finExportBtn">⬇ Export CSV</button>
+          <button class="export-btn alt no-print" id="finPrintBtn">🖨 Print</button>
+        </div>
+      </div>
+      <p class="mini-stat-note" id="finCount"></p>
+      <div style="overflow-x:auto;">
+        <table class="ftable" id="finTbl"></table>
+      </div>
+    </div>
+  `;
+
+  const draw = () => {
+    let rows = audit;
+    const vf = document.getElementById("finVendorFilter")?.value || "all";
+    const rf = document.getElementById("finReasonFilter")?.value || "all";
+    if(vf !== "all") rows = rows.filter(a => a.vendor_id === vf);
+    if(rf !== "all") rows = rows.filter(a => a.reason_code === rf);
+
+    document.getElementById("finCount").textContent = `${rows.length} adjustment records shown.`;
+
+    const tbl = document.getElementById("finTbl");
+    if(!rows.length){
+      tbl.innerHTML = `<tbody><tr><td colspan="8" style="text-align:center;color:#6B7280;padding:28px;">No adjustments match the filters.</td></tr></tbody>`;
+      return;
     }
+    let html = `<thead><tr><th>#</th><th>Date</th><th>Vendor</th><th>Product</th><th>Reason</th><th>Qty Change</th><th>Notes</th></tr></thead><tbody>`;
+    rows.forEach((a, i) => {
+      const v = vendors.find(vd => vd.id === a.vendor_id);
+      const p = products.find(pr => pr.id === a.product_id);
+      const delta = a.new_qty - a.previous_qty;
+      const deltaCls = delta < 0 ? "danger-text" : "ok-text";
+      html += `<tr>
+        <td>${i + 1}</td>
+        <td>${new Date(a.created_at).toLocaleString()}</td>
+        <td>${esc(v?.name || "—")}<br><span class="muted">${esc(v?.state || "")}</span></td>
+        <td>${esc(p?.name || "—")}<br><span class="muted">${esc(p?.sku || "")}</span></td>
+        <td>${labelForReason(a.reason_code)}</td>
+        <td class="${deltaCls}">${a.previous_qty} → ${a.new_qty} (${delta >= 0 ? "+" : ""}${delta})</td>
+        <td>${esc(a.notes || "—")}</td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    tbl.innerHTML = html;
+  };
+  draw();
+
+  document.getElementById("finVendorFilter").onchange = draw;
+  document.getElementById("finReasonFilter").onchange = draw;
+
+  document.getElementById("finExportBtn").onclick = () => exportAuditCSV();
+  document.getElementById("finPrintBtn").onclick = () => printReport();
+}
+
+/* ---- 13f. Admin: Products Tab ---- */
+function renderAdminProductsTab(content){
+  const productStats = (pid) => {
+    const entries = stockEntries.filter(e => e.product_id === pid);
+    let qty = 0, value = 0;
+    entries.forEach(e => { qty += e.quantity; value += e.quantity * ((products.find(p => p.id === pid))?.selling_price || 0); });
+    return { lines: entries.length, qty, value };
+  };
+
+  content.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <h2>🧬 Product Master Catalog</h2>
+        <button class="export-btn no-print" id="addProductBtn">+ Add Product</button>
+      </div>
+      <p class="panel-note"><strong>Visibility</strong> controls which products state vendors can see in their storefront. Hiding a product removes it from vendor stock tables but keeps all history.</p>
+      <div style="overflow-x:auto;">
+        <table class="ftable" id="prodTbl"></table>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("addProductBtn").onclick = () => openProductModal(null);
+
+  const draw = () => {
+    const tbl = document.getElementById("prodTbl");
+    let html = `<thead><tr><th>Product</th><th>Category</th><th>SKU</th><th>Unit Price</th><th>Thresholds</th><th>Stock</th><th>Value</th><th>Visibility</th><th>Actions</th></tr></thead><tbody>`;
+    products.forEach(p => {
+      const s = productStats(p.id);
+      const visible = isProductVisible(p.id);
+      html += `<tr>
+        <td><strong>${esc(p.name)}</strong>${p.description ? `<br><span class="muted">${esc(p.description.length > 60 ? p.description.slice(0,60) + "…" : p.description)}</span>` : ""}</td>
+        <td>${esc(p.category || "—")}</td>
+        <td>${esc(p.sku)}</td>
+        <td>₹${formatCurrency(p.selling_price)}</td>
+        <td class="muted">Low ${p.low_stock_threshold} · Reorder ${p.reorder_threshold}</td>
+        <td>${s.lines ? `${s.qty} units<br><span class="muted">${s.lines} lines</span>` : '<span class="badge badge-muted">no stock</span>'}</td>
+        <td>₹${formatCurrency(s.value)}</td>
+        <td>${(visibilityMap[p.id]?.size || 0) > 0 ? `<span class="badge badge-warn">Restricted (${visibilityMap[p.id].size})</span>` : '<span class="badge badge-ok">Visible to all</span>'}</td>
+        <td class="row-actions">
+          <button class="save-btn" data-prod-edit="${p.id}">Edit</button>
+          <button class="link-btn" data-prod-vis="${p.id}">${(visibilityMap[p.id]?.size || 0) > 0 ? "Allow all" : "Restrict"}</button>
+          <button class="link-btn danger-link" data-prod-del="${p.id}">Delete</button>
+        </td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    tbl.innerHTML = html;
+
+    tbl.querySelectorAll("[data-prod-edit]").forEach(btn => {
+      btn.onclick = () => openProductModal(products.find(p => p.id === btn.dataset.prodEdit));
+    });
+    tbl.querySelectorAll("[data-prod-vis]").forEach(btn => {
+      btn.onclick = async () => {
+        const p = products.find(pr => pr.id === btn.dataset.prodVis);
+        const current = new Set(visibilityMap[p.id] || []);
+        if(current.size){
+          const removeAll = confirm(`"${p.name}" is currently restricted to ${current.size} vendor(s).\n\nClick OK to make it visible to ALL vendors (deletes restriction rows).`);
+          if(!removeAll) return;
+          const { error } = await sb.from("product_visibility").delete().eq("product_id", p.id);
+          if(error){ showToast("Error: " + error.message); return; }
+          showToast(`${p.name} now visible to all vendors`);
+        } else {
+          openRestrictModal(p);
+          return;
+        }
+        await loadAll();
+        renderAdminProductsTab(content);
+      };
+    });
+    tbl.querySelectorAll("[data-prod-del]").forEach(btn => {
+      btn.onclick = async () => {
+        const p = products.find(pr => pr.id === btn.dataset.prodDel);
+        const s = productStats(p.id);
+        if(!confirm(`Delete product "${p.name}" (${p.sku})?\n\nIt currently has ${s.lines} stock line(s) and ${s.qty} units on hand.\n\nThis also deletes its batches, stock entries, and audit history. This cannot be undone!`)) return;
+        const { error } = await sb.from("products").delete().eq("id", p.id);
+        if(error){ showToast("Error: " + error.message); return; }
+        showToast("Product deleted");
+        await loadAll();
+        renderAdminProductsTab(content);
+      };
+    });
+  };
+  draw();
+}
+
+function openRestrictModal(product){
+  const current = new Set(visibilityMap[product.id] || []);
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="modal" style="max-width:560px;">
+        <button class="modal-close" id="closeX">×</button>
+        <h3>🔒 Restrict — ${esc(product.name)}</h3>
+        <p class="modal-sub">Select which vendors may see this product. Unchecked vendors will not see it in their stock tables. No selection = visible to all.</p>
+        <div style="max-height:320px;overflow-y:auto;border:1px solid #E7E2D6;border-radius:4px;padding:12px;">
+          ${vendors.map(v => `
+            <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" value="${v.id}" ${current.has(v.id) ? "checked" : ""}> ${esc(v.name)} <span class="muted">(${esc(v.state)})</span>
+            </label>`).join("") || `<p class="muted">No vendors exist yet — create vendor accounts from the header button.</p>`}
+        </div>
+        <p class="mini-stat-note">Restriction rows: ${current.size} current · ${vendors.length} vendors</p>
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelRv">Cancel</button>
+          <button class="btn-primary" style="width:auto;" id="saveRv" ${!vendors.length ? "disabled" : ""}>Save Visibility</button>
+        </div>
+      </div>
+    </div>
+  `;
+  bindModalClose(["closeX","cancelRv"]);
+
+  document.getElementById("saveRv").onclick = async () => {
+    const checked = new Set([...modalRoot.querySelectorAll('input[type="checkbox"]:checked')].map(cb => cb.value));
+    const toDelete = [...current].filter(vid => !checked.has(vid));
+    const toInsert = [...checked].filter(vid => !current.has(vid));
+    const tasks = [];
+    toDelete.forEach(vid => tasks.push(sb.from("product_visibility").delete().eq("product_id", product.id).eq("vendor_id", vid)));
+    toInsert.forEach(vid => tasks.push(sb.from("product_visibility").insert({ product_id: product.id, vendor_id: vid })));
+    const results = await Promise.all(tasks);
+    const failed = results.filter(r => r.error);
+    if(failed.length){ showToast("Error: " + failed[0].error.message); return; }
+    showToast("✓ Visibility updated");
+    closeModal();
+    await loadAll();
+    renderAdminProductsTab(document.getElementById("tabContent"));
   };
 }
 
-/* ---- 10g. ANNOUNCEMENTS TAB ---- */
-function renderAdminAnnouncementsTab(){
-  const container = document.getElementById("adminTabBody");
-  const vendorCount = vendors.filter(v => !v.is_admin).length;
-
-  container.innerHTML = `
-    <div class="panel">
-      <div class="panel-head"><h2>Broadcast Announcement</h2></div>
-      <div class="panel-body">
-        <label>Title</label>
-        <input id="annTitle" type="text" placeholder="e.g. Stock shipment arriving Monday">
-        <label>Message</label>
-        <textarea id="annMsg" rows="3" placeholder="Vendor broadcast details"></textarea>
-        <button class="btn-primary" style="width:auto;" id="sendAnnBtn">Broadcast to All Vendors</button>
+function openProductModal(product){
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="overlay">
+      <div class="modal">
+        <button class="modal-close" id="closeX">×</button>
+        <h3>${product ? "✏️ Edit Product" : "➕ Add Product"}</h3>
+        <label>Product Name</label>
+        <input id="pName" type="text" value="${product ? esc(product.name) : ""}" placeholder="e.g. Omega-3 Fish Oil 1000mg">
+        <div class="inline-form-grid">
+          <div>
+            <label>Category</label>
+            <select id="pCat">
+              ${["vitamins","medicines","herbal","personal"].map(c => `<option value="${c}" ${product?.category === c ? "selected" : ""}>${c.replace(/(^|_)/g, m => m === "_" ? " " : "").replace(/^./, x => x.toUpperCase())}</option>`).join("")}
+            </select>
+          </div>
+          <div>
+            <label>SKU</label>
+            <input id="pSku" type="text" value="${product ? esc(product.sku) : ""}" placeholder="e.g. CF-OMG-060">
+          </div>
+          <div>
+            <label>Selling Price (₹)</label>
+            <input id="pPrice" type="number" min="0" step="0.01" value="${product ? product.selling_price : ""}">
+          </div>
+          <div>
+            <label>Low Stock Threshold</label>
+            <input id="pLow" type="number" min="0" value="${product ? product.low_stock_threshold : "20"}">
+          </div>
+          <div>
+            <label>Reorder Threshold</label>
+            <input id="pReorder" type="number" min="0" value="${product ? product.reorder_threshold : "50"}">
+          </div>
+        </div>
+        <label>Description (optional)</label>
+        <input id="pDesc" type="text" value="${product ? esc(product.description || "") : ""}">
+        <div class="modal-actions">
+          <button class="btn-secondary" id="cancelP">Cancel</button>
+          <button class="btn-primary" style="width:auto;" id="saveP">${product ? "Save Changes" : "Add Product"}</button>
+        </div>
       </div>
     </div>
+  `;
+  bindModalClose(["closeX","cancelP"]);
+
+  document.getElementById("saveP").onclick = async () => {
+    const name = document.getElementById("pName").value.trim();
+    const sku = document.getElementById("pSku").value.trim();
+    const price = parseFloat(document.getElementById("pPrice").value);
+    const low = parseInt(document.getElementById("pLow").value, 10);
+    const reorder = parseInt(document.getElementById("pReorder").value, 10);
+    if(!name || !sku || isNaN(price) || isNaN(low) || isNaN(reorder)){
+      showToast("Name, SKU, price, and thresholds are all required");
+      return;
+    }
+
+    const payload = {
+      name,
+      category: document.getElementById("pCat").value,
+      sku,
+      selling_price: price,
+      low_stock_threshold: low,
+      reorder_threshold: reorder,
+      description: document.getElementById("pDesc").value.trim() || null
+    };
+
+    let error = null;
+    if(product){
+      ({ error } = await sb.from("products").update(payload).eq("id", product.id));
+    } else {
+      const dup = products.find(p => p.sku.toLowerCase() === sku.toLowerCase());
+      if(dup){
+        showToast(`SKU "${sku}" already exists (use the Edit action instead)`);
+        return;
+      }
+      ({ error } = await sb.from("products").insert(payload));
+    }
+    if(error){ showToast("Error: " + error.message); return; }
+    showToast(product ? "✓ Product updated" : "✓ Product added");
+    closeModal();
+    await loadAll();
+    renderAdminProductsTab(document.getElementById("tabContent"));
+  };
+}
+
+/* ---- 13g. Admin: Announcements Tab ---- */
+function renderAdminAnnouncementsTab(content){
+  const announcementsSorted = [...announcements].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+  const readCount = (id) => announcementReads.filter(r => r.announcement_id === id).length;
+
+  content.innerHTML = `
+    <div class="panel">
+      <div class="panel-head"><h2>📣 Broadcast Announcement</h2></div>
+      <div class="inline-form-grid">
+        <div><label>Title</label><input id="annTitle" type="text" placeholder="e.g. New FSSAI guidelines"></div>
+        <div><label>Message</label><input id="annMsg" type="text" placeholder="e.g. All vendors must verify batch expiry codes"></div>
+      </div>
+      <div style="margin-top:12px;">
+        <label>Audience</label>
+        <div style="display:flex;gap:16px;margin-top:6px;">
+          <label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="radio" name="annScope" value="blocking" id="scopeBlocking" checked> 🔴 Urgent / Blocking (red banner for all)</label>
+          <label style="font-size:13px;display:flex;align-items:center;gap:6px;"><input type="radio" name="annScope" value="info" id="scopeInfo"> ℹ️ Informational</label>
+        </div>
+      </div>
+      <button class="btn-primary" style="width:auto;margin-top:14px;" id="sendAnnBtn">📤 Send Announcement</button>
+    </div>
+
     <div class="panel">
       <div class="panel-head"><h2>Sent Announcements</h2></div>
-      <table>
-        <thead><tr><th>Title</th><th>Message</th><th>Seen</th><th>Sent</th><th>Status</th><th></th></tr></thead>
-        <tbody id="annBody"></tbody>
-      </table>
+      ${announcementsSorted.length ? `
+        <table class="ftable" id="annTbl"></table>
+      ` : `<p class="panel-note empty-note">No announcements sent yet.</p>`}
     </div>
   `;
 
   document.getElementById("sendAnnBtn").onclick = async () => {
     const title = document.getElementById("annTitle").value.trim();
     const message = document.getElementById("annMsg").value.trim();
-    if(!title || !message){ showToast("Title and message are required"); return; }
-    const btn = document.getElementById("sendAnnBtn");
-    btn.disabled = true; btn.textContent = "Sending...";
-    const { error } = await sb.from("announcements").insert({ title, message, created_by: session.user.id });
-    btn.disabled = false; btn.textContent = "Broadcast to All Vendors";
-    if(error){ showToast("Error: " + error.message); }
-    else { showToast("Announcement sent"); await loadAll(); renderAdminAnnouncementsTab(); }
+    const scope = document.getElementById("scopeBlocking").checked ? "blocking" : "info";
+    if(!title || !message){ showToast("Both title and message are required"); return; }
+    const { error } = await sb.from("announcements").insert({ title, message, is_blocking: scope === "blocking", is_active: true });
+    if(error){ showToast("Error: " + error.message); return; }
+    showToast("📣 Announcement broadcast to all vendors" + (scope === "blocking" ? " (Urgent)" : ""));
+    await loadAll();
+    renderAdminAnnouncementsTab(content);
   };
 
-  const body = document.getElementById("annBody");
-  announcements.forEach(a => {
-    const seenCount = announcementReads.filter(r => r.announcement_id === a.id).length;
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><strong>${esc(a.title)}</strong></td>
-      <td class="sku">${esc(a.message)}</td>
-      <td>${seenCount}/${vendorCount}</td>
-      <td class="sku">${new Date(a.created_at).toLocaleDateString()}</td>
-      <td><span class="badge ${a.is_active?'ok':'info'}">${a.is_active?'Active':'Inactive'}</span></td>
-      <td><button class="link-btn ${a.is_active?'danger-link':''}" data-toggle="${a.id}">${a.is_active?'Deactivate':'Reactivate'}</button></td>
-    `;
-    body.appendChild(tr);
-  });
-  body.querySelectorAll("[data-toggle]").forEach(btn => {
-    btn.onclick = async () => {
-      const a = announcements.find(x => x.id === btn.dataset.toggle);
-      await sb.from("announcements").update({ is_active: !a.is_active }).eq("id", a.id);
-      await loadAll(); renderAdminAnnouncementsTab();
-    };
-  });
+  const tbl = document.getElementById("annTbl");
+  if(tbl){
+    let html = `<thead><tr><th>Title</th><th>Message</th><th>Type</th><th>Status</th><th>Read</th><th>Sent</th><th>Actions</th></tr></thead><tbody>`;
+    announcementsSorted.forEach(a => {
+      html += `<tr>
+        <td><strong>${esc(a.title)}</strong></td>
+        <td>${esc(a.message)}</td>
+        <td>${a.is_blocking ? '<span class="badge badge-danger">URGENT</span>' : '<span class="badge badge-ok">Info</span>'}</td>
+        <td>${a.is_active ? '<span class="badge badge-ok">Active</span>' : '<span class="badge badge-muted">Archived</span>'}</td>
+        <td>${readCount(a.id)}/${vendors.length}</td>
+        <td>${new Date(a.created_at).toLocaleString()}</td>
+        <td class="row-actions">
+          <button class="link-btn" data-ann-toggle="${a.id}">${a.is_active ? "Archive" : "Re-activate"}</button>
+          <button class="link-btn danger-link" data-ann-del="${a.id}">Delete</button>
+        </td>
+      </tr>`;
+    });
+    html += "</tbody>";
+    tbl.innerHTML = html;
+
+    tbl.querySelectorAll("[data-ann-toggle]").forEach(btn => {
+      btn.onclick = async () => {
+        const a = announcements.find(x => x.id === btn.dataset.annToggle);
+        await sb.from("announcements").update({ is_active: !a.is_active }).eq("id", a.id);
+        await loadAll();
+        renderAdminAnnouncementsTab(content);
+      };
+    });
+    tbl.querySelectorAll("[data-ann-del]").forEach(btn => {
+      btn.onclick = async () => {
+        if(!confirm("Delete this announcement? Read receipts will also be removed.")) return;
+        await sb.from("announcements").delete().eq("id", btn.dataset.annDel);
+        await loadAll();
+        renderAdminAnnouncementsTab(content);
+      };
+    });
+  }
 }
 
 /* ============================================================
-   11. CSV EXPORT & HISTORY MODAL
+   14. EXPORTS, PRINT, HISTORY
    ============================================================ */
-function exportCSV(rows){
-  const headers = ["Vendor","State","Product","SKU","Barcode","Quantity","Cost Valuation","Expiry Date","Notes","Status"];
-  const lines = [headers.join(",")];
-  rows.forEach(({entry, product, vendor}) => {
-    const flags = stockStatus(entry, product).map(f=>f.text).join(" / ") || "Good";
-    const costVal = (entry.quantity * (product.cost_price || 0)).toFixed(2);
-    const row = [
-      vendor.name, vendor.state, product.name, product.sku, product.barcode || "", entry.quantity, costVal,
-      entry.expiry_date || "", (entry.notes || "").replace(/,/g," "), flags
-    ].map(v => `"${String(v).replace(/"/g,'""')}"`);
-    lines.push(row.join(","));
-  });
-  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `cureforever-inventory-${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast("CSV downloaded");
+function exportCSV(filename, rows){
+  if(!rows.length){ showToast("Nothing to export"); return; }
+  const headers = Object.keys(rows[0]);
+  const escapeCell = (v) => {
+    const s = String(v === null || v === undefined ? "" : v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [
+    headers.map(escapeCell).join(","),
+    ...rows.map(r => headers.map(h => escapeCell(r[h])).join(","))
+  ];
+  downloadFile(filename, "\uFEFF" + lines.join("\r\n"), "text/csv;charset=utf-8;");
 }
 
-async function openHistoryModal(vendorId, productId, productName){
+function exportAllStockXLSX(){
+  if(!window.XLSX){ showToast("Excel library not loaded — check network"); return; }
+  const rows = allStockRowsCombined().sort((a,b) => (a.product.name || "").localeCompare(b.product.name || ""));
+  const data = rows.map((r, i) => ({
+    "#": i + 1,
+    SKU: r.product.sku,
+    Product: r.product.name,
+    Category: r.product.category || "",
+    Vendor: r.vendor.name,
+    State: r.vendor.state,
+    "Batch Number": r.batch?.batch_number || "Unlinked",
+    "Expiry Date": r.batch?.expiry_date ? r.batch.expiry_date.slice(0,10) : (r.entry.expiry_date ? r.entry.expiry_date.slice(0,10) : ""),
+    Quantity: r.entry.quantity,
+    Status: stockStatus(r.product, r.entry.quantity),
+    Reason: labelForReason(r.entry.reason_code),
+    "Selling Price": r.product.selling_price,
+    "Line Value": Math.round(r.entry.quantity * r.product.selling_price * 100) / 100,
+    Notes: r.entry.notes || ""
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "All Stock");
+  XLSX.writeFile(wb, `all-stock-${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function exportAllStockCSV(){
+  const rows = allStockRowsCombined().sort((a,b) => (a.product.name || "").localeCompare(b.product.name || ""));
+  const data = rows.map((r, i) => ({
+    "#": i + 1,
+    SKU: r.product.sku,
+    Product: r.product.name,
+    Category: r.product.category || "",
+    Vendor: r.vendor.name,
+    State: r.vendor.state,
+    "Batch Number": r.batch?.batch_number || "Unlinked",
+    "Expiry Date": r.batch?.expiry_date ? r.batch.expiry_date.slice(0,10) : (r.entry.expiry_date ? r.entry.expiry_date.slice(0,10) : ""),
+    Quantity: r.entry.quantity,
+    Status: stockStatus(r.product, r.entry.quantity),
+    Reason: labelForReason(r.entry.reason_code),
+    "Selling Price": r.product.selling_price,
+    "Line Value": Math.round(r.entry.quantity * r.product.selling_price * 100) / 100,
+    Notes: r.entry.notes || ""
+  }));
+  exportCSV(`all-stock-${new Date().toISOString().slice(0,10)}.csv`, data);
+}
+
+function exportAuditCSV(){
+  const vf = document.getElementById("finVendorFilter");
+  const rf = document.getElementById("finReasonFilter");
+  let rows = [...stockAdjustments].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+  if(vf && vf.value !== "all") rows = rows.filter(a => a.vendor_id === vf.value);
+  if(rf && rf.value !== "all") rows = rows.filter(a => a.reason_code === rf.value);
+  const data = rows.map(a => {
+    const v = vendors.find(vd => vd.id === a.vendor_id);
+    const p = products.find(pr => pr.id === a.product_id);
+    return {
+      Date: new Date(a.created_at).toLocaleString(),
+      Vendor: v?.name || "",
+      State: v?.state || "",
+      Product: p?.name || "",
+      SKU: p?.sku || "",
+      Reason: labelForReason(a.reason_code),
+      "Old Quantity": a.previous_qty,
+      "New Quantity": a.new_qty,
+      Notes: a.notes || ""
+    };
+  });
+  exportCSV(`audit-trail-${new Date().toISOString().slice(0,10)}.csv`, data);
+}
+
+function printReport(){
+  const rows = allStockRowsCombined().sort((a,b) => (a.vendor.state || "").localeCompare(b.vendor.state || ""));
+  const totalValue = rows.reduce((s,r) => s + r.entry.quantity * r.product.selling_price, 0);
+  const totalQty = rows.reduce((s,r) => s + r.entry.quantity, 0);
+
+  const printBody = document.getElementById("printRoot");
+  printBody.innerHTML = `
+    <h1>CureForever Inventory Report</h1>
+    <p style="color:#555;">${new Date().toLocaleString()} · Systems-generated · ${rows.length} stock lines</p>
+    <table>
+      <thead>
+        <tr>
+          <th>State</th><th>Vendor</th><th>SKU</th><th>Product</th><th>Batch</th><th>Expiry</th><th>Qty</th><th>Unit Price</th><th>Value</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r => `
+          <tr>
+            <td>${esc(r.vendor.state)}</td>
+            <td>${esc(r.vendor.name)}</td>
+            <td>${esc(r.product.sku)}</td>
+            <td>${esc(r.product.name)}</td>
+            <td>${r.batch ? esc(r.batch.batch_number) : "Unlinked"}</td>
+            <td>${r.batch?.expiry_date ? r.batch.expiry_date.slice(0,10) : "—"}</td>
+            <td>${r.entry.quantity}</td>
+            <td>₹${r.product.selling_price}</td>
+            <td>₹${Math.round(r.entry.quantity * r.product.selling_price)}</td>
+            <td>${stockStatus(r.product, r.entry.quantity)}</td>
+          </tr>`).join("")}
+      </tbody>
+      <tfoot>
+        <tr><td colspan="6"><strong>Totals</strong></td><td><strong>${totalQty}</strong></td><td></td><td><strong>₹${Math.round(totalValue)}</strong></td><td></td></tr>
+      </tfoot>
+    </table>
+    <p style="color:#555;margin-top:16px;">Signatures: ______________________ (Authorized) &nbsp;&nbsp; ______________________ (Operations Head)</p>
+  `;
+  window.print();
+}
+
+function openHistoryModal(productId, vendorId){
+  const product = products.find(p => p.id === productId);
+  if(!product) return;
+  const events = [...stockHistory]
+    .filter(h => h.product_id === productId && (!vendorId || h.vendor_id === vendorId))
+    .sort((a,b) => new Date(b.recorded_at) - new Date(a.recorded_at))
+    .slice(0, 100);
+
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="overlay">
-      <div class="modal">
+      <div class="modal" style="max-width:700px;">
         <button class="modal-close" id="closeX">×</button>
-        <h3>${esc(productName)}</h3>
-        <p class="modal-sub">Quantity History Trend</p>
-        <canvas id="historyCanvas" height="220"></canvas>
+        <h3>🕓 Stock History — ${esc(product.name)}</h3>
+        <p class="modal-sub">${esc(product.sku)} · ${events.length} event(s) shown (newest first)</p>
+        <table class="ftable" id="histTbl"></table>
       </div>
     </div>
   `;
-  document.getElementById("closeX").onclick = closeModal;
-  document.getElementById("overlay").onclick = (e) => { if(e.target.id === "overlay") closeModal(); };
+  bindModalClose(["closeX"]);
 
-  const { data } = await sb.from("stock_history")
-    .select("*").eq("vendor_id", vendorId).eq("product_id", productId)
-    .order("recorded_at", { ascending: true });
-
-  if(!data || data.length === 0){
-    document.getElementById("historyCanvas").outerHTML = `<div class="empty">No history points recorded yet.</div>`;
+  const tbl = document.getElementById("histTbl");
+  if(!events.length){
+    tbl.outerHTML = `<p class="panel-note empty-note">No history events recorded for this product yet. History is captured when stock quantities change.</p>`;
     return;
   }
-
-  const ctx = document.getElementById("historyCanvas").getContext("2d");
-  historyChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: data.map(d => new Date(d.recorded_at).toLocaleDateString()),
-      datasets: [{
-        label: "Quantity",
-        data: data.map(d => d.quantity),
-        borderColor: "#B8935A",
-        backgroundColor: "rgba(184,147,90,0.12)",
-        tension: 0.25,
-        fill: true,
-        pointRadius: 3
-      }]
-    },
-    options: { responsive: true, plugins: { legend: { display: false } } }
+  let html = `<thead><tr><th>Date</th><th>Change</th><th>Quantity</th><th>Vendor</th></tr></thead><tbody>`;
+  const asc = [...events].sort((a,b) => new Date(a.recorded_at) - new Date(b.recorded_at));
+  asc.forEach((h, i) => {
+    const v = vendors.find(vd => vd.id === h.vendor_id);
+    const delta = i === 0 ? null : h.quantity - asc[i-1].quantity;
+    html += `<tr>
+      <td>${new Date(h.recorded_at).toLocaleString()}</td>
+      <td>${delta === null ? '<span class="badge badge-ok">Baseline</span>' : `<span class="${delta < 0 ? 'danger-text' : 'ok-text'}">${delta > 0 ? "+" : ""}${delta}</span>`}</td>
+      <td><strong>${h.quantity}</strong>${delta !== null ? ` <span class="muted">(was ${asc[i-1].quantity})</span>` : ""}</td>
+      <td>${esc(v?.name || "—")}</td>
+    </tr>`;
   });
+  html += "</tbody>";
+  tbl.innerHTML = html;
 }
 
-function render(){
-  if(!session) renderLogin();
-  else renderDashboard();
+/* ============================================================
+   15. ROUTER + INIT
+   ============================================================ */
+async function render(){
+  if(!session) return renderLogin();
+  if(!vendorRow){
+    let p = 0;
+    const tries = 10;
+    while(p < tries && !document.getElementById("main")){
+      await renderDashboard();
+      p++;
+      if(p < tries) await new Promise(r => setTimeout(r, 500));
+    }
+    return;
+  }
+  if(document.getElementById("main")){
+    const isAdmin = vendorRow.is_admin;
+    if(isAdmin) renderAdminView();
+    else renderVendorView();
+  } else {
+    renderDashboard();
+  }
 }
-init();
+
+async function boot(){
+  try {
+    session = (await sb.auth.getSession()).data.session;
+  } catch(e) {
+    session = null;
+  }
+  if(!session){
+    renderLogin();
+  } else {
+    await loadVendorProfile();
+    const apply = async () => {
+      await loadAll();
+      renderDashboard();
+    };
+    await apply();
+  }
+}
+
+window.addEventListener("load", boot);
 </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 -- ============================================================
 -- CureForever Inventory Management System — Complete Database Schema
 -- Run this in Supabase: Dashboard → SQL Editor → New query → Run
+-- (Idempotent: safe to re-run after upgrades)
 -- ============================================================
 
 -- 1. VENDORS TABLE
@@ -14,6 +15,9 @@ create table if not exists vendors (
   is_admin boolean not null default false,       -- true only for admin
   created_at timestamptz not null default now()
 );
+
+-- Ensure new columns exist if vendors already existed from an earlier setup
+alter table vendors add column if not exists email text;
 
 -- 2. PRODUCTS TABLE
 -- Master product list with financial pricing and barcode metadata. Shared across all vendors.
@@ -33,6 +37,8 @@ create table if not exists products (
 alter table products add column if not exists cost_price numeric(10,2) not null default 0.00;
 alter table products add column if not exists selling_price numeric(10,2) not null default 0.00;
 alter table products add column if not exists barcode text;
+alter table products add column if not exists reorder_threshold integer not null default 25;
+alter table products add column if not exists description text;
 
 -- 3. PRODUCT BATCHES TABLE (Pharmaceutical & Compliance)
 -- Multi-batch management with manufacturing/expiry dates and recall flags.
@@ -51,8 +57,11 @@ create table if not exists product_batches (
   unique (product_id, batch_number)
 );
 
+-- Ensure new columns exist if product_batches already existed from an earlier setup
+alter table product_batches add column if not exists supplier text;
+
 -- 4. STOCK ENTRIES TABLE
--- Real-time quantity, batch reference, expiry dates, and notes per (vendor, product).
+-- Real-time quantity, batch reference, expiry dates, reason code, and notes per (vendor, product).
 create table if not exists stock_entries (
   id uuid primary key default gen_random_uuid(),
   vendor_id uuid not null references vendors(id) on delete cascade,
@@ -60,14 +69,16 @@ create table if not exists stock_entries (
   batch_id uuid references product_batches(id) on delete set null,
   quantity integer not null default 0,
   expiry_date date,
+  reason_code text not null default 'manual_adjustment',
   notes text,
   last_updated timestamptz not null default now(),
   updated_by uuid references auth.users(id),
   unique (vendor_id, product_id)
 );
 
--- Ensure batch_id exists if stock_entries already existed
+-- Ensure new columns exist if stock_entries already existed from an earlier setup
 alter table stock_entries add column if not exists batch_id uuid references product_batches(id) on delete set null;
+alter table stock_entries add column if not exists reason_code text not null default 'manual_adjustment';
 
 -- 5. STOCK HISTORY TABLE
 -- Tracks historical quantity updates over time for line chart visualization.
@@ -90,7 +101,7 @@ create table if not exists stock_adjustments (
   previous_qty integer not null default 0,
   new_qty integer not null default 0,
   change_qty integer not null default 0,
-  reason_code text not null default 'manual_adjustment', -- 'physical_reconciliation', 'damaged_goods', 'expired_disposal', 'qc_sample', 'return_to_vendor', 'manual_adjustment'
+  reason_code text not null default 'manual_adjustment', -- 'physical_reconciliation', 'damaged_goods', 'expired_disposal', 'qc_sample', 'return_to_vendor', 'manual_adjustment', 'initial_stock'
   notes text,
   performed_by uuid references auth.users(id),
   created_at timestamptz not null default now()
@@ -128,9 +139,12 @@ create table if not exists announcements (
   title text not null,
   message text not null,
   is_active boolean not null default true,
+  is_blocking boolean not null default false,
   created_by uuid references auth.users(id),
   created_at timestamptz not null default now()
 );
+
+alter table announcements add column if not exists is_blocking boolean not null default false;
 
 -- 10. ANNOUNCEMENT READS TABLE
 -- Tracks which announcements have been dismissed/read by which vendors.
@@ -161,10 +175,14 @@ create trigger trg_stock_updated
 before update on stock_entries
 for each row execute function set_last_updated();
 
--- Record history point automatically whenever stock quantity is inserted or updated
+-- Record history point automatically whenever stock QUANTITY is inserted or updated
+-- (notes/expiry-only edits do not pollute the history chart)
 create or replace function record_stock_history()
 returns trigger as $$
 begin
+  if (TG_OP = 'UPDATE' and old.quantity = new.quantity) then
+    return new;
+  end if;
   insert into stock_history (vendor_id, product_id, quantity)
   values (new.vendor_id, new.product_id, new.quantity);
   return new;
@@ -176,36 +194,42 @@ create trigger trg_stock_history
 after insert or update on stock_entries
 for each row execute function record_stock_history();
 
--- Record audit adjustment entry whenever stock quantity changes
+-- Record audit adjustment entry whenever stock quantity, expiry, or reason code changes.
+-- FIX: reason_code is taken from the stock_entries.reason_code column (selected in the UI),
+-- and notes are stored in the notes column — no longer mixed together.
 create or replace function record_stock_adjustment()
 returns trigger as $$
 declare
   old_q integer := 0;
   new_q integer := 0;
   diff integer := 0;
+  adv text;
 begin
   if (TG_OP = 'UPDATE') then
     old_q := old.quantity;
     new_q := new.quantity;
     diff := new_q - old_q;
-    if (diff <> 0) then
+    if (diff <> 0 or old.expiry_date is distinct from new.expiry_date
+        or old.reason_code is distinct from new.reason_code) then
+      adv := coalesce(nullif(new.reason_code, ''), 'manual_adjustment');
       insert into stock_adjustments (
         stock_entry_id, vendor_id, product_id, batch_id,
         previous_qty, new_qty, change_qty, reason_code, notes, performed_by
       ) values (
         new.id, new.vendor_id, new.product_id, new.batch_id,
-        old_q, new_q, diff, coalesce(new.notes, 'manual_adjustment'), new.notes, auth.uid()
+        old_q, new_q, diff, adv, new.notes, auth.uid()
       );
     end if;
   elsif (TG_OP = 'INSERT') then
     new_q := new.quantity;
+    adv := coalesce(nullif(new.reason_code, ''), 'initial_stock');
     if (new_q > 0) then
       insert into stock_adjustments (
         stock_entry_id, vendor_id, product_id, batch_id,
         previous_qty, new_qty, change_qty, reason_code, notes, performed_by
       ) values (
         new.id, new.vendor_id, new.product_id, new.batch_id,
-        0, new_q, new_q, 'initial_stock', new.notes, auth.uid()
+        0, new_q, new_q, adv, new.notes, auth.uid()
       );
     end if;
   end if;
@@ -251,6 +275,10 @@ create policy "vendors_select_all" on vendors for select using (true);
 
 drop policy if exists "vendors_admin_write" on vendors;
 create policy "vendors_admin_write" on vendors for all using (is_admin()) with check (is_admin());
+
+-- Vendors may update their own profile row (name, state, phone) — never delete or change is_admin
+drop policy if exists "vendors_self_update" on vendors;
+create policy "vendors_self_update" on vendors for update using (id = my_vendor_id()) with check (id = my_vendor_id() and is_admin = false);
 
 -- --- products table policies ---
 drop policy if exists "products_select_all" on products;
@@ -300,8 +328,10 @@ create policy "reorder_select" on reorder_requests for select using (is_admin() 
 drop policy if exists "reorder_insert" on reorder_requests;
 create policy "reorder_insert" on reorder_requests for insert with check (is_admin() or vendor_id = my_vendor_id());
 
+-- Admins can update/fulfil/cancel anything; vendors may only cancel their own pending requests
 drop policy if exists "reorder_update" on reorder_requests;
-create policy "reorder_update" on reorder_requests for update using (is_admin()) with check (is_admin());
+create policy "reorder_update" on reorder_requests for update using (is_admin() or vendor_id = my_vendor_id())
+  with check (is_admin() or (vendor_id = my_vendor_id() and status = 'cancelled'));
 
 drop policy if exists "reorder_delete" on reorder_requests;
 create policy "reorder_delete" on reorder_requests for delete using (is_admin());
@@ -361,4 +391,10 @@ on conflict (product_id, batch_number) do nothing;
 insert into product_batches (product_id, batch_number, mfg_date, expiry_date, cost_price, selling_price, initial_quantity, status)
 select id, 'BATCH-2026-B2', '2025-03-01', '2026-09-01', cost_price, selling_price, 300, 'active'
 from products where sku = 'CF-MVD-030'
+on conflict (product_id, batch_number) do nothing;
+
+-- Already-expired sample batch (auto-flagged by the app's expiry engine)
+insert into product_batches (product_id, batch_number, mfg_date, expiry_date, cost_price, selling_price, initial_quantity, status)
+select id, 'BATCH-2025-C3', '2024-06-01', '2026-01-01', cost_price, selling_price, 120, 'active'
+from products where sku = 'CF-ASH-060'
 on conflict (product_id, batch_number) do nothing;
