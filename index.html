@@ -170,6 +170,23 @@ const SUPABASE_URL = "https://uchozkkzgqeismqvamye.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaG96a2t6Z3FlaXNtcXZhbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0Mzc5ODgsImV4cCI6MjEwMjAxMzk4OH0.AmpMk0huP9cwbmHEn1EaO8FZsIEJDF8ZqzHxIoYh37Q";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/* Safe Numeric Helpers to Prevent NaN / Null Violations */
+function safeNum(val, defaultVal = 0.0) {
+  if (val === null || val === undefined) return defaultVal;
+  const s = String(val).replace(/[^0-9.-]/g, '').trim();
+  if (!s) return defaultVal;
+  const n = parseFloat(s);
+  return isNaN(n) ? defaultVal : n;
+}
+
+function safeInt(val, defaultVal = 10) {
+  if (val === null || val === undefined) return defaultVal;
+  const s = String(val).replace(/[^0-9-]/g, '').trim();
+  if (!s) return defaultVal;
+  const n = parseInt(s, 10);
+  return isNaN(n) ? defaultVal : n;
+}
+
 /* ============================================================
    2. GLOBAL STATE
    ============================================================ */
@@ -538,7 +555,6 @@ function openAddVendorModal(){
     btn.disabled = true; btn.textContent = "Creating Account...";
 
     try {
-      // 1. Create Supabase Auth user using unpersisted secondary client so admin session is never logged out
       const secondarySb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false } });
       const { data: authData, error: authError } = await secondarySb.auth.signUp({ email, password });
 
@@ -550,7 +566,6 @@ function openAddVendorModal(){
 
       const newUserId = authData.user.id;
 
-      // 2. Insert vendor row into database
       const { data: vendorData, error: vendorError } = await sb.from("vendors").insert({
         user_id: newUserId,
         name: name,
@@ -974,7 +989,7 @@ function renderAdminDashboardTab(){
   });
 }
 
-/* ---- 10b. DEDICATED VENDORS TAB (WITH CREATION & SEPARATE SUB-TABS PER VENDOR) ---- */
+/* ---- 10b. DEDICATED VENDORS TAB ---- */
 function renderAdminByVendorTab(){
   const container = document.getElementById("adminTabBody");
   const nonAdminVendors = vendors.filter(v => !v.is_admin);
@@ -1027,7 +1042,6 @@ function renderAdminByVendorTab(){
       </div>
     </div>
 
-    <!-- Active Vendor Detail Cards -->
     <div class="stat-row">
       <div class="stat"><div class="num">${rows.length}</div><div class="lbl">Products Tracked</div></div>
       <div class="stat warn"><div class="num">${vendorLow}</div><div class="lbl">Low / Out of Stock</div></div>
@@ -1035,7 +1049,6 @@ function renderAdminByVendorTab(){
       <div class="stat purple"><div class="num">${formatCurrency(vendorValuation)}</div><div class="lbl">${esc(activeVendor.name)} Valuation</div></div>
     </div>
 
-    <!-- Dedicated Vendor Stock Table -->
     <div class="panel">
       <div class="panel-head">
         <h2>Dedicated Inventory — ${esc(activeVendor.name)} (${esc(activeVendor.state)})</h2>
@@ -1047,7 +1060,6 @@ function renderAdminByVendorTab(){
       </table>
     </div>
 
-    <!-- Vendor Reorder Requests -->
     <div class="panel">
       <div class="panel-head"><h2>Reorder Requests for ${esc(activeVendor.name)}</h2></div>
       <table>
@@ -1057,7 +1069,6 @@ function renderAdminByVendorTab(){
       ${vendorRequests.length === 0 ? `<div class="empty">No reorder requests submitted by this vendor.</div>` : ""}
     </div>
 
-    <!-- Vendor Audit History -->
     <div class="panel">
       <div class="panel-head"><h2>Audit Logs for ${esc(activeVendor.name)}</h2></div>
       <table>
@@ -1078,7 +1089,6 @@ function renderAdminByVendorTab(){
   body.innerHTML = stockTableRowsHTML(rows);
   wireStockTable(body, activeVendor.id, () => renderAdminByVendorTab());
 
-  // Render Vendor Reorder Requests
   const vReqBody = document.getElementById("vendorReqBody");
   vendorRequests.forEach(r => {
     const product = products.find(p => p.id === r.product_id);
@@ -1094,7 +1104,6 @@ function renderAdminByVendorTab(){
     vReqBody.appendChild(tr);
   });
 
-  // Render Vendor Audit Adjustments
   const vAuditBody = document.getElementById("vendorAuditBody");
   vendorAudits.forEach(a => {
     const prod = products.find(p => p.id === a.product_id);
@@ -1387,7 +1396,7 @@ function renderAdminFinancialsTab(){
   };
 }
 
-/* ---- 10f. PRODUCTS TAB ---- */
+/* ---- 10f. PRODUCTS TAB WITH SMART BULK IMPORT ---- */
 function renderAdminProductsTab(){
   const container = document.getElementById("adminTabBody");
   container.innerHTML = `
@@ -1395,7 +1404,7 @@ function renderAdminProductsTab(){
       <div class="panel-head">
         <h2>Products Catalog</h2>
         <div class="filters">
-          <button class="export-btn" id="bulkImportBtn">⬆ Bulk import (Excel)</button>
+          <button class="export-btn" id="bulkImportBtn">⬆ Bulk import (CSV / Excel)</button>
           <button class="btn-secondary" id="addProductBtn" style="padding:7px 14px;font-size:12px;">+ Add product</button>
         </div>
       </div>
@@ -1465,9 +1474,9 @@ function openAddProductModal(){
     const sku = document.getElementById("npSku").value.trim();
     const barcode = document.getElementById("npBarcode").value.trim() || null;
     const category = document.getElementById("npCategory").value.trim() || null;
-    const cost = parseFloat(document.getElementById("npCost").value || "0");
-    const sell = parseFloat(document.getElementById("npSell").value || "0");
-    const threshold = parseInt(document.getElementById("npThreshold").value || "0", 10);
+    const cost = safeNum(document.getElementById("npCost").value, 0.00);
+    const sell = safeNum(document.getElementById("npSell").value, 0.00);
+    const threshold = safeInt(document.getElementById("npThreshold").value, 10);
 
     if(!name || !sku){ showToast("Name and SKU are required"); return; }
     const btn = document.getElementById("saveNp");
@@ -1543,14 +1552,15 @@ function openVisibilityModal(productId){
   };
 }
 
+/* SMART HEADER-AWARE BULK IMPORT PARSER */
 function openBulkImportModal(){
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="overlay">
-      <div class="modal" style="max-width:720px;">
+      <div class="modal" style="max-width:750px;">
         <button class="modal-close" id="closeX">×</button>
         <h3>Bulk Import Products</h3>
-        <p class="modal-sub">Upload product catalog Excel file (.xlsx).</p>
-        <input type="file" id="bulkFile" accept=".xlsx,.xls">
+        <p class="modal-sub">Upload CSV or Excel file (.csv, .xlsx, .xls). Auto-detects Shopify exports, CureForever templates, or custom catalogs.</p>
+        <input type="file" id="bulkFile" accept=".csv,.xlsx,.xls">
         <div id="bulkPreviewWrap"></div>
         <div class="modal-actions">
           <button class="btn-secondary" id="cancelBulk">Cancel</button>
@@ -1577,30 +1587,105 @@ function openBulkImportModal(){
       const sheet = wb.Sheets[sheetName];
       const raw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
 
+      if(!raw || raw.length === 0){
+        previewWrap.innerHTML = `<p class="err">File is empty.</p>`;
+        return;
+      }
+
+      // 1. Detect headers from row 0
+      const headerRow = (raw[0] || []).map(cell => String(cell || '').trim().toLowerCase());
+      
+      const findHeaderIndex = (keywords) => {
+        return headerRow.findIndex(h => keywords.some(k => h === k || h.includes(k)));
+      };
+
+      let idxTitle = findHeaderIndex(["title", "product name", "name"]);
+      if (idxTitle === -1) idxTitle = findHeaderIndex(["handle"]);
+      
+      let idxSku = findHeaderIndex(["variant sku", "sku", "item code", "code"]);
+      let idxCategory = findHeaderIndex(["product category", "category", "type", "product type"]);
+      let idxCost = findHeaderIndex(["cost per item", "cost price", "cost_price", "cost", "cogs"]);
+      let idxSell = findHeaderIndex(["variant price", "price", "selling price", "selling_price", "mrp"]);
+      let idxBarcode = findHeaderIndex(["variant barcode", "barcode", "ean", "upc"]);
+      let idxThreshold = findHeaderIndex(["low stock threshold", "threshold", "min qty"]);
+
+      // Fallbacks if no header match found (for simple 7-column positional CSVs)
+      if (idxTitle === -1) idxTitle = 0;
+      if (idxSku === -1) idxSku = 1;
+      if (idxCategory === -1) idxCategory = 2;
+      if (idxThreshold === -1) idxThreshold = 3;
+      if (idxCost === -1) idxCost = 4;
+      if (idxSell === -1) idxSell = 5;
+      if (idxBarcode === -1) idxBarcode = 6;
+
+      const seenSkus = new Set();
       const parsed = [];
+
       for(let i = 1; i < raw.length; i++){
         const r = raw[i];
         if(!r || r.every(c => String(c).trim() === "")) continue;
-        const name = String(r[0] ?? "").trim();
-        const sku = String(r[1] ?? "").trim();
-        const category = String(r[2] ?? "").trim();
-        const threshold = parseInt(r[3], 10) || 10;
-        const cost = parseFloat(r[4] || 0);
-        const sell = parseFloat(r[5] || 0);
-        const barcode = String(r[6] ?? "").trim() || null;
 
-        if(name && sku){
-          parsed.push({ name, sku, category, threshold, cost, sell, barcode });
+        let name = String(r[idxTitle] ?? "").trim();
+        let sku = String(r[idxSku] ?? "").trim();
+        let category = String(r[idxCategory] ?? "").trim();
+        let barcode = String(r[idxBarcode] ?? "").trim() || null;
+
+        let threshold = safeInt(r[idxThreshold], 10);
+        let cost = safeNum(r[idxCost], 0.00);
+        let sell = safeNum(r[idxSell], 0.00);
+
+        // If Shopify CSV has empty SKU/Title on extra image attachment lines, skip them cleanly
+        if(!sku && !name) continue;
+        if(!sku && name){
+          // Auto-generate fallback SKU from title if missing
+          sku = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + i;
         }
+
+        if(seenSkus.has(sku)){
+          // De-dupe: update existing entry with non-empty fields
+          const existing = parsed.find(item => item.sku === sku);
+          if(existing){
+            if(!existing.name && name) existing.name = name;
+            if(cost > 0) existing.cost = cost;
+            if(sell > 0) existing.sell = sell;
+            if(barcode) existing.barcode = barcode;
+          }
+          continue;
+        }
+
+        seenSkus.add(sku);
+        parsed.push({ name: name || sku, sku, category, threshold, cost, sell, barcode });
       }
+
       parsedValidRows = parsed;
 
       const confirmBtn = document.getElementById("confirmBulk");
       confirmBtn.disabled = parsedValidRows.length === 0;
       confirmBtn.textContent = `Import ${parsedValidRows.length} products`;
-      previewWrap.innerHTML = `<p class="modal-sub" style="color:var(--ok);margin-top:10px;">✓ Ready to import ${parsedValidRows.length} items.</p>`;
+
+      previewWrap.innerHTML = `
+        <div class="preview-table-wrap">
+          <table>
+            <thead><tr><th>Product Name</th><th>SKU</th><th>Category</th><th>Cost (₹)</th><th>Selling (₹)</th><th>Barcode</th></tr></thead>
+            <tbody>
+              ${parsedValidRows.slice(0, 50).map(r => `
+                <tr>
+                  <td><strong>${esc(r.name)}</strong></td>
+                  <td class="sku">${esc(r.sku)}</td>
+                  <td>${esc(r.category) || '—'}</td>
+                  <td>${formatCurrency(r.cost)}</td>
+                  <td>${formatCurrency(r.sell)}</td>
+                  <td class="sku">${esc(r.barcode) || '—'}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+        <p class="modal-sub" style="color:var(--ok);margin-top:8px;">✓ Ready to import ${parsedValidRows.length} valid product items.${parsedValidRows.length > 50 ? ' (Showing first 50 rows preview)' : ''}</p>
+      `;
     } catch(err){
-      previewWrap.innerHTML = `<p class="err" style="margin-top:10px;">Failed to parse: ${esc(err.message)}</p>`;
+      console.error("CSV Parse Error:", err);
+      previewWrap.innerHTML = `<p class="err" style="margin-top:10px;">Failed to parse file: ${esc(err.message)}</p>`;
     }
   };
 
@@ -1608,16 +1693,27 @@ function openBulkImportModal(){
     if(parsedValidRows.length === 0) return;
     const btn = document.getElementById("confirmBulk");
     btn.disabled = true; btn.textContent = "Importing...";
-    const { error } = await sb.from("products").upsert(
-      parsedValidRows.map(r => ({
-        name: r.name, sku: r.sku, category: r.category || null, low_stock_threshold: r.threshold,
-        cost_price: r.cost, selling_price: r.sell, barcode: r.barcode
-      })),
-      { onConflict: "sku" }
-    );
-    if(error){ showToast("Import failed: " + error.message); btn.disabled = false; }
+
+    const payload = parsedValidRows.map(r => ({
+      name: r.name || r.sku,
+      sku: r.sku,
+      category: r.category || null,
+      low_stock_threshold: safeInt(r.threshold, 10),
+      cost_price: safeNum(r.cost, 0.00),
+      selling_price: safeNum(r.sell, 0.00),
+      barcode: r.barcode || null
+    }));
+
+    const { error } = await sb.from("products").upsert(payload, { onConflict: "sku" });
+
+    if(error){
+      console.error("Supabase Import Error:", error);
+      showToast("Import failed: " + error.message);
+      btn.disabled = false;
+      btn.textContent = "Retry Import";
+    }
     else {
-      showToast(`Imported ${parsedValidRows.length} products`);
+      showToast(`✓ Successfully imported ${parsedValidRows.length} products!`);
       closeModal();
       await loadAll();
       refreshCurrentView();
