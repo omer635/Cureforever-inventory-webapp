@@ -33,3 +33,5 @@ Core platform files:
 ### 5. 📱 Offline PWA Capabilities
 - Progressive Web App with Service Worker (`sw.js`).
 - Network status pill (`🟢 Online` / `🔴 Offline`) indicates live connection and local cache mode.
+
+
