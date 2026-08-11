@@ -209,6 +209,38 @@
    ============================================================ */
 const SUPABASE_URL = "https://uchozkkzgqeismqvamye.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjaG96a2t6Z3FlaXNtcXZhbXllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0Mzc5ODgsImV4cCI6MjEwMjAxMzk4OH0.AmpMk0huP9cwbmHEn1EaO8FZsIEJDF8ZqzHxIoYh37Q";
+
+const app = document.getElementById("app");
+const toastEl = document.getElementById("toast");
+const modalRoot = document.getElementById("modalRoot");
+
+/* Surface any load-time failure instead of a blank page */
+window.addEventListener("error", (ev) => {
+  try {
+    const el = document.getElementById("app");
+    if (el && !el.innerHTML.trim()) {
+      el.innerHTML = `<div style="padding:80px 24px;text-align:center;font-family:system-ui,sans-serif;color:#1A1D24;line-height:1.7;">
+        <h2 style="color:#B3261E;margin:0 0 12px;">Something went wrong</h2>
+        <p style="margin:0 0 16px;">${esc(String((ev && ev.message) || "Unknown error"))}</p>
+        <button onclick="location.reload()" style="padding:10px 22px;background:#0F1F3D;color:#fff;border:0;border-radius:4px;cursor:pointer;">Reload App</button>
+      </div>`;
+    }
+  } catch (e) {}
+}, true);
+
+if (!window.supabase) {
+  const script = document.createElement("script");
+  script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+  document.head.appendChild(script);
+  if (app) {
+    app.innerHTML = `<div style="padding:80px 24px;text-align:center;font-family:system-ui,sans-serif;color:#1A1D24;">
+      <h2 style="color:#B3261E;margin:0 0 12px;">Database client failed to load</h2>
+      <p style="margin:0 0 16px;">The Supabase library could not be reached (network or CDN blocked). It is being fetched again — if this message persists, check your connection.</p>
+      <button onclick="location.reload()" style="padding:10px 22px;background:#0F1F3D;color:#fff;border:0;border-radius:4px;cursor:pointer;">Try Again</button>
+    </div>`;
+  }
+  throw new Error("supabase-js CDN library unavailable");
+}
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* Reason codes used across the UI and audit trail */
@@ -276,9 +308,6 @@ let historyChart = null;
 let dashboardCharts = {};
 let scannerInstance = null;
 
-const app = document.getElementById("app");
-const toastEl = document.getElementById("toast");
-const modalRoot = document.getElementById("modalRoot");
 let realtimeChannel = null;
 let refreshPending = false;
 let liveIndicatorTimer = null;
