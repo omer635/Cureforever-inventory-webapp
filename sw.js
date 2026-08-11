@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cureforever-v2';
+const CACHE_NAME = 'cureforever-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -35,6 +35,12 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // The Cache API only supports http/https. Browser-extension and other
+  // non-http(s) requests (e.g. chrome-extension://) must never be cached.
+  if (!event.request.url.startsWith('http')) {
+    return;
+  }
+
   // Network first strategy for API requests, Cache first with network fallback for static assets
   if (event.request.url.includes('supabase.co')) {
     event.respondWith(
@@ -50,8 +56,8 @@ self.addEventListener('fetch', (event) => {
       if (cachedResponse) {
         // Return cached and update in background
         fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse)).catch(() => {});
           }
         }).catch(() => {});
         return cachedResponse;
@@ -62,7 +68,7 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         }
         const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache)).catch(() => {});
         return networkResponse;
       }).catch(() => {
         if (event.request.mode === 'navigate') {
