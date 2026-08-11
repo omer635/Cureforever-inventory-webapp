@@ -45,9 +45,13 @@ alter table products add column if not exists description text;
 create table if not exists product_batches (
   id uuid primary key default gen_random_uuid(),
   product_id uuid not null references products(id) on delete cascade,
+  vendor_id uuid references vendors(id) on delete cascade,
   batch_number text not null,
   mfg_date date,
+  received_date date,
   expiry_date date not null,
+  quantity integer not null default 0,
+  rate numeric(10,2) not null default 0.00,
   cost_price numeric(10,2) not null default 0.00,
   selling_price numeric(10,2) not null default 0.00,
   initial_quantity integer not null default 0,
@@ -59,6 +63,10 @@ create table if not exists product_batches (
 
 -- Ensure new columns exist if product_batches already existed from an earlier setup
 alter table product_batches add column if not exists supplier text;
+alter table product_batches add column if not exists vendor_id uuid references vendors(id) on delete cascade;
+alter table product_batches add column if not exists received_date date;
+alter table product_batches add column if not exists quantity integer not null default 0;
+alter table product_batches add column if not exists rate numeric(10,2) not null default 0.00;
 
 -- 4. STOCK ENTRIES TABLE
 -- Real-time quantity, batch reference, expiry dates, reason code, and notes per (vendor, product).
@@ -71,6 +79,7 @@ create table if not exists stock_entries (
   expiry_date date,
   reason_code text not null default 'manual_adjustment',
   notes text,
+  updated_at timestamptz not null default now(),
   last_updated timestamptz not null default now(),
   updated_by uuid references auth.users(id),
   unique (vendor_id, product_id)
@@ -79,6 +88,7 @@ create table if not exists stock_entries (
 -- Ensure new columns exist if stock_entries already existed from an earlier setup
 alter table stock_entries add column if not exists batch_id uuid references product_batches(id) on delete set null;
 alter table stock_entries add column if not exists reason_code text not null default 'manual_adjustment';
+alter table stock_entries add column if not exists updated_at timestamptz not null default now();
 
 -- 5. STOCK HISTORY TABLE
 -- Tracks historical quantity updates over time for line chart visualization.
