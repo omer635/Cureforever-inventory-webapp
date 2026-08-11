@@ -1,5 +1,5 @@
 -- ============================================================
--- CureForever Inventory Management System — Database Schema
+-- CureForever Inventory Management System — Complete Database Schema
 -- Run this in Supabase: Dashboard → SQL Editor → New query → Run
 -- ============================================================
 
@@ -16,22 +16,48 @@ create table if not exists vendors (
 );
 
 -- 2. PRODUCTS TABLE
--- Master product list. Shared across all vendors (SKUs are the same everywhere).
+-- Master product list with financial pricing and barcode metadata. Shared across all vendors.
 create table if not exists products (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   sku text unique not null,
   category text,
   low_stock_threshold integer not null default 10,
+  cost_price numeric(10,2) not null default 0.00,
+  selling_price numeric(10,2) not null default 0.00,
+  barcode text,
   created_at timestamptz not null default now()
 );
 
--- 3. STOCK ENTRIES TABLE
--- One row per (vendor, product). Updated regularly by vendors or admin.
+-- Ensure new columns are safely added if the products table already existed from an earlier setup
+alter table products add column if not exists cost_price numeric(10,2) not null default 0.00;
+alter table products add column if not exists selling_price numeric(10,2) not null default 0.00;
+alter table products add column if not exists barcode text;
+
+-- 3. PRODUCT BATCHES TABLE (Pharmaceutical & Compliance)
+-- Multi-batch management with manufacturing/expiry dates and recall flags.
+create table if not exists product_batches (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references products(id) on delete cascade,
+  batch_number text not null,
+  mfg_date date,
+  expiry_date date not null,
+  cost_price numeric(10,2) not null default 0.00,
+  selling_price numeric(10,2) not null default 0.00,
+  initial_quantity integer not null default 0,
+  status text not null default 'active', -- 'active', 'recalled', 'quarantined', 'expired'
+  notes text,
+  created_at timestamptz not null default now(),
+  unique (product_id, batch_number)
+);
+
+-- 4. STOCK ENTRIES TABLE
+-- Real-time quantity, batch reference, expiry dates, and notes per (vendor, product).
 create table if not exists stock_entries (
   id uuid primary key default gen_random_uuid(),
   vendor_id uuid not null references vendors(id) on delete cascade,
   product_id uuid not null references products(id) on delete cascade,
+  batch_id uuid references product_batches(id) on delete set null,
   quantity integer not null default 0,
   expiry_date date,
   notes text,
@@ -40,7 +66,10 @@ create table if not exists stock_entries (
   unique (vendor_id, product_id)
 );
 
--- 4. STOCK HISTORY TABLE
+-- Ensure batch_id exists if stock_entries already existed
+alter table stock_entries add column if not exists batch_id uuid references product_batches(id) on delete set null;
+
+-- 5. STOCK HISTORY TABLE
 -- Tracks historical quantity updates over time for line chart visualization.
 create table if not exists stock_history (
   id uuid primary key default gen_random_uuid(),
@@ -50,12 +79,30 @@ create table if not exists stock_history (
   recorded_at timestamptz not null default now()
 );
 
--- 5. REORDER REQUESTS TABLE
+-- 6. STOCK ADJUSTMENTS AUDIT TABLE (Financial Control & Audit Integrity)
+-- Immutable log of stock level modifications with reason codes and user attribution.
+create table if not exists stock_adjustments (
+  id uuid primary key default gen_random_uuid(),
+  stock_entry_id uuid references stock_entries(id) on delete cascade,
+  vendor_id uuid not null references vendors(id) on delete cascade,
+  product_id uuid not null references products(id) on delete cascade,
+  batch_id uuid references product_batches(id) on delete set null,
+  previous_qty integer not null default 0,
+  new_qty integer not null default 0,
+  change_qty integer not null default 0,
+  reason_code text not null default 'manual_adjustment', -- 'physical_reconciliation', 'damaged_goods', 'expired_disposal', 'qc_sample', 'return_to_vendor', 'manual_adjustment'
+  notes text,
+  performed_by uuid references auth.users(id),
+  created_at timestamptz not null default now()
+);
+
+-- 7. REORDER REQUESTS TABLE
 -- Stock reorder requests submitted by vendors and managed by admin.
 create table if not exists reorder_requests (
   id uuid primary key default gen_random_uuid(),
   vendor_id uuid not null references vendors(id) on delete cascade,
   product_id uuid not null references products(id) on delete cascade,
+  batch_id uuid references product_batches(id) on delete set null,
   requested_qty integer not null default 1,
   note text,
   status text not null default 'pending', -- pending, fulfilled, cancelled
@@ -63,7 +110,9 @@ create table if not exists reorder_requests (
   resolved_at timestamptz
 );
 
--- 6. PRODUCT VISIBILITY TABLE
+alter table reorder_requests add column if not exists batch_id uuid references product_batches(id) on delete set null;
+
+-- 8. PRODUCT VISIBILITY TABLE
 -- Maps products to specific vendors (when empty/absent, product is visible to all vendors).
 create table if not exists product_visibility (
   id uuid primary key default gen_random_uuid(),
@@ -72,7 +121,7 @@ create table if not exists product_visibility (
   unique (product_id, vendor_id)
 );
 
--- 7. ANNOUNCEMENTS TABLE
+-- 9. ANNOUNCEMENTS TABLE
 -- Broadcast announcements sent by admin to all vendors.
 create table if not exists announcements (
   id uuid primary key default gen_random_uuid(),
@@ -83,7 +132,7 @@ create table if not exists announcements (
   created_at timestamptz not null default now()
 );
 
--- 8. ANNOUNCEMENT READS TABLE
+-- 10. ANNOUNCEMENT READS TABLE
 -- Tracks which announcements have been dismissed/read by which vendors.
 create table if not exists announcement_reads (
   id uuid primary key default gen_random_uuid(),
@@ -127,14 +176,58 @@ create trigger trg_stock_history
 after insert or update on stock_entries
 for each row execute function record_stock_history();
 
+-- Record audit adjustment entry whenever stock quantity changes
+create or replace function record_stock_adjustment()
+returns trigger as $$
+declare
+  old_q integer := 0;
+  new_q integer := 0;
+  diff integer := 0;
+begin
+  if (TG_OP = 'UPDATE') then
+    old_q := old.quantity;
+    new_q := new.quantity;
+    diff := new_q - old_q;
+    if (diff <> 0) then
+      insert into stock_adjustments (
+        stock_entry_id, vendor_id, product_id, batch_id,
+        previous_qty, new_qty, change_qty, reason_code, notes, performed_by
+      ) values (
+        new.id, new.vendor_id, new.product_id, new.batch_id,
+        old_q, new_q, diff, coalesce(new.notes, 'manual_adjustment'), new.notes, auth.uid()
+      );
+    end if;
+  elsif (TG_OP = 'INSERT') then
+    new_q := new.quantity;
+    if (new_q > 0) then
+      insert into stock_adjustments (
+        stock_entry_id, vendor_id, product_id, batch_id,
+        previous_qty, new_qty, change_qty, reason_code, notes, performed_by
+      ) values (
+        new.id, new.vendor_id, new.product_id, new.batch_id,
+        0, new_q, new_q, 'initial_stock', new.notes, auth.uid()
+      );
+    end if;
+  end if;
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trg_stock_adjustment on stock_entries;
+create trigger trg_stock_adjustment
+after insert or update on stock_entries
+for each row execute function record_stock_adjustment();
+
 -- ============================================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================================
 
 alter table vendors enable row level security;
 alter table products enable row level security;
+alter table product_batches enable row level security;
 alter table stock_entries enable row level security;
 alter table stock_history enable row level security;
+alter table stock_adjustments enable row level security;
 alter table reorder_requests enable row level security;
 alter table product_visibility enable row level security;
 alter table announcements enable row level security;
@@ -166,6 +259,13 @@ create policy "products_select_all" on products for select using (true);
 drop policy if exists "products_admin_write" on products;
 create policy "products_admin_write" on products for all using (is_admin()) with check (is_admin());
 
+-- --- product_batches table policies ---
+drop policy if exists "batches_select_all" on product_batches;
+create policy "batches_select_all" on product_batches for select using (true);
+
+drop policy if exists "batches_admin_write" on product_batches;
+create policy "batches_admin_write" on product_batches for all using (is_admin()) with check (is_admin());
+
 -- --- stock_entries table policies ---
 drop policy if exists "stock_select" on stock_entries;
 create policy "stock_select" on stock_entries for select using (is_admin() or vendor_id = my_vendor_id());
@@ -185,6 +285,13 @@ create policy "history_select" on stock_history for select using (is_admin() or 
 
 drop policy if exists "history_insert" on stock_history;
 create policy "history_insert" on stock_history for insert with check (is_admin() or vendor_id = my_vendor_id());
+
+-- --- stock_adjustments table policies ---
+drop policy if exists "adjustments_select" on stock_adjustments;
+create policy "adjustments_select" on stock_adjustments for select using (is_admin() or vendor_id = my_vendor_id());
+
+drop policy if exists "adjustments_insert" on stock_adjustments;
+create policy "adjustments_insert" on stock_adjustments for insert with check (is_admin() or vendor_id = my_vendor_id());
 
 -- --- reorder_requests table policies ---
 drop policy if exists "reorder_select" on reorder_requests;
@@ -227,18 +334,31 @@ create policy "reads_insert_update" on announcement_reads for all using (is_admi
 do $$
 begin
   if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
-    alter publication supabase_realtime add table stock_entries, reorder_requests, vendors, products, product_visibility, announcements, announcement_reads;
+    alter publication supabase_realtime add table stock_entries, reorder_requests, vendors, products, product_batches, stock_adjustments, product_visibility, announcements, announcement_reads;
   end if;
 exception
   when others then null; -- ignore if already added or publication missing
 end $$;
 
 -- ============================================================
--- SAMPLE DATA CATALOG
--- Seed sample products to populate the catalog
+-- SAMPLE DATA CATALOG & BATCHES
+-- Seed sample products and batches
 -- ============================================================
-insert into products (name, sku, category, low_stock_threshold) values
-  ('Omega-3 Krill Oil 60caps', 'CF-OMG-060', 'Supplements', 15),
-  ('Multivitamin Daily 30tabs', 'CF-MVD-030', 'Supplements', 20),
-  ('Ashwagandha 500mg 60caps', 'CF-ASH-060', 'Supplements', 15)
-on conflict (sku) do nothing;
+insert into products (name, sku, category, low_stock_threshold, cost_price, selling_price, barcode) values
+  ('Omega-3 Krill Oil 60caps', 'CF-OMG-060', 'Supplements', 15, 12.50, 24.99, '8901234567890'),
+  ('Multivitamin Daily 30tabs', 'CF-MVD-030', 'Supplements', 20, 5.00, 12.00, '8901234567891'),
+  ('Ashwagandha 500mg 60caps', 'CF-ASH-060', 'Supplements', 15, 8.00, 18.50, '8901234567892')
+on conflict (sku) do update set
+  cost_price = excluded.cost_price,
+  selling_price = excluded.selling_price,
+  barcode = excluded.barcode;
+
+insert into product_batches (product_id, batch_number, mfg_date, expiry_date, cost_price, selling_price, initial_quantity, status)
+select id, 'BATCH-2026-A1', '2025-01-15', '2027-01-15', cost_price, selling_price, 500, 'active'
+from products where sku = 'CF-OMG-060'
+on conflict (product_id, batch_number) do nothing;
+
+insert into product_batches (product_id, batch_number, mfg_date, expiry_date, cost_price, selling_price, initial_quantity, status)
+select id, 'BATCH-2026-B2', '2025-03-01', '2026-09-01', cost_price, selling_price, 300, 'active'
+from products where sku = 'CF-MVD-030'
+on conflict (product_id, batch_number) do nothing;

@@ -1,0 +1,23 @@
+{
+  "name": "CureForever Inventory System",
+  "short_name": "CureForever",
+  "description": "Enterprise Pharmaceutical & Supplement Inventory Platform",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0F1F3D",
+  "theme_color": "#0F1F3D",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3063/3063822.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3063/3063822.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
