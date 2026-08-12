@@ -58,6 +58,23 @@ export default function ProductModal({ product }: { product: Product | null }) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!product) return;
+    if (confirm(`Are you sure you want to delete product "${product.name}"? This action cannot be undone.`)) {
+      setBusy(true);
+      try {
+        await api.deleteProductRow(product.id);
+        await refreshAll();
+        toast("Product deleted");
+        closeModal();
+      } catch (err) {
+        toast("Delete failed: " + (err as Error).message);
+      } finally {
+        setBusy(false);
+      }
+    }
+  };
+
   return (
     <div>
       <button className="modal-close" onClick={closeModal}>
@@ -99,13 +116,25 @@ export default function ProductModal({ product }: { product: Product | null }) {
       </div>
       <label>Description</label>
       <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
-      <div className="modal-actions">
-        <button className="btn-secondary" onClick={closeModal}>
-          Cancel
-        </button>
-        <button className="save-btn" onClick={() => void save()} disabled={busy}>
-          {busy ? "Saving…" : "Save"}
-        </button>
+      <div className="modal-actions" style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+        {product ? (
+          <button
+            type="button"
+            onClick={() => void handleDelete()}
+            disabled={busy}
+            style={{ background: "transparent", color: "#B3261E", border: "1px solid #B3261E", padding: "8px 14px", borderRadius: 3, cursor: "pointer", fontSize: 13 }}
+          >
+            Delete Product
+          </button>
+        ) : <div />}
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn-secondary" onClick={closeModal}>
+            Cancel
+          </button>
+          <button className="save-btn" onClick={() => void save()} disabled={busy}>
+            {busy ? "Saving…" : "Save"}
+          </button>
+        </div>
       </div>
     </div>
   );

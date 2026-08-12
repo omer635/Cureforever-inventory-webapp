@@ -2,11 +2,24 @@
 
 import React, { useMemo, useState } from "react";
 import { useApp } from "@/components/AppProvider";
+import * as api from "@/lib/db";
 import { cleanText, downloadCSV, fmtDate, money } from "@/lib/utils";
 
 export default function AdminProducts() {
-  const { products, vendors, stockEntries, productBatches, visibilityMap, openModal, toast } = useApp();
+  const { products, vendors, stockEntries, productBatches, visibilityMap, openModal, toast, refreshAll } = useApp();
   const [search, setSearch] = useState("");
+
+  const handleDelete = async (id: string, name: string) => {
+    if (confirm(`Are you sure you want to delete product "${cleanText(name)}"? This action cannot be undone.`)) {
+      try {
+        await api.deleteProductRow(id);
+        await refreshAll();
+        toast("Product deleted successfully");
+      } catch (err) {
+        toast("Delete failed: " + (err as Error).message);
+      }
+    }
+  };
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -118,6 +131,9 @@ export default function AdminProducts() {
                       </button>
                       <button className="link-btn" onClick={() => openModal({ type: "restrict", productId: p.id })}>
                         Restrict
+                      </button>
+                      <button className="link-btn" style={{ color: "#B3261E" }} onClick={() => handleDelete(p.id, p.name)}>
+                        Delete
                       </button>
                     </div>
                   </td>

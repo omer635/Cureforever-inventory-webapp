@@ -179,6 +179,14 @@ export async function updateProduct(id: string, payload: Record<string, unknown>
   if (error) throw new Error(error.message);
 }
 
+export async function deleteProductRow(id: string): Promise<void> {
+  const sb = getSupabase();
+  await sb.from("vendor_product_visibility").delete().eq("product_id", id);
+  await sb.from("stock_entries").delete().eq("product_id", id);
+  const { error } = await sb.from("products").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 export async function createVendor(payload: Record<string, unknown>): Promise<Vendor> {
   const sb = getSupabase();
   const { data, error } = await sb.from("vendors").insert(payload).select().single();
