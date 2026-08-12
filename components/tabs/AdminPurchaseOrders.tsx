@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useApp } from "@/components/AppProvider";
 import * as api from "@/lib/db";
 import type { PurchaseOrder } from "@/lib/types";
 
 export default function AdminPurchaseOrders() {
-  const { purchaseOrders, vendors, openModal, toast, refreshAll, isOnline, queueOp } = useApp();
+  const { purchaseOrders, vendors, notifications, openModal, toast, refreshAll, isOnline, queueOp } = useApp();
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [expandedPO, setExpandedPO] = useState<string | null>(null);
 
   const filteredPOs = purchaseOrders.filter((po) => {
     const matchesStatus = filterStatus === "all" || po.status === filterStatus;
@@ -18,13 +19,19 @@ export default function AdminPurchaseOrders() {
     return matchesStatus && matchesSearch;
   });
 
-  const vendorMap = React.useMemo(() => {
+  const vendorMap = useMemo(() => {
     const map: Record<string, string> = {};
     vendors.forEach((v) => {
       map[v.id] = v.name;
     });
     return map;
   }, [vendors]);
+
+  // Count unread PO-module notifications for the summary
+  const unreadPONotifs = useMemo(
+    () => notifications.filter((n) => n.module === "purchase_orders" && !n.is_read).length,
+    [notifications]
+  );
 
   const handleStatusChange = async (po: PurchaseOrder, newStatus: string) => {
     try {
@@ -66,11 +73,25 @@ export default function AdminPurchaseOrders() {
     }
   };
 
+  /** Extract vendor notes from the combined notes string */
+  const extractVendorNotes = (notes: string | null): string[] => {
+    if (!notes) return [];
+    return notes
+      .split("\n")
+      .filter((line) => line.includes("[Vendor Note]:"))
+      .map((line) => line.replace("[Vendor Note]:", "").trim());
+  };
+
   return (
     <div className="tab-pane active" style={{ animation: "fadeIn 0.2s ease" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h2 style={{ margin: 0, color: "#0F1F3D", fontSize: 20 }}>Purchase Orders & Vendor Procurement</h2>
+          <h2 style={{ margin: 0, color: "#0F1F3D", fontSize: 20, display: "flex", alignItems: "center", gap: 8 }}>
+            Purchase Orders & Vendor Procurement
+            {unreadPONotifs > 0 && (
+              <span className="notif-count-badge">{unreadPONotifs}</span>
+            )}
+          </h2>
           <p style={{ margin: "4px 0 0", color: "#5C6B73", fontSize: 13 }}>
             Issue purchase orders to vendor stores, track vendor acceptance, review revision requests, and receive inventory.
           </p>
@@ -133,56 +154,173 @@ export default function AdminPurchaseOrders() {
               ) : (
                 filteredPOs.map((po) => {
                   const badge = getStatusBadgeClass(po.status);
+                  const vendorNotes = extractVendorNotes(po.notes);
+                  const hasNotes = !!po.notes;
+                  const isExpanded = expandedPO === po.id;
+                  const isRevision = po.status === "revision_requested";
+
                   return (
-                    <tr key={po.id} style={{ borderBottom: "1px solid #F3F4F6", fontSize: 13 }}>
-                      <td style={{ padding: "12px 16px", fontWeight: 600, color: "#111827" }}>
-                        #{po.po_number}
-                        <div style={{ fontSize: 11, color: "#6B7280" }}>
-                          Created: {new Date(po.created_at).toLocaleDateString()}
-                        </div>
-                      </td>
-                      <td style={{ padding: "12px 16px", color: "#374151" }}>{po.supplier}</td>
-                      <td style={{ padding: "12px 16px", color: "#4B5563" }}>
-                        {vendorMap[po.destination_vendor_id] || "Main Warehouse"}
-                      </td>
-                      <td style={{ padding: "12px 16px", color: "#4B5563" }}>
-                        {po.expected_delivery ? new Date(po.expected_delivery).toLocaleDateString() : "Flexible"}
-                      </td>
-                      <td style={{ padding: "12px 16px" }}>
-                        <span style={{ background: badge.bg, color: badge.color, padding: "4px 8px", borderRadius: 4, fontWeight: 600, fontSize: 12 }}>
-                          {badge.label}
-                        </span>
-                      </td>
-                      <td style={{ padding: "12px 16px", textAlign: "right" }}>
-                        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                          <button
-                            className="btn-ghost"
-                            onClick={() => openModal({ type: "viewPO", po })}
-                            style={{ padding: "4px 8px", fontSize: 12 }}
-                          >
-                            View & Receive
-                          </button>
-                          {po.status === "draft" && (
+                    <React.Fragment key={po.id}>
+                      <tr
+                        style={{
+                          borderBottom: isExpanded ? "none" : "1px solid #F3F4F6",
+                          fontSize: 13,
+                          background: isRevision ? "#FFFBEB" : undefined,
+                          cursor: hasNotes ? "pointer" : undefined,
+                        }}
+                        onClick={() => hasNotes && setExpandedPO(isExpanded ? null : po.id)}
+                      >
+                        <td style={{ padding: "12px 16px", fontWeight: 600, color: "#111827" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            #{po.po_number}
+                            {isRevision && vendorNotes.length > 0 && (
+                              <span style={{ fontSize: 14 }} title="Has vendor revision message">💬</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 11, color: "#6B7280" }}>
+                            Created: {new Date(po.created_at).toLocaleDateString()}
+                          </div>
+                        </td>
+                        <td style={{ padding: "12px 16px", color: "#374151" }}>{po.supplier}</td>
+                        <td style={{ padding: "12px 16px", color: "#4B5563" }}>
+                          {vendorMap[po.destination_vendor_id] || "Main Warehouse"}
+                        </td>
+                        <td style={{ padding: "12px 16px", color: "#4B5563" }}>
+                          {po.expected_delivery ? new Date(po.expected_delivery).toLocaleDateString() : "Flexible"}
+                        </td>
+                        <td style={{ padding: "12px 16px" }}>
+                          <span style={{ background: badge.bg, color: badge.color, padding: "4px 8px", borderRadius: 4, fontWeight: 600, fontSize: 12 }}>
+                            {badge.label}
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }} onClick={(e) => e.stopPropagation()}>
                             <button
                               className="btn-ghost"
-                              onClick={() => void handleStatusChange(po, "sent")}
-                              style={{ padding: "4px 8px", fontSize: 12, color: "#1E40AF" }}
+                              onClick={() => openModal({ type: "viewPO", po })}
+                              style={{ padding: "4px 8px", fontSize: 12 }}
                             >
-                              Mark Sent
+                              View & Receive
                             </button>
-                          )}
-                          {po.status !== "fulfilled" && po.status !== "cancelled" && (
-                            <button
-                              className="btn-ghost"
-                              onClick={() => void handleStatusChange(po, "cancelled")}
-                              style={{ padding: "4px 8px", fontSize: 12, color: "#DC2626" }}
+                            {hasNotes && (
+                              <button
+                                className="btn-ghost"
+                                onClick={() => setExpandedPO(isExpanded ? null : po.id)}
+                                style={{
+                                  padding: "4px 8px",
+                                  fontSize: 12,
+                                  color: isRevision ? "#92400E" : "#2563EB",
+                                  background: isRevision ? "#FEF3C7" : undefined,
+                                  borderColor: isRevision ? "#FCD34D" : undefined,
+                                }}
+                              >
+                                {isExpanded ? "Hide Notes ▲" : "View Notes ▼"}
+                              </button>
+                            )}
+                            {po.status === "draft" && (
+                              <button
+                                className="btn-ghost"
+                                onClick={() => void handleStatusChange(po, "sent")}
+                                style={{ padding: "4px 8px", fontSize: 12, color: "#1E40AF" }}
+                              >
+                                Mark Sent
+                              </button>
+                            )}
+                            {po.status !== "fulfilled" && po.status !== "cancelled" && (
+                              <button
+                                className="btn-ghost"
+                                onClick={() => void handleStatusChange(po, "cancelled")}
+                                style={{ padding: "4px 8px", fontSize: 12, color: "#DC2626" }}
+                              >
+                                Cancel
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Expandable notes/revision row */}
+                      {isExpanded && po.notes && (
+                        <tr style={{ borderBottom: "1px solid #F3F4F6" }}>
+                          <td colSpan={6} style={{ padding: 0 }}>
+                            <div
+                              className="po-notes-expand"
+                              style={{
+                                margin: "0 16px 12px",
+                                padding: 16,
+                                borderRadius: 8,
+                                background: isRevision ? "#FEF3C7" : "#F0F9FF",
+                                border: `1px solid ${isRevision ? "#FCD34D" : "#BAE6FD"}`,
+                                animation: "slideDown 0.2s ease",
+                              }}
                             >
-                              Cancel
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
+                              {/* Vendor revision messages */}
+                              {vendorNotes.length > 0 && (
+                                <div style={{ marginBottom: vendorNotes.length > 0 && po.notes ? 12 : 0 }}>
+                                  <div style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    marginBottom: 8,
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    color: "#92400E",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                  }}>
+                                    💬 Vendor Revision Message{vendorNotes.length > 1 ? "s" : ""}
+                                  </div>
+                                  {vendorNotes.map((note, idx) => (
+                                    <div
+                                      key={idx}
+                                      style={{
+                                        padding: "10px 14px",
+                                        background: "#FFFFFF",
+                                        borderRadius: 6,
+                                        border: "1px solid #FDE68A",
+                                        fontSize: 13,
+                                        color: "#1F2937",
+                                        lineHeight: 1.5,
+                                        marginBottom: idx < vendorNotes.length - 1 ? 8 : 0,
+                                        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                                      }}
+                                    >
+                                      {note}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Full notes (including admin's original notes) */}
+                              <div>
+                                <div style={{
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  color: isRevision ? "#78350F" : "#0369A1",
+                                  marginBottom: 6,
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.5px",
+                                }}>
+                                  📋 Full Notes & Instructions
+                                </div>
+                                <div style={{
+                                  padding: "10px 14px",
+                                  background: "#FFFFFF",
+                                  borderRadius: 6,
+                                  border: `1px solid ${isRevision ? "#FDE68A" : "#BAE6FD"}`,
+                                  fontSize: 13,
+                                  color: "#334155",
+                                  lineHeight: 1.5,
+                                  whiteSpace: "pre-wrap",
+                                }}>
+                                  {po.notes}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })
               )}

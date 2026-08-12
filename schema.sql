@@ -553,3 +553,35 @@ create policy "transfers_update" on stock_transfers for update using (is_admin()
 
 drop policy if exists "transfers_delete" on stock_transfers;
 create policy "transfers_delete" on stock_transfers for delete using (is_admin());
+
+-- ─── NOTIFICATIONS ──────────────────────────────────────────────────────────
+create table if not exists notifications (
+  id            uuid default gen_random_uuid() primary key,
+  vendor_id     uuid references vendors(id) on delete cascade,  -- NULL = admin-targeted
+  title         text not null,
+  message       text not null,
+  module        text not null,        -- 'purchase_orders','transfers','announcements','stock','batches'
+  module_ref_id text,                 -- optional reference to the specific record (PO id, transfer id, etc.)
+  is_read       boolean default false,
+  created_at    timestamptz default now()
+);
+
+alter table notifications enable row level security;
+
+drop policy if exists "notifications_select" on notifications;
+create policy "notifications_select" on notifications for select using (
+  is_admin() and vendor_id is null      -- admins see admin notifications
+  or vendor_id = my_vendor_id()         -- vendors see their own
+);
+
+drop policy if exists "notifications_insert" on notifications;
+create policy "notifications_insert" on notifications for insert with check (true);
+
+drop policy if exists "notifications_update" on notifications;
+create policy "notifications_update" on notifications for update using (
+  is_admin() and vendor_id is null
+  or vendor_id = my_vendor_id()
+);
+
+drop policy if exists "notifications_delete" on notifications;
+create policy "notifications_delete" on notifications for delete using (is_admin());

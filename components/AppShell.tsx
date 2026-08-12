@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useApp } from "@/components/AppProvider";
 import { ADMIN_TAB_LABELS } from "@/lib/constants";
 import VendorDashboard from "@/components/VendorDashboard";
@@ -17,11 +17,47 @@ import AdminTransfers from "@/components/tabs/AdminTransfers";
 import AdminAuditLogs from "@/components/tabs/AdminAuditLogs";
 import ModalHost from "@/components/ModalHost";
 
+const MODULE_ICON: Record<string, string> = {
+  purchase_orders: "📑",
+  transfers: "🚚",
+  announcements: "📢",
+  stock: "📦",
+  batches: "🧪",
+};
+
+const MODULE_LABEL: Record<string, string> = {
+  purchase_orders: "Purchase Orders",
+  transfers: "Stock Transfers",
+  announcements: "Announcements",
+  stock: "Stock",
+  batches: "Batches",
+};
+
+/** Map notification module to the sidebar tab id */
+const MODULE_TO_TAB: Record<string, string> = {
+  purchase_orders: "pos",
+  transfers: "transfers",
+  announcements: "announcements",
+  stock: "allstock",
+  batches: "batches",
+};
+
+function timeAgo(date: string): string {
+  const now = Date.now();
+  const then = new Date(date).getTime();
+  const diff = Math.max(0, Math.floor((now - then) / 1000));
+  if (diff < 60) return "Just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
 export default function AppShell() {
   const {
     announcements,
     announcementReads,
     reorderRequests,
+    notifications,
     session,
     vendorRow,
     isAdmin,
@@ -29,10 +65,27 @@ export default function AppShell() {
     offlineOps,
     logout,
     openModal,
+    markNotifRead,
+    markAllNotifsRead,
   } = useApp();
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  // Close notification dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifDropdownOpen(false);
+      }
+    };
+    if (notifDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [notifDropdownOpen]);
 
   const vendorReads = useMemo(
     () => new Set((announcementReads || []).filter((r) => r.vendor_id === vendorRow?.id).map((r) => r.announcement_id)),
@@ -49,7 +102,22 @@ export default function AppShell() {
     [reorderRequests]
   );
 
+  const unreadNotifications = useMemo(
+    () => notifications.filter((n) => !n.is_read),
+    [notifications]
+  );
+
+  // Count unread per module for sidebar badges
+  const unreadByModule = useMemo(() => {
+    const map: Record<string, number> = {};
+    unreadNotifications.forEach((n) => {
+      map[n.module] = (map[n.module] || 0) + 1;
+    });
+    return map;
+  }, [unreadNotifications]);
+
   const alertBadgeCount = isAdmin ? unreadAnnouncementsCount + pendingReordersCount : unreadAnnouncementsCount;
+  const totalNotifCount = unreadNotifications.length;
 
   const handleNavigate = (tab: string, vendorId?: string) => {
     setActiveTab(tab);
@@ -57,6 +125,13 @@ export default function AppShell() {
       setSelectedVendorId(vendorId);
     }
     setMobileNavOpen(false);
+  };
+
+  const handleNotifClick = (notifId: string, module: string) => {
+    void markNotifRead(notifId);
+    const tabId = MODULE_TO_TAB[module] || "dashboard";
+    setActiveTab(tabId);
+    setNotifDropdownOpen(false);
   };
 
   if (!vendorRow) {
@@ -96,16 +171,16 @@ export default function AppShell() {
     {
       title: "Inventory & Products",
       items: [
-        { id: "allstock", label: "All Stock", icon: "📦" },
+        { id: "allstock", label: "All Stock", icon: "📦", module: "stock" },
         { id: "products", label: "Products Catalog", icon: "🏷️" },
-        { id: "batches", label: "Batches & Compliance", icon: "🧪" },
+        { id: "batches", label: "Batches & Compliance", icon: "🧪", module: "batches" },
       ],
     },
     {
       title: "Logistics & Orders",
       items: [
-        { id: "pos", label: "Purchase Orders", icon: "📑" },
-        { id: "transfers", label: "Stock Transfers", icon: "🚚" },
+        { id: "pos", label: "Purchase Orders", icon: "📑", module: "purchase_orders" },
+        { id: "transfers", label: "Stock Transfers", icon: "🚚", module: "transfers" },
       ],
     },
     {
@@ -119,7 +194,7 @@ export default function AppShell() {
       title: "Administration",
       items: [
         { id: "vendors", label: "Vendor Locations", icon: "🏬" },
-        { id: "announcements", label: "Announcements", icon: "📢" },
+        { id: "announcements", label: "Announcements", icon: "📢", module: "announcements" },
       ],
     },
   ];
@@ -147,19 +222,27 @@ export default function AppShell() {
               {navGroups.map((group) => (
                 <div key={group.title}>
                   <div className="nav-section-title">{group.title}</div>
-                  {group.items.map((item) => (
-                    <button
-                      key={item.id}
-                      className={`sidebar-link ${activeTab === item.id ? "active" : ""}`}
-                      onClick={() => {
-                        setActiveTab(item.id);
-                        setMobileNavOpen(false);
-                      }}
-                    >
-                      <span style={{ fontSize: 15 }}>{item.icon}</span>
-                      <span>{item.label}</span>
-                    </button>
-                  ))}
+                  {group.items.map((item) => {
+                    const moduleCount = (item as { module?: string }).module
+                      ? unreadByModule[(item as { module?: string }).module!] || 0
+                      : 0;
+                    return (
+                      <button
+                        key={item.id}
+                        className={`sidebar-link ${activeTab === item.id ? "active" : ""}`}
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          setMobileNavOpen(false);
+                        }}
+                      >
+                        <span style={{ fontSize: 15 }}>{item.icon}</span>
+                        <span>{item.label}</span>
+                        {moduleCount > 0 && (
+                          <span className="sidebar-notif-badge">{moduleCount}</span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               ))}
             </div>
@@ -239,6 +322,83 @@ export default function AppShell() {
                 </button>
               )}
 
+              {/* === NOTIFICATION BELL === */}
+              <div ref={notifRef} style={{ position: "relative" }}>
+                <button
+                  className="btn-ghost notif-bell-btn"
+                  onClick={() => setNotifDropdownOpen((prev) => !prev)}
+                  title={`${totalNotifCount} unread notification${totalNotifCount === 1 ? "" : "s"}`}
+                  style={{
+                    color: "#0F1F3D",
+                    borderColor: totalNotifCount > 0 ? "#B8935A" : "#CBD5E1",
+                    background: totalNotifCount > 0 ? "#FFFBEB" : "#F8FAFC",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontWeight: 600,
+                    position: "relative",
+                  }}
+                >
+                  🔔 Notifications
+                  {totalNotifCount > 0 && (
+                    <span className="notif-count-badge">
+                      {totalNotifCount > 99 ? "99+" : totalNotifCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notification Dropdown Panel */}
+                {notifDropdownOpen && (
+                  <div className="notif-dropdown">
+                    <div className="notif-dropdown-header">
+                      <span style={{ fontWeight: 700, fontSize: 14, color: "#0F1F3D" }}>
+                        Notifications
+                      </span>
+                      {unreadNotifications.length > 0 && (
+                        <button
+                          className="notif-mark-all-btn"
+                          onClick={() => void markAllNotifsRead()}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="notif-dropdown-body">
+                      {notifications.length === 0 ? (
+                        <div className="notif-empty">
+                          <span style={{ fontSize: 28 }}>🔔</span>
+                          <p>No notifications yet</p>
+                        </div>
+                      ) : (
+                        notifications.slice(0, 30).map((n) => (
+                          <button
+                            key={n.id}
+                            className={`notif-item ${!n.is_read ? "notif-unread" : ""}`}
+                            onClick={() => handleNotifClick(n.id, n.module)}
+                          >
+                            <div className="notif-item-icon">
+                              {MODULE_ICON[n.module] || "📋"}
+                            </div>
+                            <div className="notif-item-content">
+                              <div className="notif-item-title">{n.title}</div>
+                              <div className="notif-item-msg">{n.message}</div>
+                              <div className="notif-item-meta">
+                                <span className="notif-module-tag">
+                                  {MODULE_LABEL[n.module] || n.module}
+                                </span>
+                                <span>{timeAgo(n.created_at)}</span>
+                              </div>
+                            </div>
+                            {!n.is_read && <div className="notif-unread-dot" />}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button
                 className="btn-ghost"
                 onClick={() => openModal({ type: "alerts" })}
@@ -253,7 +413,7 @@ export default function AppShell() {
                   fontWeight: 600,
                 }}
               >
-                🔔 Alerts
+                ⚠️ Alerts
                 {alertBadgeCount > 0 && (
                   <span
                     style={{

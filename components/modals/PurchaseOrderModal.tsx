@@ -28,6 +28,28 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
       } else {
         await api.updatePOStatus(po.id, newStatus);
       }
+
+      // Auto-create notification for admin
+      const vendorName = vendors.find((v) => v.id === po.destination_vendor_id)?.name || "Vendor";
+      const statusLabels: Record<string, string> = {
+        accepted: "accepted",
+        revision_requested: "requested a revision on",
+        rejected: "declined",
+      };
+      const actionLabel = statusLabels[newStatus];
+      if (actionLabel) {
+        const message = newStatus === "revision_requested" && noteToAppend
+          ? `${vendorName} ${actionLabel} PO #${po.po_number}: "${noteToAppend}"`
+          : `${vendorName} ${actionLabel} PO #${po.po_number}`;
+        await api.createNotification({
+          vendor_id: null, // null = for admin
+          title: `PO #${po.po_number} — ${newStatus.replace("_", " ").toUpperCase()}`,
+          message,
+          module: "purchase_orders",
+          module_ref_id: po.id,
+        });
+      }
+
       toast(`PO #${po.po_number} status updated to ${newStatus.replace("_", " ").toUpperCase()}`);
       await refreshAll();
       closeModal();
@@ -82,6 +104,18 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
     try {
       if (isOnline) {
         await api.createPurchaseOrder(poPayload, itemsPayload);
+
+        // Notify the destination vendor about the new PO
+        if (destinationVendorId) {
+          const destName = vendors.find((v) => v.id === destinationVendorId)?.name || "Store";
+          await api.createNotification({
+            vendor_id: destinationVendorId,
+            title: `New PO #${poNumber} from Main Supplier`,
+            message: `A new purchase order with ${items.length} line item${items.length > 1 ? "s" : ""} has been sent to ${destName}. Please review and respond.`,
+            module: "purchase_orders",
+          });
+        }
+
         toast(`Purchase Order #${poNumber} created & sent!`);
         await refreshAll();
       } else {
@@ -152,7 +186,18 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
           const items = po.items || [];
           const stillPending = items.some((it) => it.id !== item.id && it.quantity_received < it.quantity_ordered);
           const fullyReceived = !stillPending && newReceived >= item.quantity_ordered;
-          await api.updatePOStatus(po.id, fullyReceived ? "fulfilled" : "partially_received");
+          const newStatus = fullyReceived ? "fulfilled" : "partially_received";
+          await api.updatePOStatus(po.id, newStatus);
+
+          // Notify HQ Admin about PO receipt
+          const destName = vendors.find((v) => v.id === po.destination_vendor_id)?.name || "Vendor";
+          await api.createNotification({
+            vendor_id: null, // HQ Admin
+            title: `PO #${po.po_number} ${fullyReceived ? "Fully Received" : "Partially Received"}`,
+            message: `${destName} received ${qty} × ${prod.name}. Status: ${newStatus.toUpperCase()}`,
+            module: "purchase_orders",
+            module_ref_id: po.id,
+          });
         }
         toast(`Received ${qty} units into inventory batch!`);
         await refreshAll();

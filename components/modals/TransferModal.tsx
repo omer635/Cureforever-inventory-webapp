@@ -42,6 +42,17 @@ export default function TransferModal() {
     try {
       if (isOnline) {
         await api.createStockTransfer(payload);
+
+        // Notify target vendor about incoming transfer
+        const prodName = products.find((p) => p.id === productId)?.name || "Product";
+        const sourceName = vendors.find((v) => v.id === sourceVendorId)?.name || "Source";
+        await api.createNotification({
+          vendor_id: targetVendorId,
+          title: `Incoming Transfer: ${quantity} × ${prodName}`,
+          message: `A stock transfer of ${quantity} units from ${sourceName} is pending your approval.`,
+          module: "transfers",
+        });
+
         toast("Stock transfer request submitted!");
         await refreshAll();
       } else {

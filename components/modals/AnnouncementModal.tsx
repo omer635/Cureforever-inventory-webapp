@@ -5,7 +5,7 @@ import { useApp } from "@/components/AppProvider";
 import * as api from "@/lib/db";
 
 export default function AnnouncementModal() {
-  const { closeModal, toast, refreshAll, isAdmin } = useApp();
+  const { closeModal, toast, refreshAll, isAdmin, vendors: allVendors } = useApp();
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [blocking, setBlocking] = useState(false);
@@ -30,6 +30,18 @@ export default function AnnouncementModal() {
         is_blocking: blocking,
         created_at: new Date().toISOString(),
       });
+
+      // Notify all vendor stores about the new announcement
+      const vendorStores = allVendors.filter((v) => !v.is_admin);
+      for (const v of vendorStores) {
+        await api.createNotification({
+          vendor_id: v.id,
+          title: `📢 ${title.trim()}`,
+          message: message.trim().slice(0, 200),
+          module: "announcements",
+        });
+      }
+
       await refreshAll();
       toast("Announcement published");
       closeModal();

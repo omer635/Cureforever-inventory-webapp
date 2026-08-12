@@ -8,6 +8,7 @@ import * as api from "@/lib/db";
 import type {
   Announcement,
   AnnouncementRead,
+  AppNotification,
   Currency,
   ModalState,
   OfflineOp,
@@ -49,6 +50,7 @@ interface AppContextValue {
   announcementReads: AnnouncementRead[];
   purchaseOrders: PurchaseOrder[];
   stockTransfers: StockTransfer[];
+  notifications: AppNotification[];
   currency: Currency;
   setCurrency: (c: Currency) => void;
   valuationModel: ValuationModel;
@@ -65,6 +67,8 @@ interface AppContextValue {
   queueOp: (op: OfflineOp) => void;
   flushQueue: () => Promise<void>;
   updateVendorRow: (v: Vendor | null) => void;
+  markNotifRead: (id: string) => Promise<void>;
+  markAllNotifsRead: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -122,6 +126,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [announcementReads, setAnnouncementReads] = useState<AnnouncementRead[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [stockTransfers, setStockTransfers] = useState<StockTransfer[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [currency, setCurrency] = useState<Currency>("INR");
   const [valuationModel, setValuationModel] = useState<ValuationModel>("weighted_avg");
   const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== "undefined" ? navigator.onLine : true);
@@ -164,6 +169,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAnnouncementReads(data.announcementReads);
     setPurchaseOrders(data.purchaseOrders || []);
     setStockTransfers(data.stockTransfers || []);
+    setNotifications(data.notifications || []);
     saveCache({ ...data, savedAt: Date.now() });
   }, []);
 
@@ -233,6 +239,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const openModal = useCallback((m: ModalState) => setModal(m), []);
   const closeModal = useCallback(() => setModal(null), []);
   const updateVendorRow = useCallback((v: Vendor | null) => setVendorRow(v), []);
+
+  const markNotifRead = useCallback(async (id: string) => {
+    try {
+      await api.markNotificationRead(id);
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
+    } catch { /* silent */ }
+  }, []);
+
+  const markAllNotifsRead = useCallback(async () => {
+    try {
+      await api.markAllNotificationsRead(vendorRow?.is_admin ? null : vendorRow?.id ?? null);
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    } catch { /* silent */ }
+  }, [vendorRow]);
 
   // Global Ctrl+K / Cmd+K listener for Command Palette
   useEffect(() => {
@@ -348,6 +368,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setAnnouncementReads(cached.announcementReads ?? []);
           setPurchaseOrders(cached.purchaseOrders ?? []);
           setStockTransfers(cached.stockTransfers ?? []);
+          setNotifications(cached.notifications ?? []);
         }
         await resolveVendorRow(s);
         try {
@@ -428,6 +449,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "announcement_reads" }, () => {
         void refreshAll();
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => {
+        void refreshAll();
+      })
       .subscribe();
 
     return () => {
@@ -453,6 +477,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     announcementReads,
     purchaseOrders,
     stockTransfers,
+    notifications,
     currency,
     setCurrency,
     valuationModel,
@@ -469,6 +494,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     queueOp,
     flushQueue,
     updateVendorRow,
+    markNotifRead,
+    markAllNotifsRead,
   };
 
   return (

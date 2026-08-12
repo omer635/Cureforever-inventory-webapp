@@ -4,6 +4,7 @@ import { getSupabase } from "./supabase";
 import type {
   Announcement,
   AnnouncementRead,
+  AppNotification,
   Product,
   ProductBatch,
   ProductVisibility,
@@ -29,6 +30,7 @@ export interface AllData {
   announcementReads: AnnouncementRead[];
   purchaseOrders: PurchaseOrder[];
   stockTransfers: StockTransfer[];
+  notifications: AppNotification[];
 }
 
 export async function fetchAll(): Promise<AllData> {
@@ -66,6 +68,16 @@ export async function fetchAll(): Promise<AllData> {
     /* Safe fallback if table does not exist yet */
   }
 
+  let notifications: AppNotification[] = [];
+  try {
+    const nRes = await sb.from("notifications").select("*").order("created_at", { ascending: false }).limit(100);
+    if (!nRes.error && nRes.data) {
+      notifications = nRes.data as AppNotification[];
+    }
+  } catch {
+    /* Safe fallback if table does not exist yet */
+  }
+
   const products = (p.data as Product[]) || [];
   const productBatches = (pb.data as ProductBatch[]) || [];
   const vendors = (v.data as Vendor[]) || [];
@@ -88,6 +100,7 @@ export async function fetchAll(): Promise<AllData> {
     announcementReads: (ar.data as AnnouncementRead[]) || [],
     purchaseOrders,
     stockTransfers,
+    notifications,
   };
 }
 
@@ -443,5 +456,48 @@ export async function updateTransferStatus(transfer: StockTransfer, status: stri
     await adjustStockQuantity(transfer.target_vendor_id, transfer.product_id, transfer.quantity, "transfer_in", transfer.batch_id);
   }
   const { error } = await sb.from("stock_transfers").update({ status, updated_at: new Date().toISOString() }).eq("id", transfer.id);
+  if (error) throw new Error(error.message);
+}
+
+// ─── NOTIFICATIONS ──────────────────────────────────────────────────────────
+
+export async function createNotification(payload: {
+  vendor_id?: string | null;
+  title: string;
+  message: string;
+  module: string;
+  module_ref_id?: string | null;
+}): Promise<void> {
+  const sb = getSupabase();
+  try {
+    await sb.from("notifications").insert({
+      vendor_id: payload.vendor_id ?? null,
+      title: payload.title,
+      message: payload.message,
+      module: payload.module,
+      module_ref_id: payload.module_ref_id ?? null,
+    });
+  } catch {
+    /* Silently fail if table doesn't exist yet */
+  }
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  const sb = getSupabase();
+  const { error } = await sb.from("notifications").update({ is_read: true }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function markAllNotificationsRead(vendorId: string | null): Promise<void> {
+  const sb = getSupabase();
+  const query = sb.from("notifications").update({ is_read: true }).eq("is_read", false);
+  if (vendorId) {
+    // Vendor: mark their own
+    query.eq("vendor_id", vendorId);
+  } else {
+    // Admin: mark admin notifications (vendor_id IS NULL)
+    query.is("vendor_id", null);
+  }
+  const { error } = await query;
   if (error) throw new Error(error.message);
 }

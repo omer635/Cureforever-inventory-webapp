@@ -146,6 +146,19 @@ export interface StockTransfer {
   updated_at: string;
 }
 
+export type NotificationModule = "purchase_orders" | "transfers" | "announcements" | "stock" | "batches";
+
+export interface AppNotification {
+  id: string;
+  vendor_id: string | null;
+  title: string;
+  message: string;
+  module: NotificationModule;
+  module_ref_id: string | null;
+  is_read: boolean;
+  created_at: string;
+}
+
 export type ValuationModel = "weighted_avg" | "fifo" | "lifo";
 
 export type Currency = "USD" | "EUR" | "GBP" | "INR" | "CAD";
@@ -156,7 +169,8 @@ export type OfflineOp =
   | { type: "announcement_read"; data: Record<string, unknown> }
   | { type: "purchase_order_create"; data: Record<string, unknown> }
   | { type: "transfer_create"; data: Record<string, unknown> }
-  | { type: "transfer_status_update"; data: { transfer: StockTransfer; status: string } };
+  | { type: "transfer_status_update"; data: { transfer: StockTransfer; status: string } }
+  | { type: "notification_read"; data: { id: string } };
 
 export interface RestoreCache {
   products: Product[];
@@ -171,6 +185,7 @@ export interface RestoreCache {
   announcementReads: AnnouncementRead[];
   purchaseOrders?: PurchaseOrder[];
   stockTransfers?: StockTransfer[];
+  notifications?: AppNotification[];
   savedAt: number;
 }
 
