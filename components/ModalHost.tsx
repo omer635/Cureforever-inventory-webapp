@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useApp } from "@/components/AppProvider";
 import ProfileModal from "@/components/modals/ProfileModal";
 import AlertsModal from "@/components/modals/AlertsModal";
@@ -20,6 +20,18 @@ import TransferModal from "@/components/modals/TransferModal";
 
 export default function ModalHost() {
   const { modal, closeModal, vendorRow } = useApp();
+
+  useEffect(() => {
+    if (!modal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [modal, closeModal]);
+
   if (!modal) return null;
 
   if (modal.type === "commandPalette") return <CommandPaletteModal />;

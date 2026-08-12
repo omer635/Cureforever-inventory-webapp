@@ -33,6 +33,28 @@ export function money(n: number | null | undefined, digits = 2): string {
   });
 }
 
+export function formatPrice(amount: number | null | undefined, currency: import("./types").Currency = "INR"): string {
+  const v = safeNum(amount);
+  const formatted = v.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  switch (currency) {
+    case "INR":
+      return `₹${formatted}`;
+    case "USD":
+      return `$${formatted}`;
+    case "EUR":
+      return `€${formatted}`;
+    case "GBP":
+      return `£${formatted}`;
+    case "CAD":
+      return `CA$${formatted}`;
+    default:
+      return `₹${formatted}`;
+  }
+}
+
 export function fmtDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   try {

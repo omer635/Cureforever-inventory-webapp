@@ -101,6 +101,12 @@ export default function CommandPaletteModal() {
             placeholder="Type a command, product, SKU, batch, or vendor (Press Esc to exit)..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                e.preventDefault();
+                closeModal();
+              }
+            }}
             style={{
               width: "100%",
               border: "none",
