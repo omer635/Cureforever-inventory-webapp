@@ -304,6 +304,26 @@ export async function updateVendor(id: string, payload: Record<string, unknown>)
   }
 }
 
+export async function updateVendorWithAuth(
+  id: string,
+  payload: Record<string, unknown>,
+  password?: string
+): Promise<void> {
+  const sb = getSupabase();
+  await updateVendor(id, payload);
+
+  if (password && password.trim().length >= 6) {
+    try {
+      const { data: v } = await sb.from("vendors").select("user_id").eq("id", id).single();
+      if (v?.user_id) {
+        await sb.auth.admin.updateUserById(v.user_id, { password: password.trim() });
+      }
+    } catch {
+      /* proceed */
+    }
+  }
+}
+
 export async function deleteVendorRow(id: string): Promise<void> {
   const sb = getSupabase();
   try {

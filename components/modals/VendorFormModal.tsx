@@ -21,8 +21,8 @@ export default function VendorFormModal({ vendor }: { vendor: Vendor | null }) {
       toast("Vendor name is required");
       return;
     }
-    if (!vendor && email.trim() && password && password.length < 6) {
-      toast("Password should be at least 6 characters long");
+    if (password && password.length < 6) {
+      toast("Password must be at least 6 characters long");
       return;
     }
 
@@ -37,12 +37,13 @@ export default function VendorFormModal({ vendor }: { vendor: Vendor | null }) {
     };
     try {
       if (vendor) {
-        await api.updateVendor(vendor.id, payload);
+        await api.updateVendorWithAuth(vendor.id, payload, password);
+        toast("Vendor account updated successfully");
       } else if (isAdmin) {
         await api.createVendorWithAuth({ ...payload, is_admin: isAdminV }, password);
+        toast("New vendor store created");
       }
       await refreshAll();
-      toast(vendor ? "Vendor updated" : "Vendor added");
       closeModal();
     } catch (err) {
       toast("Save failed: " + (err as Error).message);
@@ -56,46 +57,54 @@ export default function VendorFormModal({ vendor }: { vendor: Vendor | null }) {
       <button className="modal-close" onClick={closeModal}>
         ×
       </button>
-      <h3>{vendor ? "Edit Vendor Account" : "Add Vendor Location"}</h3>
-      <p className="modal-sub">Company or pharmacy vendor store credentials.</p>
-      <label>Vendor / Store Name</label>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Vendor / company name" />
-      <label>Phone Number</label>
-      <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="03xx-xxxxxxx" />
-      <label>Store Address / Location</label>
-      <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, city" />
+      <h3>{vendor ? "Edit Vendor Store Account" : "Add Vendor Location"}</h3>
+      <p className="modal-sub">Company or pharmacy vendor store credentials & location settings.</p>
+      
+      <div className="inline-form-grid">
+        <div>
+          <label>Vendor / Store Name</label>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Vendor / company name" />
+        </div>
+        <div>
+          <label>Contact Phone Number</label>
+          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="03xx-xxxxxxx" />
+        </div>
+      </div>
+
+      <label>Store Address & Location</label>
+      <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, City, State / Region" />
+
       <label>Email (Login Username)</label>
       <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vendor@cureforever.in" />
 
-      {!vendor && (
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <label style={{ margin: 0 }}>Login Password</label>
-            <button
-              type="button"
-              className="link-btn"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{ fontSize: 11, padding: 0 }}
-            >
-              {showPassword ? "Hide Password" : "Show Password"}
-            </button>
-          </div>
-          <input
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Assign password (min 6 characters)"
-            style={{ marginTop: 6 }}
-          />
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <label style={{ margin: 0 }}>{vendor ? "Update Login Password (Optional)" : "Login Password"}</label>
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => setShowPassword(!showPassword)}
+            style={{ fontSize: 11, padding: 0 }}
+          >
+            {showPassword ? "Hide Password" : "Show Password"}
+          </button>
         </div>
-      )}
+        <input
+          type={showPassword ? "text" : "password"}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={vendor ? "Leave blank to keep existing password" : "Assign password (min 6 characters)"}
+          style={{ marginTop: 6 }}
+        />
+      </div>
 
-      {!vendor && isAdmin && (
+      {isAdmin && (
         <div className="check-row" style={{ marginTop: 8 }}>
           <input type="checkbox" checked={isAdminV} onChange={(e) => setIsAdminV(e.target.checked)} />
           Administrator account (Full HQ Access)
         </div>
       )}
+
       <div className="modal-actions" style={{ marginTop: 20 }}>
         <button className="btn-secondary" onClick={closeModal}>
           Cancel

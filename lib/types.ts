@@ -48,6 +48,8 @@ export interface Vendor {
   phone: string | null;
   address: string | null;
   email: string | null;
+  state?: string | null;
+  contact_phone?: string | null;
   created_at: string;
 }
 
