@@ -67,6 +67,7 @@ export default function AppShell() {
     openModal,
     markNotifRead,
     markAllNotifsRead,
+    flushQueue,
   } = useApp();
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
@@ -298,9 +299,25 @@ export default function AppShell() {
 
             <div className="header-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
               {offlineOps.length > 0 && (
-                <span className="state-tag" style={{ background: "#FEF3C7", color: "#92400E", padding: "4px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
-                  {offlineOps.length} pending sync
-                </span>
+                <button
+                  onClick={() => void flushQueue()}
+                  title="Click to sync pending operations now"
+                  style={{
+                    background: "#FEF3C7",
+                    color: "#92400E",
+                    padding: "4px 10px",
+                    borderRadius: 4,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    border: "1px solid #FCD34D",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  ⚡ {offlineOps.length} pending sync (Sync now)
+                </button>
               )}
 
               <button

@@ -71,10 +71,12 @@ export interface ReorderRequest {
   id: string;
   vendor_id: string;
   product_id: string;
-  quantity: number;
+  quantity?: number;
+  requested_qty?: number;
   batch_id: string | null;
-  notes: string | null;
-  status: "pending" | "approved" | "rejected";
+  notes?: string | null;
+  note?: string | null;
+  status: "pending" | "approved" | "rejected" | "fulfilled";
   created_at: string;
 }
 

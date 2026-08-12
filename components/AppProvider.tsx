@@ -25,7 +25,7 @@ import type {
   ValuationModel,
   Vendor,
 } from "@/lib/types";
-import { uid } from "@/lib/utils";
+import { playNotificationSound, uid } from "@/lib/utils";
 
 interface ToastMsg {
   id: number;
@@ -152,6 +152,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const toast = useCallback((text: string) => {
     const id = ++toastIdRef.current;
     setToasts((t) => [...t, { id, text }]);
+    playNotificationSound("chime");
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200);
   }, []);
 
@@ -428,6 +429,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "purchase_orders" }, (payload) => {
         void refreshAll();
+        playNotificationSound("alert");
         if (payload.eventType === "INSERT") {
           const po = payload.new as { po_number?: string; destination_vendor_id?: string };
           toast(`📦 New Purchase Order #${po.po_number || ""} issued by Main Supplier!`);
@@ -438,9 +440,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "stock_transfers" }, () => {
         void refreshLight();
+        playNotificationSound("chime");
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "announcements" }, (payload) => {
         void refreshAll();
+        playNotificationSound("alert");
         if (payload.eventType === "INSERT") {
           const title = (payload.new as { title?: string })?.title || "New Alert";
           toast(`📢 New Broadcast: ${title}`);
@@ -449,8 +453,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "announcement_reads" }, () => {
         void refreshAll();
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, (payload) => {
         void refreshAll();
+        if (payload.eventType === "INSERT") {
+          playNotificationSound("alert");
+        }
       })
       .subscribe();
 

@@ -360,7 +360,15 @@ export async function deleteVendorRow(id: string): Promise<void> {
 
 export async function createReorder(payload: Record<string, unknown>): Promise<void> {
   const sb = getSupabase();
-  const { error } = await sb.from("reorder_requests").insert(payload);
+  const dbPayload = {
+    vendor_id: payload.vendor_id,
+    product_id: payload.product_id,
+    batch_id: payload.batch_id ?? null,
+    requested_qty: Number(payload.requested_qty ?? payload.quantity ?? 1),
+    note: (payload.note ?? payload.notes ?? "") || null,
+    status: (payload.status as string) || "pending",
+  };
+  const { error } = await sb.from("reorder_requests").insert(dbPayload);
   if (error) throw new Error(error.message);
 }
 

@@ -56,7 +56,8 @@ export default function AlertsModal() {
                 <div key={r.id} className="alert-item alert-warn">
                   <div className="alert-title">Reorder #{r.id.slice(0, 8)} · {vendor?.name || "Unknown vendor"}</div>
                   <div className="alert-meta">
-                    Quantity: {r.quantity} · {fmtDateTime(r.created_at)}
+                    Quantity: {r.requested_qty ?? r.quantity ?? 0} · {fmtDateTime(r.created_at)}
+                    {(r.note || r.notes) ? ` · Note: ${r.note || r.notes}` : ""}
                   </div>
                   <div className="alert-actions">
                     <button className="save-btn" onClick={() => void approve(r.id)}>

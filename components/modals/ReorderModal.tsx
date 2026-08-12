@@ -26,13 +26,24 @@ export default function ReorderModal({ entry }: { entry: StockEntry }) {
         vendor_id: vendorRow.id,
         product_id: product.id,
         batch_id: entry.batch_id,
+        requested_qty: quantity,
         quantity,
+        note: notes || null,
         notes: notes || null,
         status: "pending",
         created_at: new Date().toISOString(),
       };
       queueOp({ type: "reorder", data: payload });
       await api.createReorder(payload);
+
+      // Auto-notify HQ Admin of the reorder request
+      await api.createNotification({
+        vendor_id: null, // HQ Admin
+        title: `Reorder Request: ${product.name}`,
+        message: `${vendorRow.name} requested ${quantity} units of ${product.name}.${notes ? ` Note: "${notes}"` : ""}`,
+        module: "stock",
+      });
+
       await refreshAll();
       toast("Reorder request sent to admin");
       closeModal();
