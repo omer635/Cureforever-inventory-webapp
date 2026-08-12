@@ -17,6 +17,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "CureForever — Enterprise Inventory Platform",
   description: "CureForever enterprise inventory portal for vendors and administrators",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export const viewport: Viewport = {

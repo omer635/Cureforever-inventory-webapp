@@ -103,9 +103,12 @@ export default function AppShell() {
       <div className="app-container">
         {/* Sleek Side Navbar */}
         <aside className="sidebar">
-          <div className="sidebar-header">
-            <h1 className="sidebar-brand">CureForever</h1>
-            <div className="sidebar-sub">Enterprise Portal v2.0</div>
+          <div className="sidebar-header" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <img src="/logo.png" alt="CureForever Logo" style={{ width: 40, height: 40, borderRadius: "50%", border: "2px solid #B8935A", background: "#0F1F3D" }} />
+            <div>
+              <h1 className="sidebar-brand" style={{ fontSize: 21, lineHeight: 1 }}>CureForever</h1>
+              <div className="sidebar-sub" style={{ marginTop: 2 }}>Enterprise Portal v2.0</div>
+            </div>
           </div>
 
           {isAdmin ? (

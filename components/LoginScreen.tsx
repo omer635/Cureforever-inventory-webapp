@@ -36,8 +36,13 @@ export default function LoginScreen() {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <p className="brand">CureForever</p>
-        <p className="sub">Enterprise Inventory Portal</p>
+        <img
+          src="/logo.png"
+          alt="CureForever Logo"
+          style={{ width: 64, height: 64, borderRadius: "50%", margin: "0 auto 16px", display: "block", border: "2px solid #B8935A", background: "#0F1F3D" }}
+        />
+        <p className="brand" style={{ textAlign: "center" }}>CureForever</p>
+        <p className="sub" style={{ textAlign: "center" }}>Enterprise Inventory Portal</p>
         {error && <div className="err">{error}</div>}
         <form onSubmit={submit}>
           <label>Email</label>

@@ -152,9 +152,9 @@ export function computeVendorRows(
   allEntries.forEach((e) => {
     if (e.vendor_id !== vendorId) return;
     const product = products.find((p) => p.id === e.product_id);
-    if (!product || !e.batch_id) return;
+    if (!product) return;
     if (!isProductVisible(product.id, vendorId, visibilityMap)) return;
-    const batch = productBatches.find((b) => b.id === e.batch_id);
+    const batch = e.batch_id ? productBatches.find((b) => b.id === e.batch_id) : undefined;
     rows.push({ entry: e, product, batch });
   });
   return rows;
@@ -170,8 +170,8 @@ export function computeVendorRowsAll(
   allEntries.forEach((e) => {
     const product = products.find((p) => p.id === e.product_id);
     const vendor = vendors.find((v) => v.id === e.vendor_id);
-    if (!product || !vendor || !e.batch_id) return;
-    const batch = productBatches.find((b) => b.id === e.batch_id);
+    if (!product || !vendor) return;
+    const batch = e.batch_id ? productBatches.find((b) => b.id === e.batch_id) : undefined;
     rows.push({ entry: e, product, vendor, batch });
   });
   return rows;

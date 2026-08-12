@@ -31,9 +31,9 @@ export default function LabelStudioModal({ initialProduct, initialBatch }: Label
   };
 
   return (
-    <div className="modal-backdrop" onClick={closeModal}>
+    <div className="modal-overlay" onClick={closeModal}>
       <div
-        className="modal-box"
+        className="modal"
         onClick={(e) => e.stopPropagation()}
         style={{ maxWidth: 720, borderRadius: 8, padding: 24 }}
       >

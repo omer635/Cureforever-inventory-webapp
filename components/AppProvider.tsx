@@ -330,8 +330,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const interval = setInterval(() => {
       if (navigator.onLine) void refreshLight();
-    }, 30000);
+    }, 15000);
     return () => clearInterval(interval);
+  }, [refreshLight]);
+
+  // Live Real-Time Stock Synchronization Channel across all vendor stores
+  useEffect(() => {
+    const sb = getSupabase();
+    const channel = sb
+      .channel("live-vendor-stock-sync")
+      .on("postgres_changes", { event: "*", schema: "public", table: "stock_entries" }, () => {
+        void refreshLight();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "stock_adjustments" }, () => {
+        void refreshLight();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "purchase_orders" }, () => {
+        void refreshLight();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "stock_transfers" }, () => {
+        void refreshLight();
+      })
+      .subscribe();
+
+    return () => {
+      void sb.removeChannel(channel);
+    };
   }, [refreshLight]);
 
   const value: AppContextValue = {
