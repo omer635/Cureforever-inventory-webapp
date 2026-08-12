@@ -106,8 +106,8 @@ export default function DataImportModal() {
   };
 
   return (
-    <div className="modal-backdrop" onClick={closeModal}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640, borderRadius: 8, padding: 24 }}>
+    <div className="modal-overlay" onClick={closeModal}>
+      <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640, borderRadius: 8, padding: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h2 style={{ margin: 0, fontSize: 18, color: "#0F1F3D" }}>📥 Bulk Data Import Wizard</h2>
           <button className="btn-ghost" onClick={closeModal}>

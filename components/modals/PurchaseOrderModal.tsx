@@ -143,8 +143,8 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
   };
 
   return (
-    <div className="modal-backdrop" onClick={closeModal}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 680, borderRadius: 8, padding: 24 }}>
+    <div className="modal-overlay" onClick={closeModal}>
+      <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 680, borderRadius: 8, padding: 24 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h2 style={{ margin: 0, fontSize: 18, color: "#0F1F3D" }}>
             {mode === "create" ? "📋 Create Purchase Order" : `📦 Inspect PO #${po?.po_number}`}
