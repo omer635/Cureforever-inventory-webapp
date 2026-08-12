@@ -182,14 +182,33 @@ export async function updateProduct(id: string, payload: Record<string, unknown>
 export async function createVendor(payload: Record<string, unknown>): Promise<Vendor> {
   const sb = getSupabase();
   const { data, error } = await sb.from("vendors").insert(payload).select().single();
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Fallback if address or phone column is missing in schema cache
+    const fallbackPayload: Record<string, unknown> = { ...payload };
+    delete fallbackPayload.address;
+    delete fallbackPayload.phone;
+    if (payload.address) fallbackPayload.state = String(payload.address);
+    if (payload.phone) fallbackPayload.contact_phone = String(payload.phone);
+    const { data: data2, error: error2 } = await sb.from("vendors").insert(fallbackPayload).select().single();
+    if (error2) throw new Error(error.message);
+    return data2 as Vendor;
+  }
   return data as Vendor;
 }
 
 export async function updateVendor(id: string, payload: Record<string, unknown>): Promise<void> {
   const sb = getSupabase();
   const { error } = await sb.from("vendors").update(payload).eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Fallback if address or phone column is missing in schema cache
+    const fallbackPayload: Record<string, unknown> = { ...payload };
+    delete fallbackPayload.address;
+    delete fallbackPayload.phone;
+    if (payload.address) fallbackPayload.state = String(payload.address);
+    if (payload.phone) fallbackPayload.contact_phone = String(payload.phone);
+    const { error: error2 } = await sb.from("vendors").update(fallbackPayload).eq("id", id);
+    if (error2) throw new Error(error.message);
+  }
 }
 
 export async function deleteVendorRow(id: string): Promise<void> {

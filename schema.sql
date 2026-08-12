@@ -18,6 +18,8 @@ create table if not exists vendors (
 
 -- Ensure new columns exist if vendors already existed from an earlier setup
 alter table vendors add column if not exists email text;
+alter table vendors add column if not exists address text;
+alter table vendors add column if not exists phone text;
 
 -- 2. PRODUCTS TABLE
 -- Master product list with financial pricing and barcode metadata. Shared across all vendors.
