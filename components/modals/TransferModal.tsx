@@ -102,7 +102,7 @@ export default function TransferModal() {
                 onChange={(e) => setSourceVendorId(e.target.value)}
                 style={{ width: "100%", padding: "8px", marginTop: 4, borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 13 }}
               >
-                {vendors.map((v) => (
+                {vendors.filter((v) => !v.is_admin).map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.name}
                   </option>
@@ -117,7 +117,7 @@ export default function TransferModal() {
                 onChange={(e) => setTargetVendorId(e.target.value)}
                 style={{ width: "100%", padding: "8px", marginTop: 4, borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 13 }}
               >
-                {vendors.map((v) => (
+                {vendors.filter((v) => !v.is_admin).map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.name}
                   </option>

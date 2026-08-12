@@ -528,7 +528,7 @@ export default function AdminProducts() {
       </div>
 
       <div style={{ fontSize: 12, color: "#6B7280", padding: "6px 20px 12px" }}>
-        Vendors in system: {vendors.length} · {fmtDate(new Date().toISOString())}
+        Vendors in system: {vendors.filter((v) => !v.is_admin).length} · {fmtDate(new Date().toISOString())}
       </div>
     </div>
   );

@@ -32,6 +32,8 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   const topProductsChart = useRef<Chart | null>(null);
   const trendChart = useRef<Chart | null>(null);
 
+  const vendorStores = useMemo(() => vendors.filter((v) => !v.is_admin), [vendors]);
+
   const qtyByProduct = useMemo(() => {
     const map: Record<string, number> = {};
     stockEntries.forEach((se) => {
@@ -217,7 +219,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         >
           <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>Master Catalog SKUs</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: "#0F172A", marginTop: 4 }}>{products.length}</div>
-          <div style={{ fontSize: 11, color: "#10B981", marginTop: 2 }}>{vendors.length} Vendor Stores</div>
+          <div style={{ fontSize: 11, color: "#10B981", marginTop: 2 }}>{vendorStores.length} Vendor Store{vendorStores.length === 1 ? "" : "s"}</div>
         </div>
 
         <div
@@ -381,30 +383,38 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                 </tr>
               </thead>
               <tbody>
-                {vendors.map((v) => (
-                  <tr
-                    key={v.id}
-                    onClick={() => onNavigate?.("vendors", v.id)}
-                    style={{ cursor: "pointer", borderBottom: "1px solid #F1F5F9" }}
-                  >
-                    <td style={{ padding: "10px 14px", fontWeight: 600, color: "#0F172A" }}>{v.name}</td>
-                    <td style={{ padding: "10px 14px", color: "#64748B" }}>{v.address || v.email || "Primary Location"}</td>
-                    <td style={{ padding: "10px 14px" }}>
-                      <span
-                        style={{
-                          background: v.is_admin ? "#FEF3C7" : "#E0F2FE",
-                          color: v.is_admin ? "#92400E" : "#0369A1",
-                          padding: "2px 6px",
-                          borderRadius: 4,
-                          fontSize: 11,
-                          fontWeight: 700,
-                        }}
-                      >
-                        {v.is_admin ? "HQ ADMIN" : "VENDOR STORE"}
-                      </span>
+                {vendorStores.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} style={{ padding: "20px 14px", textAlign: "center", color: "#64748B", fontSize: 13 }}>
+                      No vendor stores created yet. Click "+ Add Store" above to add your first vendor location.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  vendorStores.map((v) => (
+                    <tr
+                      key={v.id}
+                      onClick={() => onNavigate?.("vendors", v.id)}
+                      style={{ cursor: "pointer", borderBottom: "1px solid #F1F5F9" }}
+                    >
+                      <td style={{ padding: "10px 14px", fontWeight: 600, color: "#0F172A" }}>{v.name}</td>
+                      <td style={{ padding: "10px 14px", color: "#64748B" }}>{v.address || v.email || "Primary Location"}</td>
+                      <td style={{ padding: "10px 14px" }}>
+                        <span
+                          style={{
+                            background: "#E0F2FE",
+                            color: "#0369A1",
+                            padding: "2px 6px",
+                            borderRadius: 4,
+                            fontSize: 11,
+                            fontWeight: 700,
+                          }}
+                        >
+                          VENDOR STORE
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

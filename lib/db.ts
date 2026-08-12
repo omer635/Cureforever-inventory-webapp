@@ -262,6 +262,13 @@ export async function deleteProductsBulk(ids: string[]): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+export async function deletePurchaseOrder(id: string): Promise<void> {
+  const sb = getSupabase();
+  await sb.from("purchase_order_items").delete().eq("purchase_order_id", id);
+  const { error } = await sb.from("purchase_orders").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 export async function createVendor(payload: Record<string, unknown>): Promise<Vendor> {
   const sb = getSupabase();
   const { data, error } = await sb.from("vendors").insert(payload).select().single();
@@ -414,9 +421,22 @@ export async function createAnnouncement(payload: Record<string, unknown>): Prom
   if (error) throw new Error(error.message);
 }
 
-export async function revokeAnnouncement(id: string): Promise<void> {
+export async function updateAnnouncement(id: string, payload: Record<string, unknown>): Promise<void> {
   const sb = getSupabase();
-  const { error } = await sb.from("announcements").update({ is_active: false }).eq("id", id);
+  const { error } = await sb.from("announcements").update(payload).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function toggleAnnouncementActive(id: string, is_active: boolean): Promise<void> {
+  const sb = getSupabase();
+  const { error } = await sb.from("announcements").update({ is_active }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteAnnouncement(id: string): Promise<void> {
+  const sb = getSupabase();
+  await sb.from("announcement_reads").delete().eq("announcement_id", id);
+  const { error } = await sb.from("announcements").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
 

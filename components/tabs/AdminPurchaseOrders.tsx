@@ -112,6 +112,18 @@ export default function AdminPurchaseOrders() {
     }
   };
 
+  const handleDeletePO = async (po: PurchaseOrder) => {
+    if (confirm(`⚠️ Are you sure you want to PERMANENTLY DELETE Purchase Order #${po.po_number}? This action cannot be undone.`)) {
+      try {
+        await api.deletePurchaseOrder(po.id);
+        await refreshAll();
+        toast(`Purchase Order #${po.po_number} deleted successfully`);
+      } catch (err) {
+        toast("Could not delete Purchase Order: " + (err as Error).message);
+      }
+    }
+  };
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "accepted":
@@ -319,6 +331,16 @@ export default function AdminPurchaseOrders() {
                                 Cancel
                               </button>
                             )}
+
+                            {/* Permanent Delete PO Button for HQ Admin */}
+                            <button
+                              className="btn-ghost"
+                              onClick={() => void handleDeletePO(po)}
+                              style={{ padding: "4px 8px", fontSize: 12, color: "#DC2626", borderColor: "#FCA5A5", background: "#FEF2F2", fontWeight: 600 }}
+                              title="Permanently delete this purchase order"
+                            >
+                              🗑️ Delete
+                            </button>
                           </div>
                         </td>
                       </tr>

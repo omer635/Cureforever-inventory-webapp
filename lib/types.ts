@@ -203,7 +203,7 @@ export type ModalState =
   | { type: "restrict"; productId: string }
   | { type: "scanner" }
   | { type: "product"; product: Product | null }
-  | { type: "announcement" }
+  | { type: "announcement"; announcement?: Announcement | null }
   | { type: "history"; entry: StockEntry }
   | { type: "commandPalette" }
   | { type: "labelStudio"; product?: Product; batch?: ProductBatch }

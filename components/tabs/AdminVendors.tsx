@@ -12,7 +12,10 @@ interface AdminVendorsProps {
 
 export default function AdminVendors({ selectedVendorId }: AdminVendorsProps) {
   const { vendors, products, productBatches, stockEntries, visibilityMap, refreshAll, toast, openModal } = useApp();
-  const [selectedId, setSelectedId] = useState<string | null>(selectedVendorId || vendors[0]?.id || null);
+
+  const vendorStores = useMemo(() => vendors.filter((v) => !v.is_admin), [vendors]);
+
+  const [selectedId, setSelectedId] = useState<string | null>(selectedVendorId || vendorStores[0]?.id || null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Adopt a newly-navigated-to selectedVendorId (e.g. clicked from the Dashboard) during
@@ -24,7 +27,7 @@ export default function AdminVendors({ selectedVendorId }: AdminVendorsProps) {
     if (selectedVendorId) setSelectedId(selectedVendorId);
   }
 
-  const selected = vendors.find((v) => v.id === selectedId) || vendors[0] || null;
+  const selected = vendorStores.find((v) => v.id === selectedId) || vendorStores[0] || null;
 
   const selectedRows = useMemo(() => {
     if (!selected) return [];
@@ -133,8 +136,8 @@ export default function AdminVendors({ selectedVendorId }: AdminVendorsProps) {
       {/* Main Vendor Summary Table */}
       <div className="panel">
         <div className="panel-head">
-          <h2>🏬 Vendor Locations & Store Accounts ({vendors.length})</h2>
-          <button className="btn-add-vendor" onClick={() => openModal({ type: "addVendor" })}>
+          <h2>Vendor Locations & Store Accounts ({vendorStores.length})</h2>
+          <button className="export-btn" onClick={() => openModal({ type: "addVendor" })}>
             + Add Vendor Location
           </button>
         </div>
@@ -153,7 +156,7 @@ export default function AdminVendors({ selectedVendorId }: AdminVendorsProps) {
               </tr>
             </thead>
             <tbody>
-              {vendors.map((v) => {
+              {vendorStores.map((v) => {
                 const t = vendorTotals[v.id];
                 const isSel = selected?.id === v.id;
                 return (
@@ -175,7 +178,7 @@ export default function AdminVendors({ selectedVendorId }: AdminVendorsProps) {
                       <strong>{money(t?.value ?? 0, 0)}</strong>
                     </td>
                     <td>
-                      {v.is_admin ? <span className="badge purple">HQ ADMIN</span> : <span className="badge info">VENDOR STORE</span>}
+                      <span className="badge info">VENDOR STORE</span>
                     </td>
                     <td>
                       <div className="row-actions">
@@ -193,10 +196,10 @@ export default function AdminVendors({ selectedVendorId }: AdminVendorsProps) {
                   </tr>
                 );
               })}
-              {vendors.length === 0 && (
+              {vendorStores.length === 0 && (
                 <tr>
                   <td colSpan={8} className="empty">
-                    No vendor locations created yet.
+                    No vendor locations created yet. Click "+ Add Vendor Location" above to create a store account.
                   </td>
                 </tr>
               )}
@@ -248,20 +251,21 @@ export default function AdminVendors({ selectedVendorId }: AdminVendorsProps) {
                 <button
                   className="export-btn"
                   onClick={() => {
-                    const header = ["Product", "SKU", "Qty", "Status", "Rate", "Value"];
+                    const header = ["Product Name", "SKU", "Category", "On-Hand Qty", "Stock Status", "Unit Cost", "Stock Valuation"];
                     const data = selectedRows.map((r) => [
                       cleanText(r.product.name),
                       r.product.sku,
+                      r.product.category || "General",
                       r.entry.quantity,
-                      stockStatus(r.product, r.entry.quantity),
+                      stockStatus(r.product, r.entry.quantity).toUpperCase(),
                       money(r.batch?.rate ?? r.product.cost_price ?? 0),
                       money((r.batch?.rate ?? r.product.cost_price ?? 0) * r.entry.quantity),
                     ]);
                     downloadCSV(`vendor-${selected.name.replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...data]);
-                    toast("Exported store stock to CSV");
+                    toast(`Exported ${selectedRows.length} store items to CSV`);
                   }}
                 >
-                  Export Store CSV
+                  📥 Export Store CSV ({selectedRows.length})
                 </button>
                 <button className="link-btn danger-link" onClick={() => void remove(selected.id)}>
                   Delete Location

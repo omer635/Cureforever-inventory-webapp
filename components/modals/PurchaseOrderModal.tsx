@@ -271,7 +271,7 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
                   onChange={(e) => setDestinationVendorId(e.target.value)}
                   style={{ width: "100%", padding: "6px 10px", marginTop: 4, borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 13 }}
                 >
-                  {vendors.map((v) => (
+                  {vendors.filter((v) => !v.is_admin).map((v) => (
                     <option key={v.id} value={v.id}>
                       {v.name}
                     </option>
@@ -525,6 +525,27 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
                         ✕ Cancel PO
                       </button>
                     )}
+
+                    <button
+                      className="btn-danger"
+                      onClick={async () => {
+                        if (!po) return;
+                        if (confirm(`⚠️ Are you sure you want to PERMANENTLY DELETE Purchase Order #${po.po_number}? This action cannot be undone.`)) {
+                          try {
+                            await api.deletePurchaseOrder(po.id);
+                            await refreshAll();
+                            toast(`Purchase Order #${po.po_number} deleted`);
+                            closeModal();
+                          } catch (err) {
+                            toast("Could not delete PO: " + (err as Error).message);
+                          }
+                        }
+                      }}
+                      style={{ padding: "6px 14px", fontSize: 12, background: "#DC2626" }}
+                      title="Permanently delete this purchase order"
+                    >
+                      🗑️ Delete PO
+                    </button>
                   </>
                 ) : (
                   <>

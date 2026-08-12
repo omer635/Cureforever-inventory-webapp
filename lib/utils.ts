@@ -171,14 +171,29 @@ export function computeVendorRows(
   products: import("./types").Product[]
 ): StockRow[] {
   const rows: StockRow[] = [];
+  const entryMap = new Map<string, import("./types").StockEntry>();
+
   allEntries.forEach((e) => {
-    if (e.vendor_id !== vendorId) return;
-    const product = products.find((p) => p.id === e.product_id);
-    if (!product) return;
-    if (!isProductVisible(product.id, vendorId, visibilityMap)) return;
-    const batch = e.batch_id ? productBatches.find((b) => b.id === e.batch_id) : undefined;
-    rows.push({ entry: e, product, batch });
+    if (e.vendor_id === vendorId) {
+      entryMap.set(e.product_id, e);
+    }
   });
+
+  products.forEach((product) => {
+    if (!isProductVisible(product.id, vendorId, visibilityMap)) return;
+    const existingEntry = entryMap.get(product.id);
+    const entry: import("./types").StockEntry = existingEntry || {
+      id: `virtual-${product.id}`,
+      vendor_id: vendorId,
+      product_id: product.id,
+      batch_id: null,
+      quantity: 0,
+      updated_at: new Date().toISOString(),
+    };
+    const batch = entry.batch_id ? productBatches.find((b) => b.id === entry.batch_id) : undefined;
+    rows.push({ entry, product, batch });
+  });
+
   return rows;
 }
 
