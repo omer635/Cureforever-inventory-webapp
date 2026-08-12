@@ -374,8 +374,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (navigator.onLine) void refreshLight();
-    }, 15000);
+      if (navigator.onLine && document.visibilityState === "visible") {
+        void refreshLight();
+      }
+    }, 60000);
     return () => clearInterval(interval);
   }, [refreshLight]);
 

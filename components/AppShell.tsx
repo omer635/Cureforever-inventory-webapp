@@ -28,6 +28,14 @@ export default function AppShell() {
     openModal,
   } = useApp();
   const [activeTab, setActiveTab] = useState<string>("dashboard");
+  const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+
+  const handleNavigate = (tab: string, vendorId?: string) => {
+    setActiveTab(tab);
+    if (vendorId) {
+      setSelectedVendorId(vendorId);
+    }
+  };
 
   if (!vendorRow) {
     return (
@@ -222,7 +230,7 @@ export default function AppShell() {
           <main style={{ maxWidth: "100%", width: "100%", padding: 24, flex: 1 }}>
             {isAdmin ? (
               <>
-                {activeTab === "dashboard" && <AdminDashboard />}
+                {activeTab === "dashboard" && <AdminDashboard onNavigate={handleNavigate} />}
                 {activeTab === "analytics" && <AdminAnalytics />}
                 {activeTab === "pos" && <AdminPurchaseOrders />}
                 {activeTab === "transfers" && <AdminTransfers />}
@@ -231,7 +239,7 @@ export default function AppShell() {
                 {activeTab === "auditlogs" && <AdminAuditLogs />}
                 {activeTab === "financials" && <AdminFinancials />}
                 {activeTab === "products" && <AdminProducts />}
-                {activeTab === "vendors" && <AdminVendors />}
+                {activeTab === "vendors" && <AdminVendors selectedVendorId={selectedVendorId} />}
                 {activeTab === "announcements" && <AdminAnnouncements />}
               </>
             ) : (

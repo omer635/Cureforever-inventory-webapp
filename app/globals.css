@@ -8,6 +8,24 @@
 body{ margin:0; background:var(--cream); color:var(--ink); font-family:var(--font-inter),sans-serif; -webkit-font-smoothing:antialiased; }
 h1,h2,h3,.brand{ font-family:var(--font-garamond), serif; }
 
+.interactive-card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  cursor: pointer;
+}
+.interactive-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(15, 31, 61, 0.12) !important;
+  border-color: #CBD5E1 !important;
+}
+
+.interactive-row {
+  transition: background-color 0.15s ease;
+  cursor: pointer;
+}
+.interactive-row:hover {
+  background-color: #F1F5F9 !important;
+}
+
 .login-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center;
   background:linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 55%, #24406e 100%); padding:24px; }
 .login-card{ background:var(--paper); width:100%; max-width:400px; border-radius:4px;

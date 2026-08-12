@@ -6,7 +6,11 @@ import { useApp } from "@/components/AppProvider";
 import { REASON_LABELS } from "@/lib/constants";
 import { cleanText, money } from "@/lib/utils";
 
-export default function AdminDashboard() {
+interface AdminDashboardProps {
+  onNavigate?: (tab: string, vendorId?: string) => void;
+}
+
+export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   const {
     products,
     productBatches,
@@ -28,9 +32,6 @@ export default function AdminDashboard() {
   const topProductsChart = useRef<Chart | null>(null);
   const trendChart = useRef<Chart | null>(null);
 
-  // Real on-hand quantity per product, summed across every vendor's stock_entries row —
-  // shared by the KPI cards and both valuation charts below so they can't disagree with
-  // each other or with All Stock.
   const qtyByProduct = useMemo(() => {
     const map: Record<string, number> = {};
     stockEntries.forEach((se) => {
@@ -45,8 +46,6 @@ export default function AdminDashboard() {
     let lowStockCount = 0;
 
     products.forEach((p) => {
-      // No stock_entries row for this product yet means genuinely zero on hand —
-      // never assume a default quantity that isn't backed by real data.
       const onHandQty = qtyByProduct[p.id] || 0;
       totalCostVal += onHandQty * (p.cost_price || 0);
       totalRetailVal += onHandQty * (p.selling_price || 0);
@@ -77,9 +76,6 @@ export default function AdminDashboard() {
     };
   }, [products, stockEntries, productBatches, reorderRequests, purchaseOrders, stockTransfers]);
 
-  // Category Distribution for Doughnut Chart — real on-hand value (qty × cost), not a
-  // fabricated multiplier. Categories with zero on-hand stock are omitted rather than
-  // shown with a made-up value.
   const categoryData = useMemo(() => {
     const map: Record<string, number> = {};
     products.forEach((p) => {
@@ -94,7 +90,6 @@ export default function AdminDashboard() {
     };
   }, [products, qtyByProduct]);
 
-  // Top 5 SKUs by real on-hand retail valuation (qty × selling price).
   const topProducts = useMemo(() => {
     return [...products]
       .map((p) => ({
@@ -106,8 +101,6 @@ export default function AdminDashboard() {
       .slice(0, 5);
   }, [products, qtyByProduct]);
 
-  // Historical Stock Movement Trend — real stock_history points only. An empty array (no
-  // synthetic fallback) is rendered as an honest "not enough data yet" state below.
   const trendPoints = useMemo(() => {
     if (!stockHistory || stockHistory.length === 0) return [];
     const series = stockHistory.reduce((acc, h) => {
@@ -118,9 +111,7 @@ export default function AdminDashboard() {
     return Object.entries(series).sort((a, b) => a[0].localeCompare(b[0])).slice(-14);
   }, [stockHistory]);
 
-  // Render Charts
   useEffect(() => {
-    // 1. Category Chart
     if (categoryChartRef.current && categoryData.labels.length > 0) {
       if (categoryChart.current) categoryChart.current.destroy();
       const ctx = categoryChartRef.current.getContext("2d");
@@ -145,7 +136,6 @@ export default function AdminDashboard() {
       }
     }
 
-    // 2. Top Products Chart
     if (topProductsChartRef.current && topProducts.length > 0) {
       if (topProductsChart.current) topProductsChart.current.destroy();
       const ctx = topProductsChartRef.current.getContext("2d");
@@ -174,7 +164,6 @@ export default function AdminDashboard() {
       }
     }
 
-    // 3. Trend Chart
     if (trendChartRef.current && trendPoints.length > 0) {
       if (trendChart.current) trendChart.current.destroy();
       const ctx = trendChartRef.current.getContext("2d");
@@ -212,7 +201,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="tab-pane active" style={{ animation: "fadeIn 0.2s ease" }}>
-      {/* Master Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
           <h2 style={{ margin: 0, color: "#0F1F3D", fontSize: 22, fontWeight: 700 }}>Executive Master Dashboard</h2>
@@ -222,21 +210,32 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* KPI Cards Row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16, marginBottom: 24 }}>
-        <div style={{ background: "#FFF", borderLeft: "4px solid #0F1F3D", padding: 16, borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div
+          className="interactive-card"
+          onClick={() => onNavigate?.("products")}
+          style={{ cursor: "pointer", background: "#FFF", borderLeft: "4px solid #0F1F3D", padding: 16, borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+        >
           <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>Master Catalog SKUs</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: "#0F172A", marginTop: 4 }}>{products.length}</div>
           <div style={{ fontSize: 11, color: "#10B981", marginTop: 2 }}>{vendors.length} Vendor Stores</div>
         </div>
 
-        <div style={{ background: "#FFF", borderLeft: "4px solid #10B981", padding: 16, borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div
+          className="interactive-card"
+          onClick={() => onNavigate?.("financials")}
+          style={{ cursor: "pointer", background: "#FFF", borderLeft: "4px solid #10B981", padding: 16, borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+        >
           <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>Total Cost Valuation</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: "#059669", marginTop: 4 }}>{money(stats.totalCostVal, 0)}</div>
           <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>Retail: {money(stats.totalRetailVal, 0)}</div>
         </div>
 
-        <div style={{ background: "#FFF", borderLeft: "4px solid #F59E0B", padding: 16, borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div
+          className="interactive-card"
+          onClick={() => onNavigate?.("allstock")}
+          style={{ cursor: "pointer", background: "#FFF", borderLeft: "4px solid #F59E0B", padding: 16, borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+        >
           <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>Low / Depleted SKUs</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: stats.lowStockCount > 0 ? "#D97706" : "#059669", marginTop: 4 }}>
             {stats.lowStockCount}
@@ -244,7 +243,11 @@ export default function AdminDashboard() {
           <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>Below Threshold</div>
         </div>
 
-        <div style={{ background: "#FFF", borderLeft: "4px solid #EF4444", padding: 16, borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div
+          className="interactive-card"
+          onClick={() => onNavigate?.("batches")}
+          style={{ cursor: "pointer", background: "#FFF", borderLeft: "4px solid #EF4444", padding: 16, borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+        >
           <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>Expiring ≤ 30 Days</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: stats.expiringBatches > 0 ? "#DC2626" : "#059669", marginTop: 4 }}>
             {stats.expiringBatches}
@@ -252,7 +255,11 @@ export default function AdminDashboard() {
           <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>Batches at risk</div>
         </div>
 
-        <div style={{ background: "#FFF", borderLeft: "4px solid #8B5CF6", padding: 16, borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div
+          className="interactive-card"
+          onClick={() => onNavigate?.("orders")}
+          style={{ cursor: "pointer", background: "#FFF", borderLeft: "4px solid #8B5CF6", padding: 16, borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+        >
           <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>Pending POs & Transfers</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: "#7C3AED", marginTop: 4 }}>
             {stats.pendingPOs + stats.pendingTransfers + stats.pendingReorders}
@@ -261,10 +268,12 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Master Analytics Charts Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20, marginBottom: 24 }}>
-        {/* Category Breakdown */}
-        <div style={{ background: "#FFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div
+          className="interactive-card"
+          onClick={() => onNavigate?.("financials")}
+          style={{ cursor: "pointer", background: "#FFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+        >
           <h3 style={{ margin: "0 0 12px", fontSize: 15, color: "#0F172A" }}>Inventory Valuation by Category</h3>
           <div style={{ height: 220, position: "relative" }}>
             {categoryData.labels.length > 0 ? (
@@ -277,8 +286,11 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Top Products Leaderboard */}
-        <div style={{ background: "#FFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div
+          className="interactive-card"
+          onClick={() => onNavigate?.("products")}
+          style={{ cursor: "pointer", background: "#FFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+        >
           <h3 style={{ margin: "0 0 12px", fontSize: 15, color: "#0F172A" }}>Top Highest Value SKUs</h3>
           <div style={{ height: 220, position: "relative" }}>
             {topProducts.length > 0 ? (
@@ -291,8 +303,11 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* 14-Day Movement Trend */}
-        <div style={{ background: "#FFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div
+          className="interactive-card"
+          onClick={() => onNavigate?.("analytics")}
+          style={{ cursor: "pointer", background: "#FFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+        >
           <h3 style={{ margin: "0 0 12px", fontSize: 15, color: "#0F172A" }}>Stock Movement Velocity (Last 14 Days)</h3>
           <div style={{ height: 220, position: "relative" }}>
             {trendPoints.length > 0 ? (
@@ -306,9 +321,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Master Control Bottom Grid: Low Stock Alert & Vendor Stores */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, flexWrap: "wrap" }}>
-        {/* Low Stock Quick Action Widget */}
         <div style={{ background: "#FFF", border: "1px solid #E2E8F0", borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <div style={{ padding: "14px 18px", borderBottom: "1px solid #E2E8F0", background: "#F8FAFC", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h3 style={{ margin: 0, fontSize: 14, color: "#0F172A" }}>⚠️ Low Stock & Depletion Warnings</h3>
@@ -328,14 +341,18 @@ export default function AdminDashboard() {
               </thead>
               <tbody>
                 {products.slice(0, 5).map((p) => (
-                  <tr key={p.id} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                  <tr
+                    key={p.id}
+                    onClick={() => onNavigate?.("allstock")}
+                    style={{ cursor: "pointer", borderBottom: "1px solid #F1F5F9" }}
+                  >
                     <td style={{ padding: "10px 14px", fontWeight: 600, color: "#0F172A" }}>{cleanText(p.name)}</td>
                     <td style={{ padding: "10px 14px", color: "#64748B", fontSize: 12 }}>{p.sku}</td>
                     <td style={{ padding: "10px 14px", color: "#DC2626", fontWeight: 700 }}>{p.low_stock_threshold} units</td>
                     <td style={{ padding: "10px 14px", textAlign: "right" }}>
                       <button
                         className="btn-ghost"
-                        onClick={() => openModal({ type: "createPO" })}
+                        onClick={(e) => { e.stopPropagation(); openModal({ type: "createPO" }); }}
                         style={{ padding: "3px 8px", fontSize: 11, color: "#2563EB" }}
                       >
                         + Reorder
@@ -348,7 +365,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Vendor Locations Quick Widget */}
         <div style={{ background: "#FFF", border: "1px solid #E2E8F0", borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <div style={{ padding: "14px 18px", borderBottom: "1px solid #E2E8F0", background: "#F8FAFC", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h3 style={{ margin: 0, fontSize: 14, color: "#0F172A" }}>🏬 Multi-Location Vendor Stores</h3>
@@ -367,7 +383,11 @@ export default function AdminDashboard() {
               </thead>
               <tbody>
                 {vendors.map((v) => (
-                  <tr key={v.id} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                  <tr
+                    key={v.id}
+                    onClick={() => onNavigate?.("vendors", v.id)}
+                    style={{ cursor: "pointer", borderBottom: "1px solid #F1F5F9" }}
+                  >
                     <td style={{ padding: "10px 14px", fontWeight: 600, color: "#0F172A" }}>{v.name}</td>
                     <td style={{ padding: "10px 14px", color: "#64748B" }}>{v.address || v.email || "Primary Location"}</td>
                     <td style={{ padding: "10px 14px" }}>

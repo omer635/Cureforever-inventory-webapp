@@ -95,25 +95,14 @@ export default function VendorDashboard() {
 
   const saveRow = async (row: StockRow) => {
     const id = row.entry.id;
-    const qty = parseInt(drafts[id] ?? "", 10);
-    if (isNaN(qty)) {
-      toast("Enter a valid quantity");
+    const rawVal = drafts[id];
+    const qty = rawVal !== undefined ? parseInt(rawVal, 10) : row.entry.quantity;
+    if (isNaN(qty) || qty < 0) {
+      toast("Enter a valid non-negative quantity");
       return;
     }
     const reason = reasons[id] || "manual_adjustment";
     setSavingKey(id);
-
-    async function finish(wait = true) {
-      if (wait) await new Promise((r) => setTimeout(r, 650));
-      await refreshAll();
-      setDrafts((d) => {
-        const next = { ...d };
-        delete next[id];
-        return next;
-      });
-      setSavingKey(null);
-      toast("Stock updated and audit recorded");
-    }
 
     if (!isOnline) {
       queueOp({ type: "stock_upsert", id, data: { entryId: id, quantity: qty, reasonCode: reason, notes: notes[id] || "", batchId: row.entry.batch_id } });
@@ -129,25 +118,36 @@ export default function VendorDashboard() {
 
     try {
       await api.saveEntry({ entryId: id, quantity: qty, reasonCode: reason, notes: notes[id] || "", batchId: row.entry.batch_id });
-      await finish(false);
+      await refreshAll();
+      setDrafts((d) => {
+        const next = { ...d };
+        delete next[id];
+        return next;
+      });
+      setSavingKey(null);
+      toast("Stock updated successfully");
     } catch (err) {
       if ((err as Error).message.includes("fetch") || !navigator.onLine) {
         queueOp({ type: "stock_upsert", id, data: { entryId: id, quantity: qty, reasonCode: reason, notes: notes[id] || "", batchId: row.entry.batch_id } });
         toast("Saved offline — will sync when back online");
-        setSavingKey(null);
       } else {
         toast("Save failed: " + (err as Error).message);
-        setSavingKey(null);
       }
+      setSavingKey(null);
     }
   };
 
-  const saveDelayed = (row: StockRow, value: string) => {
-    setDrafts((d) => ({ ...d, [row.entry.id]: value }));
-    if (saveTimer.current[row.entry.id]) clearTimeout(saveTimer.current[row.entry.id]);
-    saveTimer.current[row.entry.id] = setTimeout(() => {
-      void saveRow({ ...row, entry: { ...row.entry, quantity: parseInt(value, 10) || row.entry.quantity } });
-    }, 1000);
+  const cancelRow = (id: string) => {
+    setDrafts((d) => {
+      const next = { ...d };
+      delete next[id];
+      return next;
+    });
+    setNotes((n) => {
+      const next = { ...n };
+      delete next[id];
+      return next;
+    });
   };
 
   const exportCSV = () => {
@@ -272,7 +272,12 @@ export default function VendorDashboard() {
                       type="number"
                       min={0}
                       value={drafts[r.entry.id] ?? r.entry.quantity}
-                      onChange={(e) => saveDelayed(r, e.target.value)}
+                      onChange={(e) => setDrafts((d) => ({ ...d, [r.entry.id]: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          void saveRow(r);
+                        }
+                      }}
                     />
                   </td>
                   <td>
@@ -304,21 +309,43 @@ export default function VendorDashboard() {
                       placeholder="Note…"
                       value={notes[r.entry.id] ?? ""}
                       onChange={(e) => setNotes((m) => ({ ...m, [r.entry.id]: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          void saveRow(r);
+                        }
+                      }}
                     />
                   </td>
                   <td>
                     <div className="row-actions">
-                      {drafts[r.entry.id] !== undefined && parseInt(drafts[r.entry.id]!, 10) !== r.entry.quantity && (
-                        <button className="save-btn" onClick={() => void saveRow(r)} disabled={savingKey === r.entry.id}>
-                          {savingKey === r.entry.id ? "Saving…" : "Save"}
-                        </button>
+                      {drafts[r.entry.id] !== undefined && parseInt(drafts[r.entry.id]!, 10) !== r.entry.quantity ? (
+                        <>
+                          <button
+                            className="save-btn"
+                            onClick={() => void saveRow(r)}
+                            disabled={savingKey === r.entry.id}
+                            style={{ background: "#2F6B4F", color: "#fff", padding: "4px 8px", fontSize: 11 }}
+                          >
+                            {savingKey === r.entry.id ? "Saving…" : "✓ Save"}
+                          </button>
+                          <button
+                            className="link-btn"
+                            onClick={() => cancelRow(r.entry.id)}
+                            style={{ color: "#64748B", fontSize: 11 }}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button className="link-btn" onClick={() => openModal({ type: "reorder", entry: r.entry })}>
+                            Reorder
+                          </button>
+                          <button className="link-btn" onClick={() => openModal({ type: "history", entry: r.entry })}>
+                            History
+                          </button>
+                        </>
                       )}
-                      <button className="link-btn" onClick={() => openModal({ type: "reorder", entry: r.entry })}>
-                        Reorder
-                      </button>
-                      <button className="link-btn" onClick={() => openModal({ type: "history", entry: r.entry })}>
-                        History
-                      </button>
                     </div>
                   </td>
                 </tr>

@@ -6,10 +6,20 @@ import { useApp } from "@/components/AppProvider";
 import * as api from "@/lib/db";
 import { computeVendorRows, computeVendorRowsAll, downloadCSV, fmtDateTime, money, stockStatus, cleanText } from "@/lib/utils";
 
-export default function AdminVendors() {
+interface AdminVendorsProps {
+  selectedVendorId?: string | null;
+}
+
+export default function AdminVendors({ selectedVendorId }: AdminVendorsProps) {
   const { vendors, products, productBatches, stockEntries, visibilityMap, refreshAll, toast, openModal } = useApp();
-  const [selectedId, setSelectedId] = useState<string | null>(vendors[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(selectedVendorId || vendors[0]?.id || null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedVendorId) {
+      setSelectedId(selectedVendorId);
+    }
+  }, [selectedVendorId]);
 
   const selected = vendors.find((v) => v.id === selectedId) || vendors[0] || null;
 
