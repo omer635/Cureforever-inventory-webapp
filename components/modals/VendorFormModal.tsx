@@ -20,11 +20,19 @@ export default function VendorFormModal({ vendor }: { vendor: Vendor | null }) {
       return;
     }
     setBusy(true);
+    const payload = {
+      name: name.trim(),
+      state: address.trim() || "HQ",
+      contact_phone: phone.trim() || null,
+      phone: phone.trim() || null,
+      address: address.trim() || null,
+      email: email.trim() || null,
+    };
     try {
       if (vendor) {
-        await api.updateVendor(vendor.id, { name: name.trim(), phone: phone || null, address: address || null, email: email || null });
+        await api.updateVendor(vendor.id, payload);
       } else if (isAdmin) {
-        await api.createVendor({ name: name.trim(), phone: phone || null, address: address || null, email: email || null, is_admin: isAdminV });
+        await api.createVendor({ ...payload, is_admin: isAdminV });
       }
       await refreshAll();
       toast(vendor ? "Vendor updated" : "Vendor added");

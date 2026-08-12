@@ -1,3 +1,14 @@
+export function cleanText(val: string | null | undefined): string {
+  if (!val) return "";
+  return String(val)
+    .replace(/â€™/g, "'")
+    .replace(/â€“/g, "-")
+    .replace(/â€”/g, "—")
+    .replace(/â€œ/g, '"')
+    .replace(/â€/g, '"')
+    .replace(/â€/g, '"');
+}
+
 export function safeNum(val: unknown, defaultVal = 0): number {
   if (val === null || val === undefined) return defaultVal;
   const s = String(val).replace(/[^0-9.-]/g, "").trim();

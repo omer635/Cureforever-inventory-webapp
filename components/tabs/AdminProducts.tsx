@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useApp } from "@/components/AppProvider";
-import { downloadCSV, fmtDate, money } from "@/lib/utils";
+import { cleanText, downloadCSV, fmtDate, money } from "@/lib/utils";
 
 export default function AdminProducts() {
   const { products, vendors, stockEntries, productBatches, visibilityMap, openModal, toast } = useApp();
@@ -11,8 +11,8 @@ export default function AdminProducts() {
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     return [...products]
-      .filter((p) => !q || p.name.toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q) || (p.category || "").toLowerCase().includes(q))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .filter((p) => !q || cleanText(p.name).toLowerCase().includes(q) || (p.sku || "").toLowerCase().includes(q) || (p.category || "").toLowerCase().includes(q))
+      .sort((a, b) => cleanText(a.name).localeCompare(cleanText(b.name)));
   }, [products, search]);
 
   const stockTotals = useMemo(() => {
@@ -89,7 +89,7 @@ export default function AdminProducts() {
               return (
                 <tr key={p.id}>
                   <td>
-                    <strong>{p.name}</strong>
+                    <strong>{cleanText(p.name)}</strong>
                     {p.description && <div className="sku">{p.description}</div>}
                   </td>
                   <td className="sku">{p.sku}</td>

@@ -159,13 +159,26 @@ tr:hover td{ background:#FBFAF6; }
 @media (max-width:640px){ .inline-form-grid{ grid-template-columns:1fr; } }
 
 @media print{
-  header.top, .admin-tabs, .filters, .toolbar, .no-print, .toast, .modal-overlay{ display:none !important; }
-  body{ background:#fff; }
-  main{ max-width:100%; padding:10px; }
-  .panel{ break-inside:avoid; border:none; border-top:2px solid var(--navy); }
-  .stat-row{ display:flex; }
-  table td, table th{ padding:6px 8px; }
+  body * {
+    visibility: hidden !important;
+  }
+  #print-label-area, #print-label-area * {
+    visibility: visible !important;
+  }
+  #print-label-area {
+    position: fixed !important;
+    left: 50% !important;
+    top: 30% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 320px !important;
+    margin: 0 !important;
+    padding: 16px !important;
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
 }
+
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
