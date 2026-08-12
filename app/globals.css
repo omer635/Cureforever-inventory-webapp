@@ -295,9 +295,9 @@ tr:hover td{ background:#FBFAF6; }
 .link-btn{ background:none; color:var(--navy-2); padding:6px 4px; font-size:12px; text-decoration:underline; font-weight:600;}
 .link-btn.danger-link{ color:var(--danger); }
 .empty{ padding:40px 20px; text-align:center; color:var(--muted); font-size:14px;}
-.toast{ position:fixed; bottom:24px; right:24px; background:var(--navy); color:#fff; padding:12px 20px; border-radius:4px;
+.toast{ position:fixed; bottom:84px; right:24px; background:var(--navy); color:#fff; padding:12px 20px; border-radius:6px;
   font-size:13px; box-shadow:0 10px 30px rgba(0,0,0,.3); border-left:3px solid var(--gold); opacity:0; transform:translateY(10px);
-  transition:.25s; pointer-events:none; z-index:400; }
+  transition:.25s; pointer-events:none; z-index:9999; }
 .toast.show{ opacity:1; transform:translateY(0); }
 .state-tag{ font-size:11px; background:var(--gold-light); color:var(--navy-2); padding:2px 8px; border-radius:3px; font-weight:600;}
 .row-actions{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }

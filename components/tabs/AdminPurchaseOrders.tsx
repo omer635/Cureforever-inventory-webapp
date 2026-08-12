@@ -67,6 +67,10 @@ export default function AdminPurchaseOrders() {
 
   const handleSendReplyToVendor = async (po: PurchaseOrder, targetStatus: "sent" | "accepted") => {
     const message = (replyTextMap[po.id] || "").trim();
+    if (targetStatus === "sent" && !message) {
+      toast("Please type a message to reply back to the vendor first.");
+      return;
+    }
     setSubmittingReplyId(po.id);
 
     try {
@@ -429,7 +433,7 @@ export default function AdminPurchaseOrders() {
                                     <button
                                       className="save-btn"
                                       onClick={() => void handleSendReplyToVendor(po, "sent")}
-                                      disabled={submittingReplyId === po.id}
+                                      disabled={!replyTextMap[po.id]?.trim() || submittingReplyId === po.id}
                                       style={{ background: "#1E40AF", color: "#FFFFFF", padding: "6px 14px", fontSize: 12, fontWeight: 700 }}
                                     >
                                       {submittingReplyId === po.id ? "Sending…" : "📤 Send Reply & Re-issue PO"}
