@@ -308,17 +308,27 @@ export async function updateVendorWithAuth(
   payload: Record<string, unknown>,
   password?: string
 ): Promise<void> {
-  const sb = getSupabase();
   await updateVendor(id, payload);
 
   if (password && password.trim().length >= 6) {
-    try {
-      const { data: v } = await sb.from("vendors").select("user_id").eq("id", id).single();
-      if (v?.user_id) {
-        await sb.auth.admin.updateUserById(v.user_id, { password: password.trim() });
-      }
-    } catch {
-      /* proceed */
+    // sb.auth.admin.* requires the service-role key — the client here only has the anon
+    // key, so this must go through a server route that verifies the caller is an admin
+    // and holds the real service-role key. (Previously called sb.auth.admin.updateUserById
+    // directly with the anon-key client, which always fails silently — the password was
+    // never actually changed even though the UI reported success.)
+    const sb = getSupabase();
+    const { data: sessionData } = await sb.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) throw new Error("Not authenticated");
+
+    const res = await fetch("/api/vendor/update-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ vendorId: id, password: password.trim() }),
+    });
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => null);
+      throw new Error(errJson?.error || "Could not update login password");
     }
   }
 }
@@ -349,9 +359,12 @@ export async function updateReorderStatus(id: string, status: string): Promise<v
 
 export async function markAnnouncementRead(announcementId: string, vendorId: string): Promise<void> {
   const sb = getSupabase();
-  await sb
+  // Column is read_at (schema.sql), not created_at — the previous version silently failed
+  // on every call because it wrote a column that doesn't exist and never checked the error.
+  const { error } = await sb
     .from("announcement_reads")
-    .upsert({ announcement_id: announcementId, vendor_id: vendorId, created_at: new Date().toISOString() }, { onConflict: "announcement_id,vendor_id" });
+    .upsert({ announcement_id: announcementId, vendor_id: vendorId, read_at: new Date().toISOString() }, { onConflict: "announcement_id,vendor_id" });
+  if (error) throw new Error(error.message);
 }
 
 export async function setProductVisibility(productId: string, allowedVendorIds: string[]): Promise<void> {
@@ -384,7 +397,9 @@ export async function createPurchaseOrder(po: Record<string, unknown>, items: Re
   if (items && items.length > 0) {
     const itemsWithPo = items.map((it) => ({ ...it, po_id: createdPo.id }));
     const { error: itemsErr } = await sb.from("purchase_order_items").insert(itemsWithPo);
-    if (itemsErr) console.warn("Failed inserting PO items:", itemsErr.message);
+    // Previously only console.warn'd — the caller would show "PO created!" even though the
+    // order had zero line items. Throw so the UI surfaces the real failure.
+    if (itemsErr) throw new Error("PO created, but line items failed to save: " + itemsErr.message);
   }
 }
 
