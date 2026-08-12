@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import RegisterSW from "@/components/RegisterSW";
+import InstallPWAButton from "@/components/InstallPWAButton";
 import "./globals.css";
 
 const garamond = Cormorant_Garamond({
@@ -46,6 +47,7 @@ export default function RootLayout({
       <body>
         {children}
         <RegisterSW />
+        <InstallPWAButton />
       </body>
     </html>
   );
