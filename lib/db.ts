@@ -254,6 +254,41 @@ export async function createVendor(payload: Record<string, unknown>): Promise<Ve
   return data as Vendor;
 }
 
+export async function createVendorWithAuth(
+  payload: Record<string, unknown>,
+  password?: string
+): Promise<Vendor> {
+  const sb = getSupabase();
+  let userId: string | null = null;
+
+  if (payload.email && password && String(password).trim()) {
+    try {
+      const { data: authData, error: authError } = await sb.auth.signUp({
+        email: String(payload.email).trim(),
+        password: String(password).trim(),
+        options: {
+          data: {
+            name: String(payload.name || ""),
+            is_admin: !!payload.is_admin,
+          },
+        },
+      });
+      if (!authError && authData.user) {
+        userId = authData.user.id;
+      }
+    } catch {
+      /* proceed with vendor row creation */
+    }
+  }
+
+  const finalPayload = { ...payload };
+  if (userId) {
+    finalPayload.user_id = userId;
+  }
+
+  return createVendor(finalPayload);
+}
+
 export async function updateVendor(id: string, payload: Record<string, unknown>): Promise<void> {
   const sb = getSupabase();
   const { error } = await sb.from("vendors").update(payload).eq("id", id);
