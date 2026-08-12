@@ -1,21 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useApp } from "@/components/AppProvider";
 import * as api from "@/lib/db";
 
 export default function TransferModal() {
-  const { products, vendors, closeModal, toast, refreshAll, isOnline, queueOp } = useApp();
+  const { products, vendors, stockEntries, closeModal, toast, refreshAll, isOnline, queueOp } = useApp();
   const [productId, setProductId] = useState(products[0]?.id || "");
   const [sourceVendorId, setSourceVendorId] = useState(vendors[0]?.id || "");
   const [targetVendorId, setTargetVendorId] = useState(vendors[1]?.id || vendors[0]?.id || "");
   const [quantity, setQuantity] = useState(10);
   const [notes, setNotes] = useState("");
 
+  const availableAtSource = useMemo(
+    () => stockEntries.find((e) => e.vendor_id === sourceVendorId && e.product_id === productId)?.quantity ?? 0,
+    [stockEntries, sourceVendorId, productId]
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (sourceVendorId === targetVendorId) {
       toast("Source and target locations must be different");
+      return;
+    }
+    if (quantity > availableAtSource) {
+      toast(`Source only has ${availableAtSource} units on hand — reduce the transfer quantity`);
       return;
     }
 
@@ -109,11 +118,15 @@ export default function TransferModal() {
             <input
               type="number"
               min="1"
+              max={availableAtSource}
               value={quantity}
               onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
               required
               style={{ width: "100%", padding: "8px", marginTop: 4, borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 13 }}
             />
+            <div style={{ fontSize: 11, color: quantity > availableAtSource ? "#DC2626" : "#6B7280", marginTop: 4 }}>
+              {availableAtSource} units on hand at the source location
+            </div>
           </div>
 
           <div style={{ marginBottom: 16 }}>

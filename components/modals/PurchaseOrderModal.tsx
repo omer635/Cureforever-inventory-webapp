@@ -24,7 +24,7 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
   ]);
 
   const handleAddItem = () => {
-    setItems((prev) => [...prev, { productId: products[0]?.id || "", qty: 50, unitCost: 10 }]);
+    setItems((prev) => [...prev, { productId: products[0]?.id || "", qty: 50, unitCost: Number(products[0]?.cost_price || 0) }]);
   };
 
   const handleRemoveItem = (idx: number) => {
@@ -76,29 +76,62 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
     }
   };
 
-  const handleReceivePOItemIntoBatch = async (item: { product_id: string; quantity_ordered: number }) => {
+  // Receive Mode: per-line-item draft (real quantity received + real expiry, entered from the
+  // packing slip — previously this fabricated a fake 1-year expiry and always received the full
+  // ordered quantity, which is wrong for partial shipments).
+  const [receiveDrafts, setReceiveDrafts] = useState<Record<string, { qty: string; expiry: string; batchNumber: string }>>({});
+
+  const draftFor = (item: { id: string; quantity_ordered: number; quantity_received: number }) =>
+    receiveDrafts[item.id] || {
+      qty: String(item.quantity_ordered - item.quantity_received),
+      expiry: "",
+      batchNumber: `PO-RCV-${Math.floor(1000 + Math.random() * 9000)}`,
+    };
+
+  const setDraft = (item: { id: string; quantity_ordered: number; quantity_received: number }, patch: Partial<{ qty: string; expiry: string; batchNumber: string }>) => {
+    setReceiveDrafts((d) => ({ ...d, [item.id]: { ...draftFor(item), ...patch } }));
+  };
+
+  const handleReceivePOItemIntoBatch = async (item: { id: string; product_id: string; quantity_ordered: number; quantity_received: number }) => {
     const prod = products.find((p) => p.id === item.product_id);
     if (!prod) return;
+    const draft = draftFor(item);
+    const qty = parseInt(draft.qty, 10);
+    if (isNaN(qty) || qty <= 0) {
+      toast("Enter a valid received quantity");
+      return;
+    }
+    if (!draft.expiry) {
+      toast("Enter the batch's expiry date from the packing slip");
+      return;
+    }
 
     try {
       const batchPayload = {
         product_id: item.product_id,
         vendor_id: po?.destination_vendor_id || vendors[0]?.id || null,
-        batch_number: `PO-RCV-${Math.floor(1000 + Math.random() * 9000)}`,
-        quantity: item.quantity_ordered,
-        initial_quantity: item.quantity_ordered,
+        batch_number: draft.batchNumber,
+        quantity: qty,
+        initial_quantity: qty,
         cost_price: prod.cost_price,
         selling_price: prod.selling_price,
         received_date: new Date().toISOString().split("T")[0],
-        expiry_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        expiry_date: draft.expiry,
         status: "active",
         supplier: po?.supplier || "PO Supplier",
       };
 
       if (isOnline) {
         await api.createBatch(batchPayload);
-        if (po) await api.updatePOStatus(po.id, "fulfilled");
-        toast(`Received ${item.quantity_ordered} units into inventory batch!`);
+        const newReceived = item.quantity_received + qty;
+        await api.updatePOItemReceived(item.id, newReceived);
+        if (po) {
+          const items = po.items || [];
+          const stillPending = items.some((it) => it.id !== item.id && it.quantity_received < it.quantity_ordered);
+          const fullyReceived = !stillPending && newReceived >= item.quantity_ordered;
+          await api.updatePOStatus(po.id, fullyReceived ? "fulfilled" : "partially_received");
+        }
+        toast(`Received ${qty} units into inventory batch!`);
         await refreshAll();
       } else {
         toast("Batch receipt will sync when online");
@@ -189,7 +222,7 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
                       const val = e.target.value;
                       const prod = products.find((p) => p.id === val);
                       setItems((prev) =>
-                        prev.map((it, i) => (i === idx ? { ...it, productId: val, unitCost: Number(prod?.cost_price || 10) } : it))
+                        prev.map((it, i) => (i === idx ? { ...it, productId: val, unitCost: Number(prod?.cost_price || 0) } : it))
                       );
                     }}
                     style={{ padding: "6px", borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 13 }}
@@ -272,20 +305,48 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
             {po?.items && po.items.length > 0 ? (
               po.items.map((it) => {
                 const prod = products.find((p) => p.id === it.product_id);
+                const remaining = it.quantity_ordered - it.quantity_received;
+                const draft = draftFor(it);
                 return (
-                  <div key={it.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 12, borderBottom: "1px solid #E2E8F0" }}>
-                    <div>
-                      <strong>{prod?.name || "Product"}</strong>
-                      <div style={{ fontSize: 12, color: "#64748B" }}>Ordered: {it.quantity_ordered} units @ ${it.unit_cost}</div>
+                  <div key={it.id} style={{ padding: 12, borderBottom: "1px solid #E2E8F0" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <strong>{prod?.name || "Product"}</strong>
+                        <div style={{ fontSize: 12, color: "#64748B" }}>
+                          Ordered: {it.quantity_ordered} units @ ${it.unit_cost} — received {it.quantity_received} so far
+                        </div>
+                      </div>
                     </div>
-                    {po.status !== "fulfilled" && (
-                      <button
-                        className="btn-add-vendor"
-                        onClick={() => void handleReceivePOItemIntoBatch(it)}
-                        style={{ padding: "4px 12px", fontSize: 12 }}
-                      >
-                        Receive into Inventory Batch
-                      </button>
+                    {remaining > 0 && (
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, marginTop: 8, alignItems: "end" }}>
+                        <div>
+                          <label style={{ fontSize: 11, color: "#374151" }}>Qty received now</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max={remaining}
+                            value={draft.qty}
+                            onChange={(e) => setDraft(it, { qty: e.target.value })}
+                            style={{ width: "100%", padding: "6px 8px", borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 12 }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: 11, color: "#374151" }}>Batch expiry date</label>
+                          <input
+                            type="date"
+                            value={draft.expiry}
+                            onChange={(e) => setDraft(it, { expiry: e.target.value })}
+                            style={{ width: "100%", padding: "6px 8px", borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 12 }}
+                          />
+                        </div>
+                        <button
+                          className="btn-add-vendor"
+                          onClick={() => void handleReceivePOItemIntoBatch(it)}
+                          style={{ padding: "6px 12px", fontSize: 12 }}
+                        >
+                          Receive into Inventory Batch
+                        </button>
+                      </div>
                     )}
                   </div>
                 );

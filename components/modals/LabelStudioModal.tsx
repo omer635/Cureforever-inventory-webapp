@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import JsBarcode from "jsbarcode";
+import QRCode from "qrcode";
 import { useApp } from "@/components/AppProvider";
 import type { Product, ProductBatch } from "@/lib/types";
 
@@ -25,6 +27,32 @@ export default function LabelStudioModal({ initialProduct, initialBatch }: Label
   const selectedBatch = availableBatches.find((b) => b.id === selectedBatchId) || availableBatches[0];
 
   const barcodeValue = selectedProduct?.barcode || selectedProduct?.sku || "123456789";
+
+  const barcodeSvgRef = useRef<SVGSVGElement | null>(null);
+  const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    if (barcodeType === "code128" && barcodeSvgRef.current) {
+      try {
+        JsBarcode(barcodeSvgRef.current, barcodeValue, {
+          format: "CODE128",
+          width: 2,
+          height: 48,
+          displayValue: true,
+          fontSize: 11,
+          margin: 0,
+        });
+      } catch {
+        /* value has characters CODE128 can't encode — leave the SVG empty rather than crash */
+      }
+    }
+  }, [barcodeType, barcodeValue]);
+
+  useEffect(() => {
+    if (barcodeType === "qrcode" && qrCanvasRef.current) {
+      void QRCode.toCanvas(qrCanvasRef.current, barcodeValue, { width: 64, margin: 1 });
+    }
+  }, [barcodeType, barcodeValue]);
 
   const handlePrint = () => {
     window.print();
@@ -136,20 +164,10 @@ export default function LabelStudioModal({ initialProduct, initialBatch }: Label
             {/* Visual Barcode Graphic */}
             <div style={{ margin: "12px 0", display: "flex", justifyContent: "center" }}>
               {barcodeType === "code128" ? (
-                <div style={{ textAlign: "center" }}>
-                  <svg width="180" height="48">
-                    {/* Simulated Code128 barcode lines */}
-                    {[10, 14, 20, 26, 30, 36, 44, 52, 60, 68, 74, 82, 90, 96, 104, 112, 120, 128, 134, 142, 150, 158, 166, 172].map((x, i) => (
-                      <rect key={i} x={x} y="0" width={i % 3 === 0 ? 4 : 2} height="48" fill="#0F172A" />
-                    ))}
-                  </svg>
-                  <div style={{ fontSize: 11, fontFamily: "monospace", letterSpacing: 2, marginTop: 2 }}>{barcodeValue}</div>
-                </div>
+                <svg ref={barcodeSvgRef} />
               ) : (
                 <div style={{ textAlign: "center", background: "#FFF", padding: 6, border: "1px solid #CBD5E1", borderRadius: 4 }}>
-                  <svg width="64" height="64" viewBox="0 0 24 24">
-                    <path fill="#0F172A" d="M2 2h8v8H2V2zm2 2v4h4V4H4zm9-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm13-2h3v3h-3v-3zm0 5h3v3h-3v-3zm-5-5h3v8h-3v-8z" />
-                  </svg>
+                  <canvas ref={qrCanvasRef} width={64} height={64} />
                   <div style={{ fontSize: 10, fontFamily: "monospace", marginTop: 2 }}>{barcodeValue}</div>
                 </div>
               )}

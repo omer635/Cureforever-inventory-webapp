@@ -200,6 +200,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           await api.createPurchaseOrder(d.po, d.items);
         } else if (op.type === "transfer_create") {
           await api.createStockTransfer(op.data);
+        } else if (op.type === "transfer_status_update") {
+          await api.updateTransferStatus(op.data.transfer, op.data.status);
         }
       } catch {
         remaining.push(op);

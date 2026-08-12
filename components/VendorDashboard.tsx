@@ -225,6 +225,9 @@ export default function VendorDashboard() {
             <button className="btn-scan" onClick={() => openModal({ type: "scanner" })}>
               Scan
             </button>
+            <button className="btn-add-vendor" onClick={() => openModal({ type: "receiveStock" })}>
+              + Receive Stock
+            </button>
           </div>
         </div>
         <div style={{ overflowX: "auto" }}>

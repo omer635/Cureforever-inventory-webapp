@@ -1,6 +1,31 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ==========================================
+# CureForever — Enterprise .gitignore
+# Confidential, Environment & Local Artifacts
+# ==========================================
 
-# dependencies
+# 1. Environment & API Secrets
+.env
+.env*
+!.env.example
+*.env
+credentials.json
+service-account*.json
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+
+# 2. Local AI & Agent Workspace Directories
+.agents/
+.gemini/
+.claude/
+.system_generated/
+headroom.log
+*.log
+*.db
+
+# 3. Dependencies & Package Managers
 /node_modules
 /.pnp
 .pnp.*
@@ -9,33 +34,52 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+npm-debug.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# 4. Next.js & Build Outputs
+/.next/
+/out/
+/build/
+/dist/
+/.turbo/
+/coverage/
 
-# vercel
+# 5. Vercel & Deployment Artifacts
 .vercel
 
-# typescript
+# 6. TypeScript & Build Info
 *.tsbuildinfo
 next-env.d.ts
+
+# 7. IDEs & Code Editors
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vs/
+
+# 8. OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# 9. Temporary & Scratch Files
+*.tmp
+*.temp
+/scratch/
+*.bak

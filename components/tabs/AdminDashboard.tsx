@@ -28,21 +28,26 @@ export default function AdminDashboard() {
   const topProductsChart = useRef<Chart | null>(null);
   const trendChart = useRef<Chart | null>(null);
 
-  // Robust Master Calculations across all products & stock entries
+  // Real on-hand quantity per product, summed across every vendor's stock_entries row —
+  // shared by the KPI cards and both valuation charts below so they can't disagree with
+  // each other or with All Stock.
+  const qtyByProduct = useMemo(() => {
+    const map: Record<string, number> = {};
+    stockEntries.forEach((se) => {
+      map[se.product_id] = (map[se.product_id] || 0) + Number(se.quantity || 0);
+    });
+    return map;
+  }, [stockEntries]);
+
   const stats = useMemo(() => {
     let totalCostVal = 0;
     let totalRetailVal = 0;
     let lowStockCount = 0;
 
-    // Map stock entries per product
-    const qtyByProduct: Record<string, number> = {};
-    stockEntries.forEach((se) => {
-      qtyByProduct[se.product_id] = (qtyByProduct[se.product_id] || 0) + Number(se.quantity || 0);
-    });
-
     products.forEach((p) => {
-      // Default to batch quantity or stock entries or default low stock threshold
-      const onHandQty = qtyByProduct[p.id] !== undefined ? qtyByProduct[p.id] : 25;
+      // No stock_entries row for this product yet means genuinely zero on hand —
+      // never assume a default quantity that isn't backed by real data.
+      const onHandQty = qtyByProduct[p.id] || 0;
       totalCostVal += onHandQty * (p.cost_price || 0);
       totalRetailVal += onHandQty * (p.selling_price || 0);
 
@@ -72,42 +77,39 @@ export default function AdminDashboard() {
     };
   }, [products, stockEntries, productBatches, reorderRequests, purchaseOrders, stockTransfers]);
 
-  // Category Distribution for Doughnut Chart
+  // Category Distribution for Doughnut Chart — real on-hand value (qty × cost), not a
+  // fabricated multiplier. Categories with zero on-hand stock are omitted rather than
+  // shown with a made-up value.
   const categoryData = useMemo(() => {
     const map: Record<string, number> = {};
     products.forEach((p) => {
+      const value = (qtyByProduct[p.id] || 0) * (p.cost_price || 0);
+      if (value <= 0) return;
       const cat = p.category || "General";
-      map[cat] = (map[cat] || 0) + (p.cost_price || 10) * 20;
+      map[cat] = (map[cat] || 0) + value;
     });
     return {
       labels: Object.keys(map),
       values: Object.values(map),
     };
-  }, [products]);
+  }, [products, qtyByProduct]);
 
-  // Top 5 SKUs by Inventory Valuation
+  // Top 5 SKUs by real on-hand retail valuation (qty × selling price).
   const topProducts = useMemo(() => {
     return [...products]
       .map((p) => ({
         name: cleanText(p.name),
-        val: (p.selling_price || 15) * 25,
+        val: (qtyByProduct[p.id] || 0) * (p.selling_price || 0),
       }))
+      .filter((p) => p.val > 0)
       .sort((a, b) => b.val - a.val)
       .slice(0, 5);
-  }, [products]);
+  }, [products, qtyByProduct]);
 
-  // Historical Stock Movement Trend
+  // Historical Stock Movement Trend — real stock_history points only. An empty array (no
+  // synthetic fallback) is rendered as an honest "not enough data yet" state below.
   const trendPoints = useMemo(() => {
-    if (!stockHistory || stockHistory.length === 0) {
-      // Mock smooth fallback trend for demonstration
-      const days = [];
-      const now = Date.now();
-      for (let i = 13; i >= 0; i--) {
-        const d = new Date(now - i * 86400000).toISOString().slice(5, 10);
-        days.push([d, 40 + (i % 3) * 5]);
-      }
-      return days;
-    }
+    if (!stockHistory || stockHistory.length === 0) return [];
     const series = stockHistory.reduce((acc, h) => {
       const day = (h.recorded_at || "").slice(5, 10);
       acc[day] = (acc[day] || 0) + (Number(h.quantity) || 0);
@@ -265,7 +267,13 @@ export default function AdminDashboard() {
         <div style={{ background: "#FFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <h3 style={{ margin: "0 0 12px", fontSize: 15, color: "#0F172A" }}>Inventory Valuation by Category</h3>
           <div style={{ height: 220, position: "relative" }}>
-            <canvas ref={categoryChartRef} />
+            {categoryData.labels.length > 0 ? (
+              <canvas ref={categoryChartRef} />
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#94A3B8", fontSize: 13, textAlign: "center" }}>
+                No stock on hand yet.
+              </div>
+            )}
           </div>
         </div>
 
@@ -273,7 +281,13 @@ export default function AdminDashboard() {
         <div style={{ background: "#FFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <h3 style={{ margin: "0 0 12px", fontSize: 15, color: "#0F172A" }}>Top Highest Value SKUs</h3>
           <div style={{ height: 220, position: "relative" }}>
-            <canvas ref={topProductsChartRef} />
+            {topProducts.length > 0 ? (
+              <canvas ref={topProductsChartRef} />
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#94A3B8", fontSize: 13, textAlign: "center" }}>
+                No stock on hand yet.
+              </div>
+            )}
           </div>
         </div>
 
@@ -281,7 +295,13 @@ export default function AdminDashboard() {
         <div style={{ background: "#FFF", border: "1px solid #E2E8F0", borderRadius: 8, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <h3 style={{ margin: "0 0 12px", fontSize: 15, color: "#0F172A" }}>Stock Movement Velocity (Last 14 Days)</h3>
           <div style={{ height: 220, position: "relative" }}>
-            <canvas ref={trendChartRef} />
+            {trendPoints.length > 0 ? (
+              <canvas ref={trendChartRef} />
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#94A3B8", fontSize: 13, textAlign: "center" }}>
+                Not enough stock history yet — this fills in as quantities change.
+              </div>
+            )}
           </div>
         </div>
       </div>

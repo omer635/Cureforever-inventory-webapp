@@ -29,7 +29,7 @@ export const FILTER_LABELS: Record<string, string> = {
 
 export const ADMIN_TAB_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
-  analytics: "AI Analytics & Forecast",
+  analytics: "Demand Forecast",
   pos: "Purchase Orders",
   transfers: "Stock Transfers",
   allstock: "All Stock",

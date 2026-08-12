@@ -60,7 +60,7 @@ export default function AppShell() {
       title: "Overview",
       items: [
         { id: "dashboard", label: "Dashboard", icon: "📊" },
-        { id: "analytics", label: "AI Analytics & Forecast", icon: "📈" },
+        { id: "analytics", label: "Demand Forecast", icon: "📈" },
       ],
     },
     {

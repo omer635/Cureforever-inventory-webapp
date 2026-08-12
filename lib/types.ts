@@ -153,7 +153,8 @@ export type OfflineOp =
   | { type: "reorder"; data: Record<string, unknown> }
   | { type: "announcement_read"; data: Record<string, unknown> }
   | { type: "purchase_order_create"; data: Record<string, unknown> }
-  | { type: "transfer_create"; data: Record<string, unknown> };
+  | { type: "transfer_create"; data: Record<string, unknown> }
+  | { type: "transfer_status_update"; data: { transfer: StockTransfer; status: string } };
 
 export interface RestoreCache {
   products: Product[];
@@ -179,6 +180,7 @@ export type ModalState =
   | { type: "reorder"; entry: StockEntry }
   | { type: "createBatch" }
   | { type: "manageBatch"; batch: ProductBatch }
+  | { type: "receiveStock" }
   | { type: "restrict"; productId: string }
   | { type: "scanner" }
   | { type: "product"; product: Product | null }

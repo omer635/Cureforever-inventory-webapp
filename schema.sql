@@ -27,11 +27,9 @@ create table if not exists product_visibility (
   product_id uuid references products(id) on delete cascade
 );
 
-create table if not exists vendor_product_visibility (
-  id uuid primary key default gen_random_uuid(),
-  vendor_id uuid references vendors(id) on delete cascade,
-  product_id uuid references products(id) on delete cascade
-);
+-- vendor_product_visibility was a duplicate shadow table from an earlier migration that
+-- never got cleaned up; product_visibility is the one and only source of truth now.
+drop table if exists vendor_product_visibility;
 
 -- 2. PRODUCTS TABLE
 -- Master product list with financial pricing and barcode metadata. Shared across all vendors.
@@ -155,6 +153,11 @@ create table if not exists product_visibility (
   vendor_id uuid not null references vendors(id) on delete cascade,
   unique (product_id, vendor_id)
 );
+
+-- The table may already exist from the earlier (pre-products-table) create block above
+-- without this unique constraint, in which case the "unique" clause here is a no-op —
+-- add it as an index instead so it's actually enforced either way.
+create unique index if not exists product_visibility_product_vendor_uq on product_visibility (product_id, vendor_id);
 
 -- 9. ANNOUNCEMENTS TABLE
 -- Broadcast announcements sent by admin to all vendors.
@@ -318,6 +321,11 @@ create policy "batches_select_all" on product_batches for select using (true);
 drop policy if exists "batches_admin_write" on product_batches;
 create policy "batches_admin_write" on product_batches for all using (is_admin()) with check (is_admin());
 
+-- Vendors may receive stock themselves (create a batch for their own vendor_id) — editing,
+-- recalling, or quarantining an existing batch remains admin-only via batches_admin_write above.
+drop policy if exists "batches_vendor_insert" on product_batches;
+create policy "batches_vendor_insert" on product_batches for insert with check (is_admin() or vendor_id = my_vendor_id());
+
 -- --- stock_entries table policies ---
 drop policy if exists "stock_select" on stock_entries;
 create policy "stock_select" on stock_entries for select using (is_admin() or vendor_id = my_vendor_id());
@@ -389,6 +397,18 @@ do $$
 begin
   if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
     alter publication supabase_realtime add table stock_entries, reorder_requests, vendors, products, product_batches, stock_adjustments, product_visibility, announcements, announcement_reads;
+  end if;
+exception
+  when others then null; -- ignore if already added or publication missing
+end $$;
+
+-- purchase_orders / purchase_order_items / stock_transfers: the app already subscribes to
+-- postgres_changes on these (AppProvider.tsx) but they were never added to the publication,
+-- so those subscriptions silently received nothing.
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    alter publication supabase_realtime add table purchase_orders, purchase_order_items, stock_transfers;
   end if;
 exception
   when others then null; -- ignore if already added or publication missing
@@ -466,11 +486,53 @@ alter table purchase_orders enable row level security;
 alter table purchase_order_items enable row level security;
 alter table stock_transfers enable row level security;
 
+-- Previously "using (true) with check (true)" — any authenticated vendor could read/write
+-- every other vendor's purchase orders and transfers. Scoped to match the stock_entries
+-- pattern: admin sees/writes everything, a vendor only their own.
+
 drop policy if exists "po_all" on purchase_orders;
-create policy "po_all" on purchase_orders for all using (true) with check (true);
+drop policy if exists "po_select" on purchase_orders;
+create policy "po_select" on purchase_orders for select using (is_admin() or destination_vendor_id = my_vendor_id());
+
+drop policy if exists "po_insert" on purchase_orders;
+create policy "po_insert" on purchase_orders for insert with check (is_admin() or destination_vendor_id = my_vendor_id());
+
+drop policy if exists "po_update" on purchase_orders;
+create policy "po_update" on purchase_orders for update using (is_admin()) with check (is_admin());
+
+drop policy if exists "po_delete" on purchase_orders;
+create policy "po_delete" on purchase_orders for delete using (is_admin());
 
 drop policy if exists "po_items_all" on purchase_order_items;
-create policy "po_items_all" on purchase_order_items for all using (true) with check (true);
+drop policy if exists "po_items_select" on purchase_order_items;
+create policy "po_items_select" on purchase_order_items for select using (
+  is_admin() or exists (select 1 from purchase_orders po where po.id = purchase_order_items.po_id and po.destination_vendor_id = my_vendor_id())
+);
+
+drop policy if exists "po_items_insert" on purchase_order_items;
+create policy "po_items_insert" on purchase_order_items for insert with check (
+  is_admin() or exists (select 1 from purchase_orders po where po.id = purchase_order_items.po_id and po.destination_vendor_id = my_vendor_id())
+);
+
+drop policy if exists "po_items_write" on purchase_order_items;
+create policy "po_items_write" on purchase_order_items for update using (is_admin()) with check (is_admin());
+
+drop policy if exists "po_items_delete" on purchase_order_items;
+create policy "po_items_delete" on purchase_order_items for delete using (is_admin());
 
 drop policy if exists "transfers_all" on stock_transfers;
-create policy "transfers_all" on stock_transfers for all using (true) with check (true);
+drop policy if exists "transfers_select" on stock_transfers;
+create policy "transfers_select" on stock_transfers for select using (
+  is_admin() or source_vendor_id = my_vendor_id() or target_vendor_id = my_vendor_id()
+);
+
+drop policy if exists "transfers_insert" on stock_transfers;
+create policy "transfers_insert" on stock_transfers for insert with check (
+  is_admin() or source_vendor_id = my_vendor_id() or target_vendor_id = my_vendor_id()
+);
+
+drop policy if exists "transfers_update" on stock_transfers;
+create policy "transfers_update" on stock_transfers for update using (is_admin()) with check (is_admin());
+
+drop policy if exists "transfers_delete" on stock_transfers;
+create policy "transfers_delete" on stock_transfers for delete using (is_admin());

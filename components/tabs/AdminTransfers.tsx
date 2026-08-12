@@ -32,13 +32,13 @@ export default function AdminTransfers() {
   const handleUpdateStatus = async (transfer: StockTransfer, newStatus: string) => {
     try {
       if (isOnline) {
-        await api.updateTransferStatus(transfer.id, newStatus);
+        await api.updateTransferStatus(transfer, newStatus);
         toast(`Transfer status updated to ${newStatus}`);
         await refreshAll();
       } else {
         queueOp({
-          type: "transfer_create",
-          data: { id: transfer.id, status: newStatus },
+          type: "transfer_status_update",
+          data: { transfer, status: newStatus },
         });
         toast("Saved offline: Transfer status change");
       }

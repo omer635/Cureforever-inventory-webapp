@@ -19,7 +19,7 @@ import DataImportModal from "@/components/modals/DataImportModal";
 import TransferModal from "@/components/modals/TransferModal";
 
 export default function ModalHost() {
-  const { modal, closeModal } = useApp();
+  const { modal, closeModal, vendorRow } = useApp();
   if (!modal) return null;
 
   if (modal.type === "commandPalette") return <CommandPaletteModal />;
@@ -50,6 +50,7 @@ export default function ModalHost() {
           {modal.type === "reorder" && <ReorderModal entry={modal.entry} />}
           {modal.type === "createBatch" && <BatchModals batch={null} />}
           {modal.type === "manageBatch" && <BatchModals batch={modal.batch} />}
+          {modal.type === "receiveStock" && <BatchModals batch={null} lockVendorId={vendorRow?.id} />}
           {modal.type === "restrict" && <RestrictModal productId={modal.productId} />}
           {modal.type === "scanner" && <ScannerModal />}
           {modal.type === "product" && <ProductModal product={modal.product} />}

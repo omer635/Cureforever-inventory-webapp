@@ -1,15 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useApp } from "@/components/AppProvider";
 import * as api from "@/lib/db";
 import type { ProductBatch } from "@/lib/types";
-import { fmtDate, safeNum } from "@/lib/utils";
+import { fmtDate, isProductVisible, safeNum } from "@/lib/utils";
 
-export default function BatchModals({ batch }: { batch: ProductBatch | null }) {
-  const { products, vendors, refreshAll, toast, closeModal } = useApp();
+interface BatchModalsProps {
+  batch: ProductBatch | null;
+  /** When set (vendor "Receive Stock" flow), the vendor is fixed and hidden from the form, and
+   * the product picker is limited to products visible to that vendor. */
+  lockVendorId?: string;
+}
+
+export default function BatchModals({ batch, lockVendorId }: BatchModalsProps) {
+  const { products, vendors, visibilityMap, refreshAll, toast, closeModal } = useApp();
   const [productId, setProductId] = useState(batch?.product_id || "");
-  const [vendorId, setVendorId] = useState(batch?.vendor_id || "");
+  const [vendorId, setVendorId] = useState(batch?.vendor_id || lockVendorId || "");
+  const pickableProducts = useMemo(
+    () => (lockVendorId ? products.filter((p) => isProductVisible(p.id, lockVendorId, visibilityMap)) : products),
+    [products, lockVendorId, visibilityMap]
+  );
   const [quantity, setQuantity] = useState(batch ? String(batch.quantity) : "");
   const [rate, setRate] = useState(batch ? String(batch.rate ?? "") : "");
   const [received, setReceived] = useState(batch?.received_date?.slice(0, 10) || new Date().toISOString().slice(0, 10));
@@ -59,28 +70,36 @@ export default function BatchModals({ batch }: { batch: ProductBatch | null }) {
       <button className="modal-close" onClick={closeModal}>
         ×
       </button>
-      <h3>{batch ? "Manage Batch" : "Create Batch"}</h3>
+      <h3>{batch ? "Manage Batch" : lockVendorId ? "Receive Stock" : "Create Batch"}</h3>
       <p className="modal-sub">
-        {batch ? `Batch received ${fmtDate(batch.received_date)}` : "Register a new stock batch."}
+        {batch
+          ? `Batch received ${fmtDate(batch.received_date)}`
+          : lockVendorId
+            ? "Record a new shipment you've received — it's added to your on-hand stock immediately."
+            : "Register a new stock batch."}
       </p>
       <label>Product</label>
       <select value={productId} onChange={(e) => setProductId(e.target.value)}>
         <option value="">Select product…</option>
-        {products.map((p) => (
+        {pickableProducts.map((p) => (
           <option key={p.id} value={p.id}>
             {p.name} ({p.sku})
           </option>
         ))}
       </select>
-      <label>Vendor</label>
-      <select value={vendorId} onChange={(e) => setVendorId(e.target.value)}>
-        <option value="">Select vendor…</option>
-        {vendors.map((v) => (
-          <option key={v.id} value={v.id}>
-            {v.name}
-          </option>
-        ))}
-      </select>
+      {!lockVendorId && (
+        <>
+          <label>Vendor</label>
+          <select value={vendorId} onChange={(e) => setVendorId(e.target.value)}>
+            <option value="">Select vendor…</option>
+            {vendors.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
       <div className="inline-form-grid">
         <div>
           <label>Quantity</label>
@@ -124,7 +143,7 @@ export default function BatchModals({ batch }: { batch: ProductBatch | null }) {
           Cancel
         </button>
         <button className="save-btn" onClick={() => void save()} disabled={busy}>
-          {busy ? "Saving…" : batch ? "Save Changes" : "Create Batch"}
+          {busy ? "Saving…" : batch ? "Save Changes" : lockVendorId ? "Receive Stock" : "Create Batch"}
         </button>
       </div>
     </div>

@@ -10,51 +10,73 @@ export default function AdminAnalytics() {
   const chartRef = useRef<Chart | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  // Calculate daily depletion velocity & runout days per product
+  // Calculate daily depletion velocity & runout days per product from REAL stock_history
+  // points (a genuine trend estimate — not a heuristic on how many times a row changed).
   const analyticsData = useMemo(() => {
     const categories = Array.from(new Set(products.map((p) => p.category).filter(Boolean)));
-    
-    // Group stock entries by product
+
     const totalQtyMap: Record<string, number> = {};
     stockEntries.forEach((se) => {
       totalQtyMap[se.product_id] = (totalQtyMap[se.product_id] || 0) + Number(se.quantity || 0);
     });
 
-    // Calculate historical changes per product over time
-    const productDepletion: Record<string, { last30DaysQty: number; changesCount: number }> = {};
+    // For each (product, vendor), find the earliest and latest stock_history point within
+    // the last 30 days and take the quantity drop over that span — a real depletion rate,
+    // summed across vendors per product.
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-
+    const pointsByProductVendor: Record<string, Record<string, { qty: number; time: number }[]>> = {};
     stockHistory.forEach((sh) => {
-      const recTime = new Date(sh.recorded_at).getTime();
-      if (recTime >= thirtyDaysAgo) {
-        if (!productDepletion[sh.product_id]) {
-          productDepletion[sh.product_id] = { last30DaysQty: 0, changesCount: 0 };
-        }
-        productDepletion[sh.product_id].changesCount += 1;
-      }
+      const time = new Date(sh.recorded_at).getTime();
+      if (isNaN(time) || time < thirtyDaysAgo) return;
+      const byVendor = (pointsByProductVendor[sh.product_id] ??= {});
+      (byVendor[sh.vendor_id] ??= []).push({ qty: Number(sh.quantity) || 0, time });
     });
+
+    const depletionFor = (productId: string): { dailyVelocity: number; hasData: boolean } => {
+      const byVendor = pointsByProductVendor[productId];
+      if (!byVendor) return { dailyVelocity: 0, hasData: false };
+      let totalDrop = 0;
+      let maxSpanDays = 0;
+      let hasData = false;
+      Object.values(byVendor).forEach((points) => {
+        if (points.length < 2) return;
+        points.sort((a, b) => a.time - b.time);
+        const first = points[0];
+        const last = points[points.length - 1];
+        const spanDays = (last.time - first.time) / 86400000;
+        if (spanDays <= 0) return;
+        totalDrop += first.qty - last.qty; // positive = net depletion over the span
+        maxSpanDays = Math.max(maxSpanDays, spanDays);
+        hasData = true;
+      });
+      if (!hasData) return { dailyVelocity: 0, hasData: false };
+      return { dailyVelocity: Math.max(0, totalDrop) / maxSpanDays, hasData: true };
+    };
+
+    // EOQ: sqrt((2 * annual demand * order cost) / holding cost). Order cost has no real
+    // per-product source in this data model, so it stays a clearly-labeled assumption
+    // (shown in the UI below) rather than a fabricated per-product number.
+    const ASSUMED_ORDER_COST = 50;
+    const HOLDING_COST_RATE = 0.15;
 
     const rows = products.map((p) => {
       const totalQty = totalQtyMap[p.id] || 0;
-      // Estimate daily velocity based on activity & low stock threshold
-      const activity = productDepletion[p.id]?.changesCount || 1;
-      const dailyVelocity = Math.max(0.2, Number((activity * 0.4).toFixed(1)));
-      
+      const { dailyVelocity: rawVelocity, hasData } = depletionFor(p.id);
+      const dailyVelocity = Number(rawVelocity.toFixed(2));
       const runoutDays = dailyVelocity > 0 ? Math.round(totalQty / dailyVelocity) : 999;
 
-      // Economic Order Quantity (EOQ) formula: sqrt((2 * Demand * OrderCost) / HoldingCost)
       const annualDemand = dailyVelocity * 365;
-      const orderCost = 50; // default estimated PO cost
-      const holdingCost = Math.max(1, p.cost_price * 0.15); // 15% holding cost
-      const eoq = Math.round(Math.sqrt((2 * annualDemand * orderCost) / holdingCost)) || 25;
+      const holdingCost = Math.max(1, p.cost_price * HOLDING_COST_RATE);
+      const eoq = annualDemand > 0 ? Math.round(Math.sqrt((2 * annualDemand * ASSUMED_ORDER_COST) / holdingCost)) : 0;
 
-      const isDeadStock = totalQty > (p.reorder_threshold || 25) * 3 && activity <= 1;
-      const isCriticalRunout = runoutDays <= 14 && totalQty > 0;
+      const isDeadStock = totalQty > (p.reorder_threshold || 25) * 3 && dailyVelocity < 0.1;
+      const isCriticalRunout = hasData && runoutDays <= 14 && totalQty > 0;
 
       return {
         ...p,
         totalQty,
         dailyVelocity,
+        hasVelocityData: hasData,
         runoutDays,
         eoq,
         isDeadStock,
@@ -135,9 +157,10 @@ export default function AdminAnalytics() {
     <div className="tab-pane active" style={{ animation: "fadeIn 0.2s ease" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
-          <h2 style={{ margin: 0, color: "#0F1F3D", fontSize: 20 }}>AI Demand Forecasting & Inventory Velocity</h2>
+          <h2 style={{ margin: 0, color: "#0F1F3D", fontSize: 20 }}>Demand Forecast & Reorder Planning</h2>
           <p style={{ margin: "4px 0 0", color: "#5C6B73", fontSize: 13 }}>
-            Predictive stock runout dates, Economic Order Quantities (EOQ), and slow-moving inventory detection.
+            Statistical trend analysis from real stock movement — runout estimates, Economic Order Quantities (EOQ,
+            assuming $50 per order and 15% annual holding cost), and slow-moving inventory detection.
           </p>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
@@ -229,16 +252,20 @@ export default function AdminAnalytics() {
                     </td>
                     <td style={{ padding: "12px 16px", color: "#4B5563" }}>{row.category || "General"}</td>
                     <td style={{ padding: "12px 16px", fontWeight: 600 }}>{row.totalQty} units</td>
-                    <td style={{ padding: "12px 16px", color: "#4B5563" }}>{row.dailyVelocity} / day</td>
+                    <td style={{ padding: "12px 16px", color: "#4B5563" }}>{row.hasVelocityData ? `${row.dailyVelocity} / day` : "—"}</td>
                     <td style={{ padding: "12px 16px" }}>
-                      <span
-                        style={{
-                          color: row.runoutDays <= 14 ? "#DC2626" : row.runoutDays <= 30 ? "#D97706" : "#059669",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {row.runoutDays > 365 ? "> 1 year" : `${row.runoutDays} days`}
-                      </span>
+                      {row.hasVelocityData ? (
+                        <span
+                          style={{
+                            color: row.runoutDays <= 14 ? "#DC2626" : row.runoutDays <= 30 ? "#D97706" : "#059669",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {row.runoutDays > 365 ? "> 1 year" : `${row.runoutDays} days`}
+                        </span>
+                      ) : (
+                        <span style={{ color: "#94A3B8" }}>Not enough history</span>
+                      )}
                     </td>
                     <td style={{ padding: "12px 16px" }}>
                       <span style={{ background: "#EEF2FF", color: "#4338CA", padding: "2px 8px", borderRadius: 4, fontWeight: 600, fontSize: 12 }}>
