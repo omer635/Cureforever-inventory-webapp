@@ -258,35 +258,22 @@ export async function createVendorWithAuth(
   payload: Record<string, unknown>,
   password?: string
 ): Promise<Vendor> {
-  const sb = getSupabase();
-  let userId: string | null = null;
+  try {
+    const res = await fetch("/api/vendor/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, password }),
+    });
 
-  if (payload.email && password && String(password).trim()) {
-    try {
-      const { data: authData, error: authError } = await sb.auth.signUp({
-        email: String(payload.email).trim(),
-        password: String(password).trim(),
-        options: {
-          data: {
-            name: String(payload.name || ""),
-            is_admin: !!payload.is_admin,
-          },
-        },
-      });
-      if (!authError && authData.user) {
-        userId = authData.user.id;
-      }
-    } catch {
-      /* proceed with vendor row creation */
+    if (res.ok) {
+      const json = await res.json();
+      if (json.vendor) return json.vendor as Vendor;
     }
+  } catch {
+    /* fallback to client insert */
   }
 
-  const finalPayload = { ...payload };
-  if (userId) {
-    finalPayload.user_id = userId;
-  }
-
-  return createVendor(finalPayload);
+  return createVendor(payload);
 }
 
 export async function updateVendor(id: string, payload: Record<string, unknown>): Promise<void> {

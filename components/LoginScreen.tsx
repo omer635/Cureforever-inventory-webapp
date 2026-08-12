@@ -18,12 +18,41 @@ export default function LoginScreen() {
     setError("");
     setBusy(true);
     try {
-      const { error } = await getSupabase().auth.signInWithPassword({
+      const sb = getSupabase();
+      const { error: signInErr } = await sb.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
-      if (error) {
-        setError(error.message);
+
+      if (signInErr) {
+        // Fallback: Check if vendor record exists in database for this email
+        const { data: vRow } = await sb
+          .from("vendors")
+          .select("*")
+          .ilike("email", email.trim())
+          .maybeSingle();
+
+        if (vRow) {
+          // Auto-provision Supabase Auth User for this vendor store account
+          const { data: signUpData, error: signUpErr } = await sb.auth.signUp({
+            email: email.trim(),
+            password,
+          });
+
+          if (!signUpErr && signUpData?.user) {
+            // Bind user_id to vendor record
+            await sb.from("vendors").update({ user_id: signUpData.user.id }).eq("id", vRow.id);
+
+            // Retry sign in
+            const { error: retryErr } = await sb.auth.signInWithPassword({
+              email: email.trim(),
+              password,
+            });
+            if (!retryErr) return;
+          }
+        }
+
+        setError(signInErr.message);
         setBusy(false);
         return;
       }
