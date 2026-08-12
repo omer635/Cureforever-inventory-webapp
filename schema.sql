@@ -405,13 +405,23 @@ end $$;
 -- purchase_orders / purchase_order_items / stock_transfers: the app already subscribes to
 -- postgres_changes on these (AppProvider.tsx) but they were never added to the publication,
 -- so those subscriptions silently received nothing.
+-- Checks membership per-table via pg_publication_tables instead of a blanket try/catch —
+-- "when others then null" would silently hide a real failure (wrong privileges, typo, etc.)
+-- exactly the way that happened before: this block looked like it succeeded but admin never
+-- received live purchase_orders updates because the swallowed exception hid the real error.
 do $$
 begin
   if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
-    alter publication supabase_realtime add table purchase_orders, purchase_order_items, stock_transfers;
+    if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'purchase_orders') then
+      alter publication supabase_realtime add table purchase_orders;
+    end if;
+    if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'purchase_order_items') then
+      alter publication supabase_realtime add table purchase_order_items;
+    end if;
+    if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'stock_transfers') then
+      alter publication supabase_realtime add table stock_transfers;
+    end if;
   end if;
-exception
-  when others then null; -- ignore if already added or publication missing
 end $$;
 
 -- ============================================================
@@ -497,8 +507,15 @@ create policy "po_select" on purchase_orders for select using (is_admin() or des
 drop policy if exists "po_insert" on purchase_orders;
 create policy "po_insert" on purchase_orders for insert with check (is_admin() or destination_vendor_id = my_vendor_id());
 
+-- Was admin-only — every vendor Accept/Reject/Request-Revision action silently updated
+-- zero rows (RLS filters the row out; Supabase's .update() doesn't error on that, it just
+-- no-ops), so those buttons never actually changed anything. Vendors may update only their
+-- own destination PO, and only into the three statuses their UI actually exposes — every
+-- other transition (sent, partially_received, fulfilled, cancelled, etc.) stays admin-only.
 drop policy if exists "po_update" on purchase_orders;
-create policy "po_update" on purchase_orders for update using (is_admin()) with check (is_admin());
+create policy "po_update" on purchase_orders for update
+  using (is_admin() or destination_vendor_id = my_vendor_id())
+  with check (is_admin() or (destination_vendor_id = my_vendor_id() and status in ('accepted', 'rejected', 'revision_requested')));
 
 drop policy if exists "po_delete" on purchase_orders;
 create policy "po_delete" on purchase_orders for delete using (is_admin());
