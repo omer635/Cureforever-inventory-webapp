@@ -11,7 +11,9 @@ interface PurchaseOrderModalProps {
 }
 
 export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps) {
-  const { products, vendors, closeModal, toast, refreshAll, isOnline, queueOp } = useApp();
+  const { products, vendors: allVendors, closeModal, toast, refreshAll, isOnline, queueOp } = useApp();
+  // A PO's destination is always a real vendor store, never the HQ Admin account itself.
+  const vendors = allVendors.filter((v) => !v.is_admin);
 
   // Revision and Status Change state
   const [showRevisionForm, setShowRevisionForm] = useState(false);

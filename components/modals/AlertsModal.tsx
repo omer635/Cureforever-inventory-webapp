@@ -6,7 +6,7 @@ import * as api from "@/lib/db";
 import { fmtDateTime } from "@/lib/utils";
 
 export default function AlertsModal() {
-  const { announcements, announcementReads, vendors, reorderRequests, queueOp, refreshAll, toast, closeModal, isAdmin, vendorRow } = useApp();
+  const { announcements, announcementReads, vendors, reorderRequests, queueOp, refreshAll, toast, closeModal, isAdmin, vendorRow, isOnline } = useApp();
 
   const vendorReads = new Set(
     (announcementReads || [])
@@ -18,8 +18,18 @@ export default function AlertsModal() {
 
   const dismiss = async (id: string) => {
     if (!vendorRow) return;
-    queueOp({ type: "announcement_read", data: { announcement_id: id, vendor_id: vendorRow.id } });
-    await refreshAll();
+    // Write directly when online — queueOp alone just appends to the local offline queue
+    // and isn't flushed until the next reconnect/boot, so the alert stayed "unread" here.
+    if (isOnline) {
+      try {
+        await api.markAnnouncementRead(id, vendorRow.id);
+        await refreshAll();
+      } catch {
+        queueOp({ type: "announcement_read", data: { announcement_id: id, vendor_id: vendorRow.id } });
+      }
+    } else {
+      queueOp({ type: "announcement_read", data: { announcement_id: id, vendor_id: vendorRow.id } });
+    }
     toast("Marked as read");
   };
 

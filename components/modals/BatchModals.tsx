@@ -14,7 +14,9 @@ interface BatchModalsProps {
 }
 
 export default function BatchModals({ batch, lockVendorId }: BatchModalsProps) {
-  const { products, vendors, visibilityMap, refreshAll, toast, closeModal } = useApp();
+  const { products, vendors: allVendors, visibilityMap, refreshAll, toast, closeModal } = useApp();
+  // A batch belongs to a real vendor store, never the HQ Admin account itself.
+  const vendors = allVendors.filter((v) => !v.is_admin);
   const [productId, setProductId] = useState(batch?.product_id || "");
   const [vendorId, setVendorId] = useState(batch?.vendor_id || lockVendorId || "");
   const pickableProducts = useMemo(

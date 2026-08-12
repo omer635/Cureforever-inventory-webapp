@@ -5,7 +5,9 @@ import { useApp } from "@/components/AppProvider";
 import * as api from "@/lib/db";
 
 export default function TransferModal() {
-  const { products, vendors, stockEntries, closeModal, toast, refreshAll, isOnline, queueOp } = useApp();
+  const { products, vendors: allVendors, stockEntries, closeModal, toast, refreshAll, isOnline, queueOp } = useApp();
+  // Stock transfers move inventory between real vendor stores, not to/from the HQ Admin account.
+  const vendors = allVendors.filter((v) => !v.is_admin);
   const [productId, setProductId] = useState(products[0]?.id || "");
   const [sourceVendorId, setSourceVendorId] = useState(vendors[0]?.id || "");
   const [targetVendorId, setTargetVendorId] = useState(vendors[1]?.id || vendors[0]?.id || "");

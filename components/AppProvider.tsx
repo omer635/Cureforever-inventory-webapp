@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 import { getSupabase } from "@/lib/supabase";
 import { CACHE_KEY, OFFLINE_OPS_KEY } from "@/lib/constants";
 import * as api from "@/lib/db";
@@ -245,6 +246,68 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Resolves (and if needed, auto-provisions) the vendors row for a signed-in auth session.
+  // Shared by boot() (first page load) and the onAuthStateChange listener (fresh sign-in) —
+  // previously only boot() ran this, so a brand-new login showed "No vendor profile found"
+  // until the user manually refreshed the page and boot() ran again.
+  const resolveVendorRow = useCallback(async (s: Session) => {
+    const sb = getSupabase();
+    try {
+      // 1. Try matching by user_id first
+      const me = await sb
+        .from("vendors")
+        .select("*")
+        .eq("user_id", s.user.id)
+        .limit(1)
+        .maybeSingle();
+
+      let vRow = (me.data as Vendor) || null;
+
+      // 2. If not found by user_id, try matching by email
+      if (!vRow && s.user.email) {
+        const byEmail = await sb
+          .from("vendors")
+          .select("*")
+          .ilike("email", s.user.email.trim())
+          .limit(1)
+          .maybeSingle();
+
+        if (byEmail.data) {
+          vRow = byEmail.data as Vendor;
+          // Permanently link user_id in vendors table
+          if (!vRow.user_id) {
+            void sb.from("vendors").update({ user_id: s.user.id }).eq("id", vRow.id);
+            vRow.user_id = s.user.id;
+          }
+        }
+      }
+
+      // 3. Fallback: Create admin vendor row if account has no vendor record
+      if (!vRow && s.user.email) {
+        const { data: newV } = await sb
+          .from("vendors")
+          .insert({
+            user_id: s.user.id,
+            name: s.user.email.split("@")[0] || "HQ Admin",
+            email: s.user.email,
+            is_admin: true,
+            state: "HQ Location",
+            address: "HQ Location",
+          })
+          .select("*")
+          .single();
+
+        if (newV) {
+          vRow = newV as Vendor;
+        }
+      }
+
+      setVendorRow(vRow);
+    } catch (err) {
+      console.error("vendor lookup error:", err);
+    }
+  }, []);
+
   const boot = useCallback(async () => {
     const reconnect = () => {
       setIsOnline(true);
@@ -286,60 +349,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setPurchaseOrders(cached.purchaseOrders ?? []);
           setStockTransfers(cached.stockTransfers ?? []);
         }
-        try {
-          // 1. Try matching by user_id first
-          const me = await sb
-            .from("vendors")
-            .select("*")
-            .eq("user_id", s.user.id)
-            .limit(1)
-            .maybeSingle();
-
-          let vRow = (me.data as Vendor) || null;
-
-          // 2. If not found by user_id, try matching by email
-          if (!vRow && s.user.email) {
-            const byEmail = await sb
-              .from("vendors")
-              .select("*")
-              .ilike("email", s.user.email.trim())
-              .limit(1)
-              .maybeSingle();
-
-            if (byEmail.data) {
-              vRow = byEmail.data as Vendor;
-              // Permanently link user_id in vendors table
-              if (!vRow.user_id) {
-                void sb.from("vendors").update({ user_id: s.user.id }).eq("id", vRow.id);
-                vRow.user_id = s.user.id;
-              }
-            }
-          }
-
-          // 3. Fallback: Create admin vendor row if account has no vendor record
-          if (!vRow && s.user.email) {
-            const { data: newV } = await sb
-              .from("vendors")
-              .insert({
-                user_id: s.user.id,
-                name: s.user.email.split("@")[0] || "HQ Admin",
-                email: s.user.email,
-                is_admin: true,
-                state: "HQ Location",
-                address: "HQ Location",
-              })
-              .select("*")
-              .single();
-
-            if (newV) {
-              vRow = newV as Vendor;
-            }
-          }
-
-          setVendorRow(vRow);
-        } catch (err) {
-          console.error("vendor lookup error:", err);
-        }
+        await resolveVendorRow(s);
         try {
           await refreshAll();
         } catch (err) {
@@ -352,7 +362,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setBooted(true);
     }
-  }, [flushQueue, refreshAll, toast]);
+  }, [flushQueue, refreshAll, resolveVendorRow, toast]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- onAuthStateChange is an external subscription callback; setSession runs on auth events, not synchronously during this effect
@@ -361,8 +371,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const sbSub = getSupabase().auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s) {
+        void resolveVendorRow(s);
         void refreshAll();
         if (navigator.onLine) void flushQueue();
+      } else {
+        setVendorRow(null);
       }
     });
 
