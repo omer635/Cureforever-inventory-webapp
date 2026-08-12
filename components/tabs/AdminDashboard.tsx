@@ -146,7 +146,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
             labels: topProducts.map((p) => (p.name.length > 18 ? p.name.substring(0, 18) + "..." : p.name)),
             datasets: [
               {
-                label: "Est. Valuation ($)",
+                label: "Retail Valuation (₹)",
                 data: topProducts.map((p) => p.val),
                 backgroundColor: "rgba(15, 31, 61, 0.85)",
                 borderRadius: 4,

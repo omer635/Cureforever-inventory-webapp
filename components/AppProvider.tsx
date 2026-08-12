@@ -121,7 +121,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [announcementReads, setAnnouncementReads] = useState<AnnouncementRead[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [stockTransfers, setStockTransfers] = useState<StockTransfer[]>([]);
-  const [currency, setCurrency] = useState<Currency>("USD");
+  const [currency, setCurrency] = useState<Currency>("INR");
   const [valuationModel, setValuationModel] = useState<ValuationModel>("weighted_avg");
   const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== "undefined" ? navigator.onLine : true);
   const [offlineOps, setOfflineOps] = useState<OfflineOp[]>(() => loadQueue());

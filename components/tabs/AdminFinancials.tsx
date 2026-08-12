@@ -7,19 +7,19 @@ import { downloadCSV, fmtDateTime, money } from "@/lib/utils";
 import type { Currency, ValuationModel } from "@/lib/types";
 
 const CURRENCY_SYMBOLS: Record<Currency, string> = {
+  INR: "₹",
   USD: "$",
   EUR: "€",
   GBP: "£",
-  INR: "₹",
   CAD: "CA$",
 };
 
 const CURRENCY_RATES: Record<Currency, number> = {
-  USD: 1.0,
-  EUR: 0.92,
-  GBP: 0.79,
-  INR: 83.2,
-  CAD: 1.35,
+  INR: 1.0,
+  USD: 0.012,
+  EUR: 0.011,
+  GBP: 0.0095,
+  CAD: 0.016,
 };
 
 export default function AdminFinancials() {
@@ -27,11 +27,11 @@ export default function AdminFinancials() {
   const [vendorFilter, setVendorFilter] = useState("all");
   const [reasonFilter, setReasonFilter] = useState("all");
 
-  const fmtCurrency = (usdVal: number) => {
+  const fmtCurrency = (baseInrVal: number) => {
     const rate = CURRENCY_RATES[currency] || 1;
-    const sym = CURRENCY_SYMBOLS[currency] || "$";
-    const converted = usdVal * rate;
-    return `${sym}${converted.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const sym = CURRENCY_SYMBOLS[currency] || "₹";
+    const converted = baseInrVal * rate;
+    return `${sym}${converted.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const rows = useMemo(() => {
@@ -119,10 +119,10 @@ export default function AdminFinancials() {
               onChange={(e) => setCurrency(e.target.value as Currency)}
               style={{ display: "block", padding: "6px 10px", borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 13, fontWeight: 600 }}
             >
+              <option value="INR">INR (₹) Indian Rupee</option>
               <option value="USD">USD ($)</option>
               <option value="EUR">EUR (€)</option>
               <option value="GBP">GBP (£)</option>
-              <option value="INR">INR (₹)</option>
               <option value="CAD">CAD (CA$)</option>
             </select>
           </div>

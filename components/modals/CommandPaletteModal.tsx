@@ -31,7 +31,7 @@ export default function CommandPaletteModal() {
         matches.push({
           type: "product",
           title: name,
-          subtitle: `SKU: ${p.sku} · Price: $${p.selling_price}`,
+          subtitle: `SKU: ${p.sku} · Price: ₹${p.selling_price}`,
           category: "Product Catalog",
           action: () => openModal({ type: "product", product: p }),
         });

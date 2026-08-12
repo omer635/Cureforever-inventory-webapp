@@ -27,7 +27,7 @@ export function safeInt(val: unknown, defaultVal = 10): number {
 
 export function money(n: number | null | undefined, digits = 2): string {
   const v = safeNum(n);
-  return v.toLocaleString("en-PK", {
+  return "₹" + v.toLocaleString("en-IN", {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   });

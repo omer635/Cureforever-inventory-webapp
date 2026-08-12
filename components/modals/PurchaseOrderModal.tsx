@@ -313,7 +313,7 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
                       <div>
                         <strong>{prod?.name || "Product"}</strong>
                         <div style={{ fontSize: 12, color: "#64748B" }}>
-                          Ordered: {it.quantity_ordered} units @ ${it.unit_cost} — received {it.quantity_received} so far
+                          Ordered: {it.quantity_ordered} units @ ₹{it.unit_cost} — received {it.quantity_received} so far
                         </div>
                       </div>
                     </div>
