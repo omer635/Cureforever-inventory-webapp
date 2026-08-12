@@ -287,20 +287,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setStockTransfers(cached.stockTransfers ?? []);
         }
         try {
+          // 1. Try matching by user_id first
           let me = await sb
             .from("vendors")
             .select("*")
-            .or(`user_id.eq.${s.user.id},email.ilike.${s.user.email ?? "___"}`)
+            .eq("user_id", s.user.id)
             .limit(1)
             .maybeSingle();
 
           let vRow = (me.data as Vendor) || null;
 
-          if (vRow && !vRow.user_id && s.user.id) {
-            void sb.from("vendors").update({ user_id: s.user.id }).eq("id", vRow.id);
-            vRow.user_id = s.user.id;
+          // 2. If not found by user_id, try matching by email
+          if (!vRow && s.user.email) {
+            const byEmail = await sb
+              .from("vendors")
+              .select("*")
+              .ilike("email", s.user.email.trim())
+              .limit(1)
+              .maybeSingle();
+
+            if (byEmail.data) {
+              vRow = byEmail.data as Vendor;
+              // Permanently link user_id in vendors table
+              if (!vRow.user_id) {
+                void sb.from("vendors").update({ user_id: s.user.id }).eq("id", vRow.id);
+                vRow.user_id = s.user.id;
+              }
+            }
           }
 
+          // 3. Fallback: Create admin vendor row if account has no vendor record
           if (!vRow && s.user.email) {
             const { data: newV } = await sb
               .from("vendors")

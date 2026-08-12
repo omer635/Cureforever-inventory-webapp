@@ -21,6 +21,7 @@ export default function BatchModals({ batch, lockVendorId }: BatchModalsProps) {
     () => (lockVendorId ? products.filter((p) => isProductVisible(p.id, lockVendorId, visibilityMap)) : products),
     [products, lockVendorId, visibilityMap]
   );
+  const [batchNumber, setBatchNumber] = useState(batch?.batch_number || "");
   const [quantity, setQuantity] = useState(batch ? String(batch.quantity) : "");
   const [rate, setRate] = useState(batch ? String(batch.rate ?? "") : "");
   const [received, setReceived] = useState(batch?.received_date?.slice(0, 10) || new Date().toISOString().slice(0, 10));
@@ -38,9 +39,11 @@ export default function BatchModals({ batch, lockVendorId }: BatchModalsProps) {
     }
     setBusy(true);
     try {
+      const generatedBatchNo = `BN-${Date.now().toString().slice(-6)}`;
       const payload = {
         product_id: productId,
         vendor_id: vendorId,
+        batch_number: batchNumber.trim() || generatedBatchNo,
         quantity: safeNum(quantity),
         rate: rate ? safeNum(rate) : 0,
         received_date: received || new Date().toISOString().slice(0, 10),
@@ -101,6 +104,14 @@ export default function BatchModals({ batch, lockVendorId }: BatchModalsProps) {
         </>
       )}
       <div className="inline-form-grid">
+        <div>
+          <label>Batch No (optional)</label>
+          <input
+            placeholder="e.g. BN-89012 (auto if empty)"
+            value={batchNumber}
+            onChange={(e) => setBatchNumber(e.target.value)}
+          />
+        </div>
         <div>
           <label>Quantity</label>
           <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />

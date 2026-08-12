@@ -181,6 +181,9 @@ export async function adjustStockQuantity(
 // are recorded but don't move the on-hand number).
 export async function createBatch(payload: Record<string, unknown>): Promise<ProductBatch> {
   const sb = getSupabase();
+  if (!payload.batch_number) {
+    payload.batch_number = `BN-${Date.now().toString().slice(-6)}`;
+  }
   const { data, error } = await sb.from("product_batches").insert(payload).select().single();
   if (error) throw new Error(error.message);
   const batch = data as ProductBatch;
