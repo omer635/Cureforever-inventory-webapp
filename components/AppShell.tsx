@@ -32,6 +32,7 @@ export default function AppShell() {
   } = useApp();
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const vendorReads = useMemo(
     () => new Set((announcementReads || []).filter((r) => r.vendor_id === vendorRow?.id).map((r) => r.announcement_id)),
@@ -55,6 +56,7 @@ export default function AppShell() {
     if (vendorId) {
       setSelectedVendorId(vendorId);
     }
+    setMobileNavOpen(false);
   };
 
   if (!vendorRow) {
@@ -129,8 +131,9 @@ export default function AppShell() {
   return (
     <>
       <div className="app-container">
+        {mobileNavOpen && <div className="sidebar-backdrop" onClick={() => setMobileNavOpen(false)} />}
         {/* Sleek Side Navbar */}
-        <aside className="sidebar">
+        <aside className={`sidebar ${mobileNavOpen ? "sidebar-open" : ""}`}>
           <div className="sidebar-header" style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <img src="/logo.png" alt="CureForever Logo" style={{ width: 40, height: 40, borderRadius: "50%", border: "2px solid #B8935A", background: "#0F1F3D" }} />
             <div>
@@ -148,7 +151,10 @@ export default function AppShell() {
                     <button
                       key={item.id}
                       className={`sidebar-link ${activeTab === item.id ? "active" : ""}`}
-                      onClick={() => setActiveTab(item.id)}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setMobileNavOpen(false);
+                      }}
                     >
                       <span style={{ fontSize: 15 }}>{item.icon}</span>
                       <span>{item.label}</span>
@@ -196,7 +202,14 @@ export default function AppShell() {
         <div className="app-main-content">
           {/* Top Bar Header */}
           <header className="top-bar">
-            <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                className="sidebar-toggle"
+                onClick={() => setMobileNavOpen((v) => !v)}
+                aria-label="Toggle navigation menu"
+              >
+                ☰
+              </button>
               <h2 style={{ margin: 0, fontSize: 18, color: "#0F1F3D", fontWeight: 700 }}>{getActiveTabTitle()}</h2>
             </div>
 
@@ -280,7 +293,7 @@ export default function AppShell() {
           </header>
 
           {/* Page Body Viewport */}
-          <main style={{ maxWidth: "100%", width: "100%", padding: 24, flex: 1 }}>
+          <main className="app-main">
             {isAdmin ? (
               <>
                 {activeTab === "dashboard" && <AdminDashboard onNavigate={handleNavigate} />}

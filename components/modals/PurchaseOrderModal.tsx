@@ -179,7 +179,7 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
 
         {mode === "create" ? (
           <form onSubmit={handleCreatePO}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12, marginBottom: 16 }}>
               <div>
                 <label style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>PO Number</label>
                 <input
@@ -238,7 +238,7 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
               </div>
 
               {items.map((item, idx) => (
-                <div key={idx} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 40px", gap: 8, marginBottom: 8, alignItems: "center" }}>
+                <div key={idx} className="po-line-item-grid">
                   <select
                     value={item.productId}
                     onChange={(e) => {
@@ -435,7 +435,7 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
                       </div>
                     </div>
                     {remaining > 0 && (
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, marginTop: 8, alignItems: "end" }}>
+                      <div className="po-receive-grid">
                         <div>
                           <label style={{ fontSize: 11, color: "#374151" }}>Qty received now</label>
                           <input

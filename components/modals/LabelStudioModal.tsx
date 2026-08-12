@@ -142,7 +142,7 @@ export default function LabelStudioModal({ initialProduct, initialBatch }: Label
         </div>
 
         {/* Configuration Toolbar */}
-        <div className="no-print" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 20, background: "#F8FAFC", padding: 16, borderRadius: 6, border: "1px solid #E2E8F0" }}>
+        <div className="no-print" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 20, background: "#F8FAFC", padding: 16, borderRadius: 6, border: "1px solid #E2E8F0" }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#475569" }}>Select Product</label>
             <select

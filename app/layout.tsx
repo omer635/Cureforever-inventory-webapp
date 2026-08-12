@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
+import RegisterSW from "@/components/RegisterSW";
 import "./globals.css";
 
 const garamond = Cormorant_Garamond({
@@ -17,9 +18,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "CureForever — Enterprise Inventory Platform",
   description: "CureForever enterprise inventory portal for vendors and administrators",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: "/logo.png",
-    apple: "/logo.png",
+    apple: "/icons/icon-192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "CureForever",
   },
 };
 
@@ -36,7 +43,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${garamond.variable} ${inter.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <RegisterSW />
+      </body>
     </html>
   );
 }
