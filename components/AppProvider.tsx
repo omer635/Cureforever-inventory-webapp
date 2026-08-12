@@ -287,15 +287,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setStockTransfers(cached.stockTransfers ?? []);
         }
         try {
-          const me = await sb
+          let me = await sb
             .from("vendors")
             .select("*")
-            .or(`user_id.eq.${s.user.id},email.eq.${s.user.email ?? "___"}`)
+            .or(`user_id.eq.${s.user.id},email.ilike.${s.user.email ?? "___"}`)
             .limit(1)
             .maybeSingle();
-          setVendorRow((me.data as Vendor) || null);
-        } catch {
-          /* vendor lookup failed */
+
+          let vRow = (me.data as Vendor) || null;
+
+          if (vRow && !vRow.user_id && s.user.id) {
+            void sb.from("vendors").update({ user_id: s.user.id }).eq("id", vRow.id);
+            vRow.user_id = s.user.id;
+          }
+
+          if (!vRow && s.user.email) {
+            const { data: newV } = await sb
+              .from("vendors")
+              .insert({
+                user_id: s.user.id,
+                name: s.user.email.split("@")[0] || "HQ Admin",
+                email: s.user.email,
+                is_admin: true,
+                state: "HQ Location",
+                address: "HQ Location",
+              })
+              .select("*")
+              .single();
+
+            if (newV) {
+              vRow = newV as Vendor;
+            }
+          }
+
+          setVendorRow(vRow);
+        } catch (err) {
+          console.error("vendor lookup error:", err);
         }
         try {
           await refreshAll();
