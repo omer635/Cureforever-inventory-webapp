@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { useApp } from "@/components/AppProvider";
 
+import { cleanText } from "@/lib/utils";
+
 export default function CommandPaletteModal() {
   const { products, vendors, productBatches, purchaseOrders, openModal, closeModal } = useApp();
   const [query, setQuery] = useState("");
@@ -24,10 +26,11 @@ export default function CommandPaletteModal() {
     const matches: { type: string; title: string; subtitle?: string; category: string; action: () => void }[] = [];
 
     products.forEach((p) => {
-      if (p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || (p.barcode || "").includes(q)) {
+      const name = cleanText(p.name);
+      if (name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || (p.barcode || "").includes(q)) {
         matches.push({
           type: "product",
-          title: p.name,
+          title: name,
           subtitle: `SKU: ${p.sku} · Price: $${p.selling_price}`,
           category: "Product Catalog",
           action: () => openModal({ type: "product", product: p }),
@@ -76,9 +79,9 @@ export default function CommandPaletteModal() {
   }, [query, products, vendors, productBatches, purchaseOrders, openModal]);
 
   return (
-    <div className="modal-backdrop" onClick={closeModal} style={{ background: "rgba(15, 23, 42, 0.65)", backdropFilter: "blur(4px)" }}>
+    <div className="modal-overlay" onClick={closeModal}>
       <div
-        className="modal-box"
+        className="modal"
         onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: 620,
