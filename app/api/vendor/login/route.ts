@@ -30,8 +30,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ session: signData.session });
     }
 
-    // 2. Handle "Email not confirmed" or unconfirmed users
-    if (signError && signError.message.toLowerCase().includes("email not confirmed")) {
+    // 2. Fallback using admin service role if sign in failed
+    if (signError && process.env.SUPABASE_SERVICE_ROLE_KEY) {
       const sbAdmin = createClient(supabaseUrl, serviceRoleKey, {
         auth: { persistSession: false },
       });
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       );
 
       if (targetUser) {
-        // Auto-confirm user email and set password
+        // Auto-confirm user email and sync password
         await sbAdmin.auth.admin.updateUserById(targetUser.id, {
           email_confirm: true,
           password: cleanPassword,
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
           .update({ user_id: targetUser.id })
           .ilike("email", cleanEmail);
 
-        // Retry sign in
+        // Retry sign in with updated password & confirmed email
         const { data: retryData, error: retryErr } = await sbClient.auth.signInWithPassword({
           email: cleanEmail,
           password: cleanPassword,
@@ -65,6 +65,13 @@ export async function POST(req: Request) {
           return NextResponse.json({ session: retryData.session });
         }
       }
+    }
+
+    if (signError && signError.message.toLowerCase().includes("email not confirmed") && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        { error: "Email not confirmed. Please turn off 'Confirm email' in Supabase Dashboard (Auth -> Providers -> Email)." },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json({ error: signError?.message || "Invalid credentials" }, { status: 401 });
