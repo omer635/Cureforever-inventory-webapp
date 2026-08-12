@@ -253,6 +253,15 @@ export async function deleteProductRow(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+export async function deleteProductsBulk(ids: string[]): Promise<void> {
+  if (!ids || ids.length === 0) return;
+  const sb = getSupabase();
+  await sb.from("product_visibility").delete().in("product_id", ids);
+  await sb.from("stock_entries").delete().in("product_id", ids);
+  const { error } = await sb.from("products").delete().in("id", ids);
+  if (error) throw new Error(error.message);
+}
+
 export async function createVendor(payload: Record<string, unknown>): Promise<Vendor> {
   const sb = getSupabase();
   const { data, error } = await sb.from("vendors").insert(payload).select().single();
