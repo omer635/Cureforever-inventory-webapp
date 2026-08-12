@@ -407,6 +407,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Request browser native desktop/mobile push notification permission
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      void Notification.requestPermission();
+    }
+  }, []);
+
   useEffect(() => {
     const interval = setInterval(() => {
       if (navigator.onLine && document.visibilityState === "visible") {
@@ -456,7 +463,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, (payload) => {
         void refreshAll();
         if (payload.eventType === "INSERT") {
-          playNotificationSound("alert");
+          const notif = payload.new as AppNotification;
+          const isForMe = vendorRow?.is_admin
+            ? notif.vendor_id === null
+            : notif.vendor_id === vendorRow?.id;
+
+          if (isForMe) {
+            playNotificationSound("alert");
+            toast(`🔔 ${notif.title}: ${notif.message}`);
+
+            if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+              try {
+                new Notification(notif.title, {
+                  body: notif.message,
+                  icon: "/icon.png",
+                });
+              } catch { /* ignore notification error */ }
+            }
+          }
         }
       })
       .subscribe();

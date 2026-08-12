@@ -421,6 +421,9 @@ begin
     if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'stock_transfers') then
       alter publication supabase_realtime add table stock_transfers;
     end if;
+    if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'notifications') then
+      alter publication supabase_realtime add table notifications;
+    end if;
   end if;
 end $$;
 
