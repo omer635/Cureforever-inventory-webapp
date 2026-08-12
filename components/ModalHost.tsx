@@ -12,10 +12,22 @@ import ScannerModal from "@/components/modals/ScannerModal";
 import ProductModal from "@/components/modals/ProductModal";
 import AnnouncementModal from "@/components/modals/AnnouncementModal";
 import HistoryModal from "@/components/modals/HistoryModal";
+import CommandPaletteModal from "@/components/modals/CommandPaletteModal";
+import LabelStudioModal from "@/components/modals/LabelStudioModal";
+import PurchaseOrderModal from "@/components/modals/PurchaseOrderModal";
+import DataImportModal from "@/components/modals/DataImportModal";
+import TransferModal from "@/components/modals/TransferModal";
 
 export default function ModalHost() {
   const { modal, closeModal } = useApp();
   if (!modal) return null;
+
+  if (modal.type === "commandPalette") return <CommandPaletteModal />;
+  if (modal.type === "labelStudio") return <LabelStudioModal initialProduct={modal.product} initialBatch={modal.batch} />;
+  if (modal.type === "createPO") return <PurchaseOrderModal mode="create" />;
+  if (modal.type === "viewPO") return <PurchaseOrderModal mode="view" po={modal.po} />;
+  if (modal.type === "createTransfer") return <TransferModal />;
+  if (modal.type === "dataImport") return <DataImportModal />;
 
   return (
     <div

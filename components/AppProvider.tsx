@@ -7,16 +7,20 @@ import * as api from "@/lib/db";
 import type {
   Announcement,
   AnnouncementRead,
+  Currency,
   ModalState,
   OfflineOp,
   Product,
   ProductBatch,
   ProductVisibility,
+  PurchaseOrder,
   ReorderRequest,
   RestoreCache,
   StockAdjustment,
   StockEntry,
   StockHistory,
+  StockTransfer,
+  ValuationModel,
   Vendor,
 } from "@/lib/types";
 import { uid } from "@/lib/utils";
@@ -42,6 +46,12 @@ interface AppContextValue {
   visibilityMap: Record<string, Set<string>>;
   announcements: Announcement[];
   announcementReads: AnnouncementRead[];
+  purchaseOrders: PurchaseOrder[];
+  stockTransfers: StockTransfer[];
+  currency: Currency;
+  setCurrency: (c: Currency) => void;
+  valuationModel: ValuationModel;
+  setValuationModel: (v: ValuationModel) => void;
   isOnline: boolean;
   offlineOps: OfflineOp[];
   modal: ModalState;
@@ -109,6 +119,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [productVisibility, setProductVisibility] = useState<ProductVisibility[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [announcementReads, setAnnouncementReads] = useState<AnnouncementRead[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [stockTransfers, setStockTransfers] = useState<StockTransfer[]>([]);
+  const [currency, setCurrency] = useState<Currency>("USD");
+  const [valuationModel, setValuationModel] = useState<ValuationModel>("weighted_avg");
   const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== "undefined" ? navigator.onLine : true);
   const [offlineOps, setOfflineOps] = useState<OfflineOp[]>(() => loadQueue());
   const offlineOpsRef = useRef<OfflineOp[]>([]);
@@ -147,6 +161,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setProductVisibility(data.productVisibility);
     setAnnouncements(data.announcements);
     setAnnouncementReads(data.announcementReads);
+    setPurchaseOrders(data.purchaseOrders || []);
+    setStockTransfers(data.stockTransfers || []);
     saveCache({ ...data, savedAt: Date.now() });
   }, []);
 
@@ -179,6 +195,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         } else if (op.type === "announcement_read") {
           const d = op.data as { announcement_id: string; vendor_id: string };
           await api.markAnnouncementRead(d.announcement_id, d.vendor_id);
+        } else if (op.type === "purchase_order_create") {
+          const d = op.data as { po: Record<string, unknown>; items: Record<string, unknown>[] };
+          await api.createPurchaseOrder(d.po, d.items);
+        } else if (op.type === "transfer_create") {
+          await api.createStockTransfer(op.data);
         }
       } catch {
         remaining.push(op);
@@ -209,6 +230,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const openModal = useCallback((m: ModalState) => setModal(m), []);
   const closeModal = useCallback(() => setModal(null), []);
   const updateVendorRow = useCallback((v: Vendor | null) => setVendorRow(v), []);
+
+  // Global Ctrl+K / Cmd+K listener for Command Palette
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setModal((prev) => (prev?.type === "commandPalette" ? null : { type: "commandPalette" }));
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const boot = useCallback(async () => {
     const reconnect = () => {
@@ -248,6 +281,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setProductVisibility(cached.productVisibility ?? []);
           setAnnouncements(cached.announcements ?? []);
           setAnnouncementReads(cached.announcementReads ?? []);
+          setPurchaseOrders(cached.purchaseOrders ?? []);
+          setStockTransfers(cached.stockTransfers ?? []);
         }
         try {
           const me = await sb
@@ -315,6 +350,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     visibilityMap,
     announcements,
     announcementReads,
+    purchaseOrders,
+    stockTransfers,
+    currency,
+    setCurrency,
+    valuationModel,
+    setValuationModel,
     isOnline,
     offlineOps,
     modal,

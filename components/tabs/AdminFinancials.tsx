@@ -4,11 +4,35 @@ import React, { useMemo, useState } from "react";
 import { useApp } from "@/components/AppProvider";
 import { REASONS, REASON_LABELS } from "@/lib/constants";
 import { downloadCSV, fmtDateTime, money } from "@/lib/utils";
+import type { Currency, ValuationModel } from "@/lib/types";
+
+const CURRENCY_SYMBOLS: Record<Currency, string> = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  INR: "₹",
+  CAD: "CA$",
+};
+
+const CURRENCY_RATES: Record<Currency, number> = {
+  USD: 1.0,
+  EUR: 0.92,
+  GBP: 0.79,
+  INR: 83.2,
+  CAD: 1.35,
+};
 
 export default function AdminFinancials() {
-  const { stockAdjustments, products, vendors, stockHistory } = useApp();
+  const { stockAdjustments, products, vendors, stockEntries, productBatches, currency, setCurrency, valuationModel, setValuationModel } = useApp();
   const [vendorFilter, setVendorFilter] = useState("all");
   const [reasonFilter, setReasonFilter] = useState("all");
+
+  const fmtCurrency = (usdVal: number) => {
+    const rate = CURRENCY_RATES[currency] || 1;
+    const sym = CURRENCY_SYMBOLS[currency] || "$";
+    const converted = usdVal * rate;
+    return `${sym}${converted.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
   const rows = useMemo(() => {
     return (stockAdjustments || [])
@@ -16,27 +40,38 @@ export default function AdminFinancials() {
       .slice(0, 300);
   }, [stockAdjustments, vendorFilter, reasonFilter]);
 
-  const totals = useMemo(() => {
-    let costValue = 0;
-    let changeTotal = 0;
-    rows.forEach((a) => {
-      const product = products.find((p) => p.id === a.product_id);
-      changeTotal += Math.abs(Number(a.change_qty) || 0);
-      costValue += (Number(a.change_qty) || 0) * (product?.cost_price ?? 0);
-    });
-    return { changeTotal, costValue };
-  }, [rows, products]);
+  // Inventory Valuation Calculation (FIFO vs LIFO vs Weighted Avg)
+  const valuation = useMemo(() => {
+    let totalCostVal = 0;
+    let totalRetailVal = 0;
 
-  const avgDaily = useMemo(() => {
-    const sorted = [...(stockHistory || [])].sort((a, b) => a.recorded_at.localeCompare(b.recorded_at));
-    if (sorted.length < 2) return null;
-    const first = new Date(sorted[0].recorded_at).getTime();
-    const last = new Date(sorted[sorted.length - 1].recorded_at).getTime();
-    const days = (last - first) / 86400000;
-    if (days <= 0) return null;
-    const total = sorted.reduce((sum, h) => sum + (Number(h.quantity) || 0), 0);
-    return total / days;
-  }, [stockHistory]);
+    products.forEach((p) => {
+      const pEntries = stockEntries.filter((se) => se.product_id === p.id);
+      const totalQty = pEntries.reduce((sum, e) => sum + (Number(e.quantity) || 0), 0);
+      const pBatches = productBatches.filter((b) => b.product_id === p.id);
+
+      let unitCost = p.cost_price;
+
+      if (valuationModel === "weighted_avg" && pBatches.length > 0) {
+        const totalBatchQty = pBatches.reduce((acc, b) => acc + (b.quantity || 1), 0);
+        const weightedCostSum = pBatches.reduce((acc, b) => acc + (b.cost_price || p.cost_price) * (b.quantity || 1), 0);
+        unitCost = totalBatchQty > 0 ? weightedCostSum / totalBatchQty : p.cost_price;
+      } else if (valuationModel === "fifo" && pBatches.length > 0) {
+        const oldestBatch = [...pBatches].sort((a, b) => a.received_date.localeCompare(b.received_date))[0];
+        unitCost = oldestBatch?.cost_price || p.cost_price;
+      } else if (valuationModel === "lifo" && pBatches.length > 0) {
+        const newestBatch = [...pBatches].sort((a, b) => b.received_date.localeCompare(a.received_date))[0];
+        unitCost = newestBatch?.cost_price || p.cost_price;
+      }
+
+      totalCostVal += totalQty * unitCost;
+      totalRetailVal += totalQty * p.selling_price;
+    });
+
+    const totalProfitMargin = totalRetailVal > 0 ? ((totalRetailVal - totalCostVal) / totalRetailVal) * 100 : 0;
+
+    return { totalCostVal, totalRetailVal, totalProfitMargin };
+  }, [products, stockEntries, productBatches, valuationModel]);
 
   const exportCSV = () => {
     const header = ["When", "Vendor", "Product", "Prev", "New", "Change", "Reason", "Notes"];
@@ -50,34 +85,74 @@ export default function AdminFinancials() {
       REASON_LABELS[a.reason_code || ""] || a.reason_code || "",
       a.notes || "",
     ]);
-    downloadCSV(`adjustments-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...data]);
+    downloadCSV(`financial-audit-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...data]);
   };
 
   return (
     <>
-      <div className="stat-row">
-        <div className="stat">
-          <div className="num">{rows.length}</div>
-          <div className="lbl">Adjustment records</div>
+      {/* Valuation Model & Currency Control Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, background: "#FFF", padding: 16, borderRadius: 8, border: "1px solid #E5E7EB" }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: 16, color: "#0F1F3D" }}>Inventory Valuation Engine</h3>
+          <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6B7280" }}>
+            Select accounting valuation method & local currency display.
+          </p>
         </div>
-        <div className="stat">
-          <div className="num">{totals.changeTotal.toLocaleString()}</div>
-          <div className="lbl">Units moved</div>
-        </div>
-        <div className="stat ok">
-          <div className="num">{money(totals.costValue, 0)}</div>
-          <div className="lbl">Net cost movement</div>
-        </div>
-        <div className="stat purple">
-          <div className="num">{avgDaily !== null ? avgDaily.toFixed(1) : "—"}</div>
-          <div className="lbl">Avg recorded qty / day</div>
-          <div className="mini-stat-note">based on stock history snapshots</div>
+        <div style={{ display: "flex", gap: 12 }}>
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, color: "#4B5563" }}>Valuation Model</label>
+            <select
+              value={valuationModel}
+              onChange={(e) => setValuationModel(e.target.value as ValuationModel)}
+              style={{ display: "block", padding: "6px 10px", borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 13, fontWeight: 600 }}
+            >
+              <option value="weighted_avg">Weighted Average Cost</option>
+              <option value="fifo">FIFO (First-In, First-Out)</option>
+              <option value="lifo">LIFO (Last-In, First-Out)</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, color: "#4B5563" }}>Currency</label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as Currency)}
+              style={{ display: "block", padding: "6px 10px", borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 13, fontWeight: 600 }}
+            >
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="INR">INR (₹)</option>
+              <option value="CAD">CAD (CA$)</option>
+            </select>
+          </div>
         </div>
       </div>
 
+      {/* Financial Valuation Stat Cards */}
+      <div className="stat-row">
+        <div className="stat ok">
+          <div className="num">{fmtCurrency(valuation.totalCostVal)}</div>
+          <div className="lbl">Total Cost Valuation ({valuationModel.toUpperCase()})</div>
+        </div>
+        <div className="stat">
+          <div className="num">{fmtCurrency(valuation.totalRetailVal)}</div>
+          <div className="lbl">Potential Retail Market Value</div>
+        </div>
+        <div className="stat purple">
+          <div className="num">{valuation.totalProfitMargin.toFixed(1)}%</div>
+          <div className="lbl">Gross Profit Margin</div>
+        </div>
+        <div className="stat">
+          <div className="num">{rows.length}</div>
+          <div className="lbl">Audit Adjustment Records</div>
+        </div>
+      </div>
+
+      {/* Audit Log Panel */}
       <div className="panel">
         <div className="panel-head">
-          <h2>Financials & Adjustments</h2>
+          <h2>Financial Audit & Stock Modifications</h2>
           <div className="filters">
             <select className="reason-select" value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)}>
               <option value="all">All vendors</option>
@@ -118,7 +193,7 @@ export default function AdminFinancials() {
               {rows.length === 0 && (
                 <tr>
                   <td colSpan={8} className="empty">
-                    No adjustment records.
+                    No adjustment records match the filter.
                   </td>
                 </tr>
               )}

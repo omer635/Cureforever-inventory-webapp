@@ -29,10 +29,14 @@ export const FILTER_LABELS: Record<string, string> = {
 
 export const ADMIN_TAB_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
-  vendors: "Vendors",
+  analytics: "AI Analytics & Forecast",
+  pos: "Purchase Orders",
+  transfers: "Stock Transfers",
   allstock: "All Stock",
-  batches: "Batches",
-  financials: "Financials",
-  products: "Products",
+  batches: "Batches & Compliance",
+  auditlogs: "Audit Trail",
+  financials: "Financial Valuation",
+  products: "Products Catalog",
+  vendors: "Vendor Locations",
   announcements: "Announcements",
 };

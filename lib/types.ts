@@ -1,4 +1,4 @@
-export type BatchStatus = "active" | "recalled" | "expired";
+export type BatchStatus = "active" | "recalled" | "expired" | "quarantined";
 
 export interface Product {
   id: string;
@@ -18,8 +18,10 @@ export interface ProductBatch {
   id: string;
   product_id: string;
   vendor_id: string;
+  batch_number?: string;
   quantity: number;
   rate: number;
+  cost_price?: number;
   received_date: string;
   mfg_date: string;
   expiry_date: string;
@@ -104,10 +106,54 @@ export interface StockHistory {
   recorded_at: string;
 }
 
+export type POStatus = "draft" | "sent" | "partially_received" | "fulfilled" | "cancelled";
+
+export interface PurchaseOrderItem {
+  id: string;
+  po_id: string;
+  product_id: string;
+  quantity_ordered: number;
+  quantity_received: number;
+  unit_cost: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  po_number: string;
+  supplier: string;
+  destination_vendor_id: string;
+  status: POStatus;
+  notes: string | null;
+  created_at: string;
+  expected_delivery: string | null;
+  items?: PurchaseOrderItem[];
+}
+
+export type TransferStatus = "pending" | "approved" | "in_transit" | "completed" | "rejected";
+
+export interface StockTransfer {
+  id: string;
+  source_vendor_id: string;
+  target_vendor_id: string;
+  product_id: string;
+  batch_id: string | null;
+  quantity: number;
+  status: TransferStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ValuationModel = "weighted_avg" | "fifo" | "lifo";
+
+export type Currency = "USD" | "EUR" | "GBP" | "INR" | "CAD";
+
 export type OfflineOp =
   | { type: "stock_upsert"; id: string; data: Record<string, unknown> }
   | { type: "reorder"; data: Record<string, unknown> }
-  | { type: "announcement_read"; data: Record<string, unknown> };
+  | { type: "announcement_read"; data: Record<string, unknown> }
+  | { type: "purchase_order_create"; data: Record<string, unknown> }
+  | { type: "transfer_create"; data: Record<string, unknown> };
 
 export interface RestoreCache {
   products: Product[];
@@ -120,6 +166,8 @@ export interface RestoreCache {
   productVisibility: ProductVisibility[];
   announcements: Announcement[];
   announcementReads: AnnouncementRead[];
+  purchaseOrders?: PurchaseOrder[];
+  stockTransfers?: StockTransfer[];
   savedAt: number;
 }
 
@@ -136,4 +184,10 @@ export type ModalState =
   | { type: "product"; product: Product | null }
   | { type: "announcement" }
   | { type: "history"; entry: StockEntry }
+  | { type: "commandPalette" }
+  | { type: "labelStudio"; product?: Product; batch?: ProductBatch }
+  | { type: "createPO" }
+  | { type: "viewPO"; po: PurchaseOrder }
+  | { type: "createTransfer" }
+  | { type: "dataImport" }
   | null;

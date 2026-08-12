@@ -7,10 +7,12 @@ import type {
   Product,
   ProductBatch,
   ProductVisibility,
+  PurchaseOrder,
   ReorderRequest,
   StockAdjustment,
   StockEntry,
   StockHistory,
+  StockTransfer,
   Vendor,
 } from "./types";
 
@@ -25,6 +27,8 @@ export interface AllData {
   productVisibility: ProductVisibility[];
   announcements: Announcement[];
   announcementReads: AnnouncementRead[];
+  purchaseOrders: PurchaseOrder[];
+  stockTransfers: StockTransfer[];
 }
 
 export async function fetchAll(): Promise<AllData> {
@@ -42,6 +46,26 @@ export async function fetchAll(): Promise<AllData> {
     sb.from("announcement_reads").select("*"),
   ]);
 
+  let purchaseOrders: PurchaseOrder[] = [];
+  try {
+    const poRes = await sb.from("purchase_orders").select("*, items:purchase_order_items(*)").order("created_at", { ascending: false });
+    if (!poRes.error && poRes.data) {
+      purchaseOrders = poRes.data as PurchaseOrder[];
+    }
+  } catch {
+    /* Safe fallback if table does not exist yet */
+  }
+
+  let stockTransfers: StockTransfer[] = [];
+  try {
+    const stRes = await sb.from("stock_transfers").select("*").order("created_at", { ascending: false });
+    if (!stRes.error && stRes.data) {
+      stockTransfers = stRes.data as StockTransfer[];
+    }
+  } catch {
+    /* Safe fallback if table does not exist yet */
+  }
+
   const fail = [p, pb, v, se, sh, sa, rr, pv, an, ar].find((r) => r.error);
   if (fail && fail.error) throw new Error(fail.error.message);
 
@@ -56,6 +80,8 @@ export async function fetchAll(): Promise<AllData> {
     productVisibility: (pv.data as ProductVisibility[]) || [],
     announcements: (an.data as Announcement[]) || [],
     announcementReads: (ar.data as AnnouncementRead[]) || [],
+    purchaseOrders,
+    stockTransfers,
   };
 }
 
@@ -212,5 +238,34 @@ export async function createAnnouncement(payload: Record<string, unknown>): Prom
 export async function revokeAnnouncement(id: string): Promise<void> {
   const sb = getSupabase();
   const { error } = await sb.from("announcements").update({ is_active: false }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function createPurchaseOrder(po: Record<string, unknown>, items: Record<string, unknown>[]): Promise<void> {
+  const sb = getSupabase();
+  const { data: createdPo, error: poErr } = await sb.from("purchase_orders").insert(po).select().single();
+  if (poErr) throw new Error(poErr.message);
+  if (items && items.length > 0) {
+    const itemsWithPo = items.map((it) => ({ ...it, po_id: createdPo.id }));
+    const { error: itemsErr } = await sb.from("purchase_order_items").insert(itemsWithPo);
+    if (itemsErr) console.warn("Failed inserting PO items:", itemsErr.message);
+  }
+}
+
+export async function updatePOStatus(poId: string, status: string): Promise<void> {
+  const sb = getSupabase();
+  const { error } = await sb.from("purchase_orders").update({ status }).eq("id", poId);
+  if (error) throw new Error(error.message);
+}
+
+export async function createStockTransfer(transfer: Record<string, unknown>): Promise<void> {
+  const sb = getSupabase();
+  const { error } = await sb.from("stock_transfers").insert(transfer);
+  if (error) throw new Error(error.message);
+}
+
+export async function updateTransferStatus(transferId: string, status: string): Promise<void> {
+  const sb = getSupabase();
+  const { error } = await sb.from("stock_transfers").update({ status, updated_at: new Date().toISOString() }).eq("id", transferId);
   if (error) throw new Error(error.message);
 }

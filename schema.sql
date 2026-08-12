@@ -408,3 +408,55 @@ insert into product_batches (product_id, batch_number, mfg_date, expiry_date, co
 select id, 'BATCH-2025-C3', '2024-06-01', '2026-01-01', cost_price, selling_price, 120, 'active'
 from products where sku = 'CF-ASH-060'
 on conflict (product_id, batch_number) do nothing;
+
+-- ============================================================
+-- 10. PURCHASE ORDERS TABLE & ITEMS
+-- ============================================================
+create table if not exists purchase_orders (
+  id uuid primary key default gen_random_uuid(),
+  po_number text unique not null,
+  supplier text not null,
+  destination_vendor_id uuid references vendors(id) on delete set null,
+  status text not null default 'draft', -- draft, sent, partially_received, fulfilled, cancelled
+  notes text,
+  expected_delivery date,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists purchase_order_items (
+  id uuid primary key default gen_random_uuid(),
+  po_id uuid not null references purchase_orders(id) on delete cascade,
+  product_id uuid not null references products(id) on delete cascade,
+  quantity_ordered integer not null default 1,
+  quantity_received integer not null default 0,
+  unit_cost numeric(10,2) not null default 0.00
+);
+
+-- ============================================================
+-- 11. STOCK TRANSFERS TABLE (Multi-Warehouse / Vendor Stock Movement)
+-- ============================================================
+create table if not exists stock_transfers (
+  id uuid primary key default gen_random_uuid(),
+  source_vendor_id uuid not null references vendors(id) on delete cascade,
+  target_vendor_id uuid not null references vendors(id) on delete cascade,
+  product_id uuid not null references products(id) on delete cascade,
+  batch_id uuid references product_batches(id) on delete set null,
+  quantity integer not null default 1,
+  status text not null default 'pending', -- pending, approved, in_transit, completed, rejected
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table purchase_orders enable row level security;
+alter table purchase_order_items enable row level security;
+alter table stock_transfers enable row level security;
+
+drop policy if exists "po_all" on purchase_orders;
+create policy "po_all" on purchase_orders for all using (true) with check (true);
+
+drop policy if exists "po_items_all" on purchase_order_items;
+create policy "po_items_all" on purchase_order_items for all using (true) with check (true);
+
+drop policy if exists "transfers_all" on stock_transfers;
+create policy "transfers_all" on stock_transfers for all using (true) with check (true);

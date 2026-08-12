@@ -11,6 +11,10 @@ import AdminBatches from "@/components/tabs/AdminBatches";
 import AdminFinancials from "@/components/tabs/AdminFinancials";
 import AdminProducts from "@/components/tabs/AdminProducts";
 import AdminAnnouncements from "@/components/tabs/AdminAnnouncements";
+import AdminAnalytics from "@/components/tabs/AdminAnalytics";
+import AdminPurchaseOrders from "@/components/tabs/AdminPurchaseOrders";
+import AdminTransfers from "@/components/tabs/AdminTransfers";
+import AdminAuditLogs from "@/components/tabs/AdminAuditLogs";
 import ModalHost from "@/components/ModalHost";
 
 export default function AppShell() {
@@ -52,11 +56,15 @@ export default function AppShell() {
   const email = session?.user?.email || "";
   const adminTabs: (keyof typeof ADMIN_TAB_LABELS)[] = [
     "dashboard",
-    "vendors",
+    "analytics",
+    "pos",
+    "transfers",
     "allstock",
     "batches",
+    "auditlogs",
     "financials",
     "products",
+    "vendors",
     "announcements",
   ];
 
@@ -71,7 +79,7 @@ export default function AppShell() {
             {vendorRow.name} · {email}
           </p>
         </div>
-        <div className="header-actions">
+        <div className="header-actions" style={{ flexWrap: "wrap", gap: 6 }}>
           <span className={`live-dot ${isOnline ? "" : "pulse"}`}>
             {isOnline ? "Live" : "Offline"}
           </span>
@@ -81,20 +89,44 @@ export default function AppShell() {
           {offlineOps.length > 0 && (
             <span className="state-tag">{offlineOps.length} pending sync</span>
           )}
+
+          <button
+            className="btn-ghost"
+            onClick={() => openModal({ type: "commandPalette" })}
+            title="Search & Quick Actions (Ctrl+K)"
+            style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}
+          >
+            🔍 <kbd style={{ background: "rgba(255,255,255,0.2)", padding: "1px 5px", borderRadius: 3, fontSize: 10 }}>Ctrl+K</kbd>
+          </button>
+
+          <button className="btn-ghost" onClick={() => openModal({ type: "labelStudio" })}>
+            🏷️ Labels
+          </button>
+
+          {isAdmin && (
+            <button className="btn-ghost" onClick={() => openModal({ type: "dataImport" })}>
+              📥 Import
+            </button>
+          )}
+
           <button className="btn-ghost" onClick={() => openModal({ type: "alerts" })}>
             Alerts
           </button>
+
           <button className="btn-scan" onClick={() => openModal({ type: "scanner" })}>
             Scan
           </button>
+
           <button className="btn-ghost" onClick={() => openModal({ type: "profile" })}>
             Profile
           </button>
+
           {isAdmin && (
             <button className="btn-add-vendor" onClick={() => openModal({ type: "addVendor" })}>
-              + Add Vendor
+              + Vendor
             </button>
           )}
+
           <button className="btn-logout" onClick={() => void logout()}>
             Logout
           </button>
@@ -104,23 +136,28 @@ export default function AppShell() {
       <main>
         {isAdmin ? (
           <>
-            <nav className="admin-tabs">
+            <nav className="admin-tabs" style={{ overflowX: "auto", flexWrap: "nowrap" }}>
               {adminTabs.map((key) => (
                 <button
                   key={key}
                   className={`tab-btn ${activeTab === key ? "active" : ""}`}
                   onClick={() => setActiveTab(key)}
+                  style={{ whiteSpace: "nowrap" }}
                 >
                   {ADMIN_TAB_LABELS[key]}
                 </button>
               ))}
             </nav>
             {activeTab === "dashboard" && <AdminDashboard />}
-            {activeTab === "vendors" && <AdminVendors />}
+            {activeTab === "analytics" && <AdminAnalytics />}
+            {activeTab === "pos" && <AdminPurchaseOrders />}
+            {activeTab === "transfers" && <AdminTransfers />}
             {activeTab === "allstock" && <AdminAllStock />}
             {activeTab === "batches" && <AdminBatches />}
+            {activeTab === "auditlogs" && <AdminAuditLogs />}
             {activeTab === "financials" && <AdminFinancials />}
             {activeTab === "products" && <AdminProducts />}
+            {activeTab === "vendors" && <AdminVendors />}
             {activeTab === "announcements" && <AdminAnnouncements />}
           </>
         ) : (
