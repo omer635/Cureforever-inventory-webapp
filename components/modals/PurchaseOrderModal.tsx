@@ -412,9 +412,83 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
                 </span>
               </div>
 
+              {/* WhatsApp-Style Chat Conversation Thread */}
               {po?.notes && (
-                <div style={{ marginTop: 6, padding: "8px 12px", background: "#FFFFFF", borderRadius: 4, border: "1px solid #CBD5E1", color: "#334155", fontSize: 12 }}>
-                  <strong>Notes & Instructions:</strong> {po.notes}
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#0F1F3D", marginBottom: 6 }}>
+                    💬 Conversation History
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 8,
+                      padding: 12,
+                      background: "#FFFFFF",
+                      borderRadius: 8,
+                      border: "1px solid #CBD5E1",
+                      maxHeight: 280,
+                      overflowY: "auto",
+                    }}
+                  >
+                    {(() => {
+                      const rawLines = (po.notes || "").split("\n").filter((l) => l.trim().length > 0);
+                      const destName = vendors.find((v) => v.id === po?.destination_vendor_id)?.name || "Vendor";
+                      return rawLines.map((line, idx) => {
+                        const isVendor = line.includes("[Vendor Note]:");
+                        const isAdminMsg = line.includes("[HQ Admin]:") || line.includes("[HQ Admin Note]:");
+                        const isSystem = !isVendor && !isAdminMsg;
+
+                        if (isSystem) {
+                          return (
+                            <div key={idx} style={{ textAlign: "center", margin: "2px 0" }}>
+                              <span style={{ background: "#F1F5F9", color: "#475569", padding: "2px 8px", borderRadius: 10, fontSize: 11, fontWeight: 600 }}>
+                                📋 {line.trim()}
+                              </span>
+                            </div>
+                          );
+                        }
+
+                        const text = isVendor
+                          ? line.replace("[Vendor Note]:", "").trim()
+                          : line.replace("[HQ Admin]:", "").replace("[HQ Admin Note]:", "").trim();
+
+                        const isMe = isAdmin ? isAdminMsg : isVendor;
+
+                        return (
+                          <div
+                            key={idx}
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: isMe ? "flex-end" : "flex-start",
+                              width: "100%",
+                            }}
+                          >
+                            <div style={{ fontSize: 10, fontWeight: 700, color: isMe ? "#1E40AF" : "#92400E", marginBottom: 2, padding: "0 4px" }}>
+                              {isAdminMsg ? "👑 HQ Admin" : `🏪 ${destName}`}
+                            </div>
+                            <div
+                              style={{
+                                maxWidth: "85%",
+                                padding: "8px 12px",
+                                borderRadius: isMe ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+                                background: isMe ? "#1E40AF" : "#F8FAFC",
+                                color: isMe ? "#FFFFFF" : "#1F2937",
+                                border: isMe ? "none" : "1px solid #E2E8F0",
+                                fontSize: 12,
+                                lineHeight: 1.4,
+                                boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                                whiteSpace: "pre-wrap",
+                              }}
+                            >
+                              {text}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
                 </div>
               )}
 

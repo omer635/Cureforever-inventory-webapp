@@ -338,75 +338,83 @@ export default function AdminPurchaseOrders() {
                                 animation: "slideDown 0.2s ease",
                               }}
                             >
-                              {/* Vendor revision messages */}
-                              {vendorNotes.length > 0 && (
-                                <div style={{ marginBottom: 12 }}>
-                                  <div style={{
+                              {/* WhatsApp-Style Chat Conversation Thread */}
+                              <div style={{ marginBottom: 8 }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: "#0F1F3D", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: 6 }}>
+                                  💬 Conversation Thread ({vendorMap[po.destination_vendor_id] || "Vendor Store"})
+                                </div>
+                                <div
+                                  style={{
                                     display: "flex",
-                                    alignItems: "center",
-                                    gap: 6,
-                                    marginBottom: 6,
-                                    fontSize: 12,
-                                    fontWeight: 700,
-                                    color: "#92400E",
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.5px",
-                                  }}>
-                                    💬 Vendor Revision Message{vendorNotes.length > 1 ? "s" : ""}
-                                  </div>
-                                  {vendorNotes.map((note, idx) => (
-                                    <div
-                                      key={idx}
-                                      style={{
-                                        padding: "10px 14px",
-                                        background: "#FFFFFF",
-                                        borderRadius: 6,
-                                        border: "1px solid #FDE68A",
-                                        fontSize: 13,
-                                        color: "#1F2937",
-                                        lineHeight: 1.5,
-                                        marginBottom: idx < vendorNotes.length - 1 ? 6 : 0,
-                                        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-                                      }}
-                                    >
-                                      {note}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+                                    flexDirection: "column",
+                                    gap: 10,
+                                    padding: 14,
+                                    background: "#F8FAFC",
+                                    borderRadius: 8,
+                                    border: "1px solid #E2E8F0",
+                                    maxHeight: 360,
+                                    overflowY: "auto",
+                                  }}
+                                >
+                                  {(() => {
+                                    const rawLines = (po.notes || "").split("\n").filter((l) => l.trim().length > 0);
+                                    if (rawLines.length === 0) {
+                                      return <div style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", padding: "12px 0" }}>No conversation history yet.</div>;
+                                    }
+                                    return rawLines.map((line, idx) => {
+                                      const isVendor = line.includes("[Vendor Note]:");
+                                      const isAdminMsg = line.includes("[HQ Admin]:") || line.includes("[HQ Admin Note]:");
+                                      const isSystem = !isVendor && !isAdminMsg;
 
-                              {/* HQ Admin past replies */}
-                              {adminNotes.length > 0 && (
-                                <div style={{ marginBottom: 12 }}>
-                                  <div style={{
-                                    fontSize: 12,
-                                    fontWeight: 700,
-                                    color: "#1E40AF",
-                                    marginBottom: 6,
-                                    textTransform: "uppercase",
-                                    letterSpacing: "0.5px",
-                                  }}>
-                                    ✉️ HQ Admin Past Replies
-                                  </div>
-                                  {adminNotes.map((note, idx) => (
-                                    <div
-                                      key={idx}
-                                      style={{
-                                        padding: "10px 14px",
-                                        background: "#EFF6FF",
-                                        borderRadius: 6,
-                                        border: "1px solid #BFDBFE",
-                                        fontSize: 13,
-                                        color: "#1E3A8A",
-                                        lineHeight: 1.5,
-                                        marginBottom: idx < adminNotes.length - 1 ? 6 : 0,
-                                      }}
-                                    >
-                                      {note}
-                                    </div>
-                                  ))}
+                                      if (isSystem) {
+                                        return (
+                                          <div key={idx} style={{ textAlign: "center", margin: "4px 0" }}>
+                                            <span style={{ background: "#E2E8F0", color: "#475569", padding: "3px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600 }}>
+                                              📋 {line.trim()}
+                                            </span>
+                                          </div>
+                                        );
+                                      }
+
+                                      const text = isVendor
+                                        ? line.replace("[Vendor Note]:", "").trim()
+                                        : line.replace("[HQ Admin]:", "").replace("[HQ Admin Note]:", "").trim();
+
+                                      return (
+                                        <div
+                                          key={idx}
+                                          style={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            alignItems: isAdminMsg ? "flex-end" : "flex-start",
+                                            width: "100%",
+                                          }}
+                                        >
+                                          <div style={{ fontSize: 11, fontWeight: 700, color: isAdminMsg ? "#1E40AF" : "#92400E", marginBottom: 3, padding: "0 4px" }}>
+                                            {isAdminMsg ? "👑 HQ Admin (You)" : `🏪 ${vendorMap[po.destination_vendor_id] || "Vendor Store"}`}
+                                          </div>
+                                          <div
+                                            style={{
+                                              maxWidth: "80%",
+                                              padding: "10px 14px",
+                                              borderRadius: isAdminMsg ? "14px 14px 2px 14px" : "14px 14px 14px 2px",
+                                              background: isAdminMsg ? "#1E40AF" : "#FFFFFF",
+                                              color: isAdminMsg ? "#FFFFFF" : "#1F2937",
+                                              border: isAdminMsg ? "none" : "1px solid #E5E7EB",
+                                              fontSize: 13,
+                                              lineHeight: 1.45,
+                                              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                                              whiteSpace: "pre-wrap",
+                                            }}
+                                          >
+                                            {text}
+                                          </div>
+                                        </div>
+                                      );
+                                    });
+                                  })()}
                                 </div>
-                              )}
+                              </div>
 
                               {/* Interactive Reply Box for Admin */}
                               {po.status !== "fulfilled" && po.status !== "cancelled" && (
