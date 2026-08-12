@@ -19,45 +19,37 @@ export default function LoginScreen() {
     setBusy(true);
     try {
       const sb = getSupabase();
-      const { error: signInErr } = await sb.auth.signInWithPassword({
+
+      // 1. Try standard client sign in
+      const { data: signData, error: signInErr } = await sb.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
-      if (signInErr) {
-        // Fallback: Check if vendor record exists in database for this email
-        const { data: vRow } = await sb
-          .from("vendors")
-          .select("*")
-          .ilike("email", email.trim())
-          .maybeSingle();
-
-        if (vRow) {
-          // Auto-provision Supabase Auth User for this vendor store account
-          const { data: signUpData, error: signUpErr } = await sb.auth.signUp({
-            email: email.trim(),
-            password,
-          });
-
-          if (!signUpErr && signUpData?.user) {
-            // Bind user_id to vendor record
-            await sb.from("vendors").update({ user_id: signUpData.user.id }).eq("id", vRow.id);
-
-            // Retry sign in
-            const { error: retryErr } = await sb.auth.signInWithPassword({
-              email: email.trim(),
-              password,
-            });
-            if (!retryErr) return;
-          }
-        }
-
-        setError(signInErr.message);
-        setBusy(false);
+      if (!signInErr && signData.session) {
         return;
       }
+
+      // 2. Call /api/vendor/login server route to auto-confirm unconfirmed emails & authenticate
+      const res = await fetch("/api/vendor/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.session) {
+          await sb.auth.setSession(json.session);
+          return;
+        }
+      }
+
+      const errJson = await res.json().catch(() => null);
+      setError(errJson?.error || signInErr?.message || "Invalid login credentials.");
     } catch (err) {
       setError((err as Error).message);
+    } finally {
       setBusy(false);
     }
   };
