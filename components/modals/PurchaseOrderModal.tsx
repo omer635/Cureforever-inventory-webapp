@@ -11,7 +11,7 @@ interface PurchaseOrderModalProps {
 }
 
 export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps) {
-  const { products, vendors: allVendors, closeModal, toast, refreshAll, isOnline, queueOp } = useApp();
+  const { products, vendors: allVendors, closeModal, toast, refreshAll, isOnline, queueOp, isAdmin } = useApp();
   // A PO's destination is always a real vendor store, never the HQ Admin account itself.
   const vendors = allVendors.filter((v) => !v.is_admin);
 
@@ -22,32 +22,48 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
   const handleUpdateStatus = async (newStatus: string, noteToAppend?: string) => {
     if (!po) return;
     try {
+      const prefix = isAdmin ? "[HQ Admin]" : "[Vendor Note]";
       if (noteToAppend) {
-        const updatedNotes = po.notes ? `${po.notes}\n[Vendor Note]: ${noteToAppend}` : `[Vendor Note]: ${noteToAppend}`;
+        const updatedNotes = po.notes ? `${po.notes}\n${prefix}: ${noteToAppend}` : `${prefix}: ${noteToAppend}`;
         await api.updatePOStatus(po.id, newStatus, updatedNotes);
       } else {
         await api.updatePOStatus(po.id, newStatus);
       }
 
-      // Auto-create notification for admin
-      const vendorName = vendors.find((v) => v.id === po.destination_vendor_id)?.name || "Vendor";
-      const statusLabels: Record<string, string> = {
-        accepted: "accepted",
-        revision_requested: "requested a revision on",
-        rejected: "declined",
-      };
-      const actionLabel = statusLabels[newStatus];
-      if (actionLabel) {
-        const message = newStatus === "revision_requested" && noteToAppend
-          ? `${vendorName} ${actionLabel} PO #${po.po_number}: "${noteToAppend}"`
-          : `${vendorName} ${actionLabel} PO #${po.po_number}`;
-        await api.createNotification({
-          vendor_id: null, // null = for admin
-          title: `PO #${po.po_number} — ${newStatus.replace("_", " ").toUpperCase()}`,
-          message,
-          module: "purchase_orders",
-          module_ref_id: po.id,
-        });
+      if (isAdmin) {
+        // Admin action -> Notify destination vendor
+        if (po.destination_vendor_id) {
+          await api.createNotification({
+            vendor_id: po.destination_vendor_id,
+            title: `PO #${po.po_number} Updated by Main Supplier`,
+            message: noteToAppend
+              ? `Main Supplier updated PO #${po.po_number}: "${noteToAppend}"`
+              : `Main Supplier set PO #${po.po_number} status to ${newStatus.replace("_", " ").toUpperCase()}`,
+            module: "purchase_orders",
+            module_ref_id: po.id,
+          });
+        }
+      } else {
+        // Vendor action -> Notify HQ Admin
+        const vendorName = vendors.find((v) => v.id === po.destination_vendor_id)?.name || "Vendor";
+        const statusLabels: Record<string, string> = {
+          accepted: "accepted",
+          revision_requested: "requested a revision on",
+          rejected: "declined",
+        };
+        const actionLabel = statusLabels[newStatus];
+        if (actionLabel) {
+          const message = newStatus === "revision_requested" && noteToAppend
+            ? `${vendorName} ${actionLabel} PO #${po.po_number}: "${noteToAppend}"`
+            : `${vendorName} ${actionLabel} PO #${po.po_number}`;
+          await api.createNotification({
+            vendor_id: null, // null = for admin
+            title: `PO #${po.po_number} — ${newStatus.replace("_", " ").toUpperCase()}`,
+            message,
+            module: "purchase_orders",
+            module_ref_id: po.id,
+          });
+        }
       }
 
       toast(`PO #${po.po_number} status updated to ${newStatus.replace("_", " ").toUpperCase()}`);
@@ -402,49 +418,87 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
                 </div>
               )}
 
-              {/* Vendor Action Controls */}
+              {/* Action Controls */}
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px dashed #CBD5E1", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                {po?.status !== "accepted" && po?.status !== "completed" && po?.status !== "rejected" && (
-                  <button
-                    className="save-btn"
-                    onClick={() => void handleUpdateStatus("accepted")}
-                    style={{ background: "#2F6B4F", color: "#FFFFFF", padding: "6px 14px", fontSize: 12, fontWeight: 700 }}
-                  >
-                    ✓ Accept Purchase Order
-                  </button>
-                )}
+                {isAdmin ? (
+                  <>
+                    {po?.status !== "completed" && po?.status !== "fulfilled" && po?.status !== "cancelled" && (
+                      <button
+                        className="save-btn"
+                        onClick={() => setShowRevisionForm((prev) => !prev)}
+                        style={{ background: "#1E40AF", color: "#FFFFFF", padding: "6px 14px", fontSize: 12, fontWeight: 700 }}
+                      >
+                        ✍️ {showRevisionForm ? "Close Reply Form" : "Reply to Vendor & Update PO"}
+                      </button>
+                    )}
 
-                {po?.status !== "completed" && po?.status !== "rejected" && (
-                  <button
-                    className="btn-ghost"
-                    onClick={() => setShowRevisionForm((prev) => !prev)}
-                    style={{ background: "#FFFBEB", color: "#B45309", borderColor: "#FCD34D", padding: "6px 14px", fontSize: 12, fontWeight: 600 }}
-                  >
-                    ✏️ Request Revision
-                  </button>
-                )}
+                    {po?.status !== "accepted" && po?.status !== "completed" && po?.status !== "fulfilled" && po?.status !== "cancelled" && (
+                      <button
+                        className="save-btn"
+                        onClick={() => void handleUpdateStatus("accepted")}
+                        style={{ background: "#065F46", color: "#FFFFFF", padding: "6px 14px", fontSize: 12, fontWeight: 700 }}
+                      >
+                        ✓ Mark Accepted
+                      </button>
+                    )}
 
-                {po?.status !== "rejected" && po?.status !== "completed" && (
-                  <button
-                    className="btn-danger"
-                    onClick={() => void handleUpdateStatus("rejected")}
-                    style={{ padding: "6px 14px", fontSize: 12 }}
-                  >
-                    ✕ Decline PO
-                  </button>
+                    {po?.status !== "cancelled" && (
+                      <button
+                        className="btn-danger"
+                        onClick={() => void handleUpdateStatus("cancelled")}
+                        style={{ padding: "6px 14px", fontSize: 12 }}
+                      >
+                        ✕ Cancel PO
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {po?.status !== "accepted" && po?.status !== "completed" && po?.status !== "rejected" && (
+                      <button
+                        className="save-btn"
+                        onClick={() => void handleUpdateStatus("accepted")}
+                        style={{ background: "#2F6B4F", color: "#FFFFFF", padding: "6px 14px", fontSize: 12, fontWeight: 700 }}
+                      >
+                        ✓ Accept Purchase Order
+                      </button>
+                    )}
+
+                    {po?.status !== "completed" && po?.status !== "rejected" && (
+                      <button
+                        className="btn-ghost"
+                        onClick={() => setShowRevisionForm((prev) => !prev)}
+                        style={{ background: "#FFFBEB", color: "#B45309", borderColor: "#FCD34D", padding: "6px 14px", fontSize: 12, fontWeight: 600 }}
+                      >
+                        ✏️ Request Revision
+                      </button>
+                    )}
+
+                    {po?.status !== "rejected" && po?.status !== "completed" && (
+                      <button
+                        className="btn-danger"
+                        onClick={() => void handleUpdateStatus("rejected")}
+                        style={{ padding: "6px 14px", fontSize: 12 }}
+                      >
+                        ✕ Decline PO
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
 
-              {/* Revision Form Toggle */}
+              {/* Revision / Reply Form Toggle */}
               {showRevisionForm && (
-                <div style={{ marginTop: 12, background: "#FEF3C7", padding: 12, borderRadius: 6, border: "1px solid #FCD34D" }}>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: "#92400E" }}>Specify requested revisions for Main Supplier:</label>
+                <div style={{ marginTop: 12, background: isAdmin ? "#EFF6FF" : "#FEF3C7", padding: 12, borderRadius: 6, border: `1px solid ${isAdmin ? "#BFDBFE" : "#FCD34D"}` }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: isAdmin ? "#1E3A8A" : "#92400E" }}>
+                    {isAdmin ? "Type reply note to vendor store:" : "Specify requested revisions for Main Supplier:"}
+                  </label>
                   <textarea
                     rows={2}
                     value={revisionNote}
                     onChange={(e) => setRevisionNote(e.target.value)}
-                    placeholder="e.g. Please adjust quantity to 50 units or update delivery date to 20th Aug..."
-                    style={{ width: "100%", padding: "6px 10px", marginTop: 4, borderRadius: 4, border: "1px solid #F59E0B", fontSize: 12 }}
+                    placeholder={isAdmin ? "e.g. Approved quantity adjustment, re-issuing PO..." : "e.g. Please adjust quantity to 50 units or update delivery date..."}
+                    style={{ width: "100%", padding: "6px 10px", marginTop: 4, borderRadius: 4, border: `1px solid ${isAdmin ? "#3B82F6" : "#F59E0B"}`, fontSize: 12 }}
                   />
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
                     <button className="btn-ghost" onClick={() => setShowRevisionForm(false)} style={{ fontSize: 11 }}>
@@ -452,11 +506,14 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
                     </button>
                     <button
                       className="save-btn"
-                      onClick={() => void handleUpdateStatus("revision_requested", revisionNote)}
+                      onClick={() => {
+                        const targetStatus = isAdmin ? "sent" : "revision_requested";
+                        void handleUpdateStatus(targetStatus, revisionNote);
+                      }}
                       disabled={!revisionNote.trim()}
-                      style={{ background: "#D97706", color: "#FFFFFF", padding: "4px 12px", fontSize: 12, fontWeight: 700 }}
+                      style={{ background: isAdmin ? "#1E40AF" : "#D97706", color: "#FFFFFF", padding: "4px 12px", fontSize: 12, fontWeight: 700 }}
                     >
-                      Submit Revision Request
+                      {isAdmin ? "Send Reply & Re-issue PO" : "Submit Revision Request"}
                     </button>
                   </div>
                 </div>
