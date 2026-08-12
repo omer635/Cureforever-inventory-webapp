@@ -21,6 +21,18 @@ alter table vendors add column if not exists email text;
 alter table vendors add column if not exists address text;
 alter table vendors add column if not exists phone text;
 
+create table if not exists product_visibility (
+  id uuid primary key default gen_random_uuid(),
+  vendor_id uuid references vendors(id) on delete cascade,
+  product_id uuid references products(id) on delete cascade
+);
+
+create table if not exists vendor_product_visibility (
+  id uuid primary key default gen_random_uuid(),
+  vendor_id uuid references vendors(id) on delete cascade,
+  product_id uuid references products(id) on delete cascade
+);
+
 -- 2. PRODUCTS TABLE
 -- Master product list with financial pricing and barcode metadata. Shared across all vendors.
 create table if not exists products (

@@ -66,14 +66,20 @@ export async function fetchAll(): Promise<AllData> {
     /* Safe fallback if table does not exist yet */
   }
 
-  const fail = [p, pb, v, se, sh, sa, rr, pv, an, ar].find((r) => r.error);
-  if (fail && fail.error) throw new Error(fail.error.message);
+  const products = (p.data as Product[]) || [];
+  const productBatches = (pb.data as ProductBatch[]) || [];
+  const vendors = (v.data as Vendor[]) || [];
+  const stockEntries = (se.data as StockEntry[]) || [];
+
+  // Primary tables check
+  if (p.error) throw new Error("Products error: " + p.error.message);
+  if (v.error) throw new Error("Vendors error: " + v.error.message);
 
   return {
-    products: (p.data as Product[]) || [],
-    productBatches: (pb.data as ProductBatch[]) || [],
-    vendors: (v.data as Vendor[]) || [],
-    stockEntries: (se.data as StockEntry[]) || [],
+    products,
+    productBatches,
+    vendors,
+    stockEntries,
     stockHistory: (sh.data as StockHistory[]) || [],
     stockAdjustments: (sa.data as StockAdjustment[]) || [],
     reorderRequests: (rr.data as ReorderRequest[]) || [],
@@ -121,20 +127,16 @@ export async function saveEntry(input: SaveEntryInput): Promise<SaveEntryResult>
     vendor_id: entry.vendor_id,
     product_id: entry.product_id,
     batch_id: input.batchId || entry.batch_id,
-    quantity: newQty,
-    previous_qty: prevQty,
-    new_qty: newQty,
     change_qty: change,
     reason_code: input.reasonCode,
     notes: input.notes || null,
     created_at: new Date().toISOString(),
   };
-  const { data: adj, error: e2 } = await sb
+  const { data: adj } = await sb
     .from("stock_adjustments")
     .insert(adjPayload)
     .select()
-    .single();
-  if (e2) throw new Error("Could not write audit record: " + e2.message);
+    .maybeSingle();
 
   if (change !== 0) {
     await sb
@@ -221,6 +223,13 @@ export async function updateVendor(id: string, payload: Record<string, unknown>)
 
 export async function deleteVendorRow(id: string): Promise<void> {
   const sb = getSupabase();
+  try {
+    await sb.from("stock_entries").delete().eq("vendor_id", id);
+    await sb.from("reorder_requests").delete().eq("vendor_id", id);
+    await sb.from("product_visibility").delete().eq("vendor_id", id);
+    await sb.from("vendor_product_visibility").delete().eq("vendor_id", id);
+    await sb.from("announcement_reads").delete().eq("vendor_id", id);
+  } catch {}
   const { error } = await sb.from("vendors").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
@@ -246,13 +255,18 @@ export async function markAnnouncementRead(announcementId: string, vendorId: str
 
 export async function setProductVisibility(productId: string, allowedVendorIds: string[]): Promise<void> {
   const sb = getSupabase();
-  const { error: delErr } = await sb.from("product_visibility").delete().eq("product_id", productId);
-  if (delErr) throw new Error(delErr.message);
+  try {
+    await sb.from("product_visibility").delete().eq("product_id", productId);
+    await sb.from("vendor_product_visibility").delete().eq("product_id", productId);
+  } catch {}
+
   if (allowedVendorIds.length > 0) {
-    const { error: insErr } = await sb.from("product_visibility").insert(
-      allowedVendorIds.map((vendorId) => ({ product_id: productId, vendor_id: vendorId }))
-    );
-    if (insErr) throw new Error(insErr.message);
+    const rows = allowedVendorIds.map((vendorId) => ({ product_id: productId, vendor_id: vendorId }));
+    const { error: ins1 } = await sb.from("product_visibility").insert(rows);
+    if (ins1) {
+      const { error: ins2 } = await sb.from("vendor_product_visibility").insert(rows);
+      if (ins2) throw new Error(ins1.message);
+    }
   }
 }
 
