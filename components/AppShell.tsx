@@ -27,7 +27,7 @@ export default function AppShell() {
     logout,
     openModal,
   } = useApp();
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState<string>("dashboard");
 
   if (!vendorRow) {
     return (
@@ -54,116 +54,189 @@ export default function AppShell() {
   }
 
   const email = session?.user?.email || "";
-  const adminTabs: (keyof typeof ADMIN_TAB_LABELS)[] = [
-    "dashboard",
-    "analytics",
-    "pos",
-    "transfers",
-    "allstock",
-    "batches",
-    "auditlogs",
-    "financials",
-    "products",
-    "vendors",
-    "announcements",
+
+  const navGroups = [
+    {
+      title: "Overview",
+      items: [
+        { id: "dashboard", label: "Dashboard", icon: "📊" },
+        { id: "analytics", label: "AI Analytics & Forecast", icon: "📈" },
+      ],
+    },
+    {
+      title: "Inventory & Products",
+      items: [
+        { id: "allstock", label: "All Stock", icon: "📦" },
+        { id: "products", label: "Products Catalog", icon: "🏷️" },
+        { id: "batches", label: "Batches & Compliance", icon: "🧪" },
+      ],
+    },
+    {
+      title: "Logistics & Orders",
+      items: [
+        { id: "pos", label: "Purchase Orders", icon: "📑" },
+        { id: "transfers", label: "Stock Transfers", icon: "🚚" },
+      ],
+    },
+    {
+      title: "Financials & Audit",
+      items: [
+        { id: "financials", label: "Financial Valuation", icon: "💰" },
+        { id: "auditlogs", label: "Audit Trail", icon: "🛡️" },
+      ],
+    },
+    {
+      title: "Administration",
+      items: [
+        { id: "vendors", label: "Vendor Locations", icon: "🏬" },
+        { id: "announcements", label: "Announcements", icon: "📢" },
+      ],
+    },
   ];
+
+  const getActiveTabTitle = () => {
+    return ADMIN_TAB_LABELS[activeTab as keyof typeof ADMIN_TAB_LABELS] || "Dashboard";
+  };
 
   return (
     <>
-      <header className="top">
-        <div>
-          <p className="brand" style={{ margin: 0 }}>
-            CureForever
-          </p>
-          <p className="who">
-            {vendorRow.name} · {email}
-          </p>
-        </div>
-        <div className="header-actions" style={{ flexWrap: "wrap", gap: 6 }}>
-          <span className={`live-dot ${isOnline ? "" : "pulse"}`}>
-            {isOnline ? "Live" : "Offline"}
-          </span>
-          <span className={`net-badge ${isOnline ? "online" : "offline"}`}>
-            {isOnline ? "Online" : "Offline"}
-          </span>
-          {offlineOps.length > 0 && (
-            <span className="state-tag">{offlineOps.length} pending sync</span>
-          )}
+      <div className="app-container">
+        {/* Sleek Side Navbar */}
+        <aside className="sidebar">
+          <div className="sidebar-header">
+            <h1 className="sidebar-brand">CureForever</h1>
+            <div className="sidebar-sub">Enterprise Portal v2.0</div>
+          </div>
 
-          <button
-            className="btn-ghost"
-            onClick={() => openModal({ type: "commandPalette" })}
-            title="Search & Quick Actions (Ctrl+K)"
-            style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}
-          >
-            🔍 <kbd style={{ background: "rgba(255,255,255,0.2)", padding: "1px 5px", borderRadius: 3, fontSize: 10 }}>Ctrl+K</kbd>
-          </button>
-
-          <button className="btn-ghost" onClick={() => openModal({ type: "labelStudio" })}>
-            🏷️ Labels
-          </button>
-
-          {isAdmin && (
-            <button className="btn-ghost" onClick={() => openModal({ type: "dataImport" })}>
-              📥 Import
-            </button>
-          )}
-
-          <button className="btn-ghost" onClick={() => openModal({ type: "alerts" })}>
-            Alerts
-          </button>
-
-          <button className="btn-scan" onClick={() => openModal({ type: "scanner" })}>
-            Scan
-          </button>
-
-          <button className="btn-ghost" onClick={() => openModal({ type: "profile" })}>
-            Profile
-          </button>
-
-          {isAdmin && (
-            <button className="btn-add-vendor" onClick={() => openModal({ type: "addVendor" })}>
-              + Vendor
-            </button>
-          )}
-
-          <button className="btn-logout" onClick={() => void logout()}>
-            Logout
-          </button>
-        </div>
-      </header>
-
-      <main>
-        {isAdmin ? (
-          <>
-            <nav className="admin-tabs" style={{ overflowX: "auto", flexWrap: "nowrap" }}>
-              {adminTabs.map((key) => (
-                <button
-                  key={key}
-                  className={`tab-btn ${activeTab === key ? "active" : ""}`}
-                  onClick={() => setActiveTab(key)}
-                  style={{ whiteSpace: "nowrap" }}
-                >
-                  {ADMIN_TAB_LABELS[key]}
-                </button>
+          {isAdmin ? (
+            <div className="sidebar-nav">
+              {navGroups.map((group) => (
+                <div key={group.title}>
+                  <div className="nav-section-title">{group.title}</div>
+                  {group.items.map((item) => (
+                    <button
+                      key={item.id}
+                      className={`sidebar-link ${activeTab === item.id ? "active" : ""}`}
+                      onClick={() => setActiveTab(item.id)}
+                    >
+                      <span style={{ fontSize: 15 }}>{item.icon}</span>
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                </div>
               ))}
-            </nav>
-            {activeTab === "dashboard" && <AdminDashboard />}
-            {activeTab === "analytics" && <AdminAnalytics />}
-            {activeTab === "pos" && <AdminPurchaseOrders />}
-            {activeTab === "transfers" && <AdminTransfers />}
-            {activeTab === "allstock" && <AdminAllStock />}
-            {activeTab === "batches" && <AdminBatches />}
-            {activeTab === "auditlogs" && <AdminAuditLogs />}
-            {activeTab === "financials" && <AdminFinancials />}
-            {activeTab === "products" && <AdminProducts />}
-            {activeTab === "vendors" && <AdminVendors />}
-            {activeTab === "announcements" && <AdminAnnouncements />}
-          </>
-        ) : (
-          <VendorDashboard />
-        )}
-      </main>
+            </div>
+          ) : (
+            <div className="sidebar-nav">
+              <div className="nav-section-title">Vendor Portal</div>
+              <button className="sidebar-link active">
+                <span>🏬</span>
+                <span>Vendor Store</span>
+              </button>
+            </div>
+          )}
+
+          <div className="sidebar-footer">
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#FFF" }}>{vendorRow.name}</div>
+            <div style={{ fontSize: 11, color: "var(--gold-light)", overflow: "hidden", textOverflow: "ellipsis" }}>{email}</div>
+
+            <div style={{ marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span className={`net-badge ${isOnline ? "online" : "offline"}`}>
+                {isOnline ? "Online" : "Offline"}
+              </span>
+              <button
+                onClick={() => void logout()}
+                style={{
+                  background: "transparent",
+                  color: "#F87171",
+                  border: "none",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <div className="app-main-content">
+          {/* Top Bar Header */}
+          <header className="top-bar">
+            <div>
+              <h2 style={{ margin: 0, fontSize: 18, color: "#0F1F3D", fontWeight: 700 }}>{getActiveTabTitle()}</h2>
+            </div>
+
+            <div className="header-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {offlineOps.length > 0 && (
+                <span className="state-tag" style={{ background: "#FEF3C7", color: "#92400E", padding: "4px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700 }}>
+                  {offlineOps.length} pending sync
+                </span>
+              )}
+
+              <button
+                className="btn-ghost"
+                onClick={() => openModal({ type: "commandPalette" })}
+                title="Search & Quick Actions (Ctrl+K)"
+                style={{ color: "#0F1F3D", borderColor: "#CBD5E1", background: "#F8FAFC", display: "flex", alignItems: "center", gap: 4 }}
+              >
+                🔍 <kbd style={{ background: "#E2E8F0", color: "#334155", padding: "1px 5px", borderRadius: 3, fontSize: 10 }}>Ctrl+K</kbd>
+              </button>
+
+              <button className="btn-ghost" onClick={() => openModal({ type: "labelStudio" })} style={{ color: "#0F1F3D", borderColor: "#CBD5E1", background: "#F8FAFC" }}>
+                🏷️ Labels
+              </button>
+
+              {isAdmin && (
+                <button className="btn-ghost" onClick={() => openModal({ type: "dataImport" })} style={{ color: "#0F1F3D", borderColor: "#CBD5E1", background: "#F8FAFC" }}>
+                  📥 Import
+                </button>
+              )}
+
+              <button className="btn-ghost" onClick={() => openModal({ type: "alerts" })} style={{ color: "#0F1F3D", borderColor: "#CBD5E1", background: "#F8FAFC" }}>
+                Alerts
+              </button>
+
+              <button className="btn-scan" onClick={() => openModal({ type: "scanner" })}>
+                Scan
+              </button>
+
+              <button className="btn-ghost" onClick={() => openModal({ type: "profile" })} style={{ color: "#0F1F3D", borderColor: "#CBD5E1", background: "#F8FAFC" }}>
+                Profile
+              </button>
+
+              {isAdmin && (
+                <button className="btn-add-vendor" onClick={() => openModal({ type: "addVendor" })}>
+                  + Vendor
+                </button>
+              )}
+            </div>
+          </header>
+
+          {/* Page Body Viewport */}
+          <main style={{ maxWidth: "100%", width: "100%", padding: 24, flex: 1 }}>
+            {isAdmin ? (
+              <>
+                {activeTab === "dashboard" && <AdminDashboard />}
+                {activeTab === "analytics" && <AdminAnalytics />}
+                {activeTab === "pos" && <AdminPurchaseOrders />}
+                {activeTab === "transfers" && <AdminTransfers />}
+                {activeTab === "allstock" && <AdminAllStock />}
+                {activeTab === "batches" && <AdminBatches />}
+                {activeTab === "auditlogs" && <AdminAuditLogs />}
+                {activeTab === "financials" && <AdminFinancials />}
+                {activeTab === "products" && <AdminProducts />}
+                {activeTab === "vendors" && <AdminVendors />}
+                {activeTab === "announcements" && <AdminAnnouncements />}
+              </>
+            ) : (
+              <VendorDashboard />
+            )}
+          </main>
+        </div>
+      </div>
 
       <ModalHost />
     </>
