@@ -46,12 +46,19 @@ export default function AdminPurchaseOrders() {
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
+      case "accepted":
+        return { bg: "#D1FAE5", color: "#065F46", label: "Accepted by Vendor" };
+      case "revision_requested":
+        return { bg: "#FEF3C7", color: "#92400E", label: "Revision Requested" };
+      case "rejected":
+        return { bg: "#FEE2E2", color: "#991B1B", label: "Declined by Vendor" };
       case "fulfilled":
-        return { bg: "#D1FAE5", color: "#065F46", label: "Fulfilled" };
+      case "completed":
+        return { bg: "#ECFDF5", color: "#047857", label: "Completed" };
       case "sent":
-        return { bg: "#DBEAFE", color: "#1E40AF", label: "Sent to Supplier" };
+        return { bg: "#DBEAFE", color: "#1E40AF", label: "Sent to Vendor" };
       case "partially_received":
-        return { bg: "#FEF3C7", color: "#92400E", label: "Partially Received" };
+        return { bg: "#FEF3C7", color: "#D97706", label: "Partially Received" };
       case "cancelled":
         return { bg: "#FEE2E2", color: "#991B1B", label: "Cancelled" };
       default:
@@ -63,9 +70,9 @@ export default function AdminPurchaseOrders() {
     <div className="tab-pane active" style={{ animation: "fadeIn 0.2s ease" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h2 style={{ margin: 0, color: "#0F1F3D", fontSize: 20 }}>Purchase Orders & Supplier Procurement</h2>
+          <h2 style={{ margin: 0, color: "#0F1F3D", fontSize: 20 }}>Purchase Orders & Vendor Procurement</h2>
           <p style={{ margin: "4px 0 0", color: "#5C6B73", fontSize: 13 }}>
-            Manage supplier purchase orders, track incoming shipments, and receive items directly into batch inventory.
+            Issue purchase orders to vendor stores, track vendor acceptance, review revision requests, and receive inventory.
           </p>
         </div>
         <button
@@ -92,10 +99,12 @@ export default function AdminPurchaseOrders() {
           style={{ padding: "8px 12px", borderRadius: 6, border: "1px solid #D1D5DB", fontSize: 13 }}
         >
           <option value="all">All Statuses</option>
-          <option value="draft">Draft</option>
           <option value="sent">Sent</option>
+          <option value="accepted">Accepted</option>
+          <option value="revision_requested">Revision Requested</option>
+          <option value="rejected">Declined</option>
           <option value="partially_received">Partially Received</option>
-          <option value="fulfilled">Fulfilled</option>
+          <option value="fulfilled">Completed</option>
           <option value="cancelled">Cancelled</option>
         </select>
       </div>

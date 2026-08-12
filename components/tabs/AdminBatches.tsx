@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useApp } from "@/components/AppProvider";
-import { batchDisplayStatus, batchStatusBadge, fmtDate, money, stockStatus } from "@/lib/utils";
+import { batchDisplayStatus, batchStatusBadge, daysUntil, fmtDate, money } from "@/lib/utils";
 import * as api from "@/lib/db";
 
 export default function AdminBatches() {
@@ -13,7 +13,7 @@ export default function AdminBatches() {
   // Identify earliest expiring batch per product for FEFO (First-Expired, First-Out) recommendation
   const fefoMap = useMemo(() => {
     const map: Record<string, string> = {}; // productId -> batchId (earliest expiring active batch)
-    const activeBatches = productBatches.filter((b) => b.status === "active" && new Date(b.expiry_date).getTime() > Date.now());
+    const activeBatches = productBatches.filter((b) => b.status === "active" && (daysUntil(b.expiry_date) ?? -1) > 0);
     
     // Group active batches by product
     const grouped: Record<string, typeof activeBatches> = {};
@@ -49,7 +49,7 @@ export default function AdminBatches() {
         if (filter === "expiring") return r.label === "Expiring Soon";
 
         if (timelineFilter !== "all") {
-          const daysToExpiry = Math.ceil((new Date(r.batch.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+          const daysToExpiry = daysUntil(r.batch.expiry_date) ?? 9999;
           if (timelineFilter === "30") return daysToExpiry >= 0 && daysToExpiry <= 30;
           if (timelineFilter === "60") return daysToExpiry > 30 && daysToExpiry <= 60;
           if (timelineFilter === "90") return daysToExpiry > 60 && daysToExpiry <= 90;

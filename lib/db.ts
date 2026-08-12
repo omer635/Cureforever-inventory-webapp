@@ -262,18 +262,27 @@ export async function createVendorWithAuth(
   password?: string
 ): Promise<Vendor> {
   try {
+    const sb = getSupabase();
+    const { data: sessionData } = await sb.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) throw new Error("Not authenticated");
+
     const res = await fetch("/api/vendor/create", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ ...payload, password }),
     });
 
     if (res.ok) {
       const json = await res.json();
       if (json.vendor) return json.vendor as Vendor;
+    } else {
+      const errJson = await res.json().catch(() => null);
+      throw new Error(errJson?.error || "Could not create vendor login");
     }
-  } catch {
-    /* fallback to client insert */
+  } catch (err) {
+    if (!password) return createVendor(payload); // no login needed — plain vendor row is fine
+    throw err;
   }
 
   return createVendor(payload);
@@ -385,9 +394,11 @@ export async function updatePOItemReceived(itemId: string, quantityReceived: num
   if (error) throw new Error(error.message);
 }
 
-export async function updatePOStatus(poId: string, status: string): Promise<void> {
+export async function updatePOStatus(poId: string, status: string, notes?: string): Promise<void> {
   const sb = getSupabase();
-  const { error } = await sb.from("purchase_orders").update({ status }).eq("id", poId);
+  const payload: Record<string, unknown> = { status };
+  if (notes !== undefined) payload.notes = notes;
+  const { error } = await sb.from("purchase_orders").update(payload).eq("id", poId);
   if (error) throw new Error(error.message);
 }
 

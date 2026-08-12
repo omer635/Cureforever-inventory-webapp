@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useApp } from "@/components/AppProvider";
 import { ADMIN_TAB_LABELS } from "@/lib/constants";
 import VendorDashboard from "@/components/VendorDashboard";
@@ -19,6 +19,9 @@ import ModalHost from "@/components/ModalHost";
 
 export default function AppShell() {
   const {
+    announcements,
+    announcementReads,
+    reorderRequests,
     session,
     vendorRow,
     isAdmin,
@@ -29,6 +32,23 @@ export default function AppShell() {
   } = useApp();
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+
+  const vendorReads = useMemo(
+    () => new Set((announcementReads || []).filter((r) => r.vendor_id === vendorRow?.id).map((r) => r.announcement_id)),
+    [announcementReads, vendorRow]
+  );
+
+  const unreadAnnouncementsCount = useMemo(
+    () => (announcements || []).filter((a) => a.is_active && !vendorReads.has(a.id)).length,
+    [announcements, vendorReads]
+  );
+
+  const pendingReordersCount = useMemo(
+    () => (reorderRequests || []).filter((r) => r.status === "pending").length,
+    [reorderRequests]
+  );
+
+  const alertBadgeCount = isAdmin ? unreadAnnouncementsCount + pendingReordersCount : unreadAnnouncementsCount;
 
   const handleNavigate = (tab: string, vendorId?: string) => {
     setActiveTab(tab);
@@ -206,8 +226,41 @@ export default function AppShell() {
                 </button>
               )}
 
-              <button className="btn-ghost" onClick={() => openModal({ type: "alerts" })} style={{ color: "#0F1F3D", borderColor: "#CBD5E1", background: "#F8FAFC" }}>
-                Alerts
+              <button
+                className="btn-ghost"
+                onClick={() => openModal({ type: "alerts" })}
+                title={`${alertBadgeCount} unread alert${alertBadgeCount === 1 ? "" : "s"}`}
+                style={{
+                  color: "#0F1F3D",
+                  borderColor: alertBadgeCount > 0 ? "#B8935A" : "#CBD5E1",
+                  background: alertBadgeCount > 0 ? "#FFFBEB" : "#F8FAFC",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontWeight: 600,
+                }}
+              >
+                🔔 Alerts
+                {alertBadgeCount > 0 && (
+                  <span
+                    style={{
+                      background: "#EF4444",
+                      color: "#FFFFFF",
+                      fontSize: 10,
+                      fontWeight: 800,
+                      borderRadius: 10,
+                      padding: "1px 6px",
+                      minWidth: 18,
+                      height: 18,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 0 0 2px #FFFFFF",
+                    }}
+                  >
+                    {alertBadgeCount}
+                  </span>
+                )}
               </button>
 
               <button className="btn-scan" onClick={() => openModal({ type: "scanner" })}>

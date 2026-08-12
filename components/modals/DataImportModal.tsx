@@ -6,7 +6,7 @@ import * as api from "@/lib/db";
 
 export default function DataImportModal() {
   const { closeModal, toast, refreshAll, isOnline } = useApp();
-  const [importType, setImportType] = useState<"products" | "batches">("products");
+  const importType = "products" as const;
   const [rawText, setRawText] = useState("");
   const [validatedRows, setValidatedRows] = useState<Record<string, unknown>[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
@@ -119,8 +119,8 @@ export default function DataImportModal() {
           <label style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>Import Target</label>
           <select
             value={importType}
-            onChange={(e) => setImportType(e.target.value as "products" | "batches")}
-            style={{ width: "100%", padding: "8px", marginTop: 4, borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 13 }}
+            disabled
+            style={{ width: "100%", padding: "8px", marginTop: 4, borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 13, color: "#374151" }}
           >
             <option value="products">Products Master Catalog (CSV / JSON)</option>
           </select>

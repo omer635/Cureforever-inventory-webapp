@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef } from "react";
 import Chart from "chart.js/auto";
 import { useApp } from "@/components/AppProvider";
 import { REASON_LABELS } from "@/lib/constants";
-import { cleanText, money } from "@/lib/utils";
+import { cleanText, daysUntil, money } from "@/lib/utils";
 
 interface AdminDashboardProps {
   onNavigate?: (tab: string, vendorId?: string) => void;
@@ -60,9 +60,8 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
     const pendingTransfers = stockTransfers.filter((st) => st.status === "pending" || st.status === "in_transit").length;
 
     const expiringBatches = productBatches.filter((b) => {
-      if (!b.expiry_date) return false;
-      const days = Math.ceil((new Date(b.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-      return days >= 0 && days <= 30;
+      const days = daysUntil(b.expiry_date);
+      return days !== null && days >= 0 && days <= 30;
     }).length;
 
     return {
@@ -257,7 +256,7 @@ export default function AdminDashboard({ onNavigate }: AdminDashboardProps) {
 
         <div
           className="interactive-card"
-          onClick={() => onNavigate?.("orders")}
+          onClick={() => onNavigate?.("pos")}
           style={{ cursor: "pointer", background: "#FFF", borderLeft: "4px solid #8B5CF6", padding: 16, borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
         >
           <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>Pending POs & Transfers</div>

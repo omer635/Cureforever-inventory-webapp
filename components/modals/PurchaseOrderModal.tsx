@@ -13,8 +13,27 @@ interface PurchaseOrderModalProps {
 export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps) {
   const { products, vendors, closeModal, toast, refreshAll, isOnline, queueOp } = useApp();
 
-  // Create Mode state
-  const [poNumber, setPoNumber] = useState(`PO-${Math.floor(100000 + Math.random() * 900000)}`);
+  // Revision and Status Change state
+  const [showRevisionForm, setShowRevisionForm] = useState(false);
+  const [revisionNote, setRevisionNote] = useState("");
+
+  const handleUpdateStatus = async (newStatus: string, noteToAppend?: string) => {
+    if (!po) return;
+    try {
+      if (noteToAppend) {
+        const updatedNotes = po.notes ? `${po.notes}\n[Vendor Note]: ${noteToAppend}` : `[Vendor Note]: ${noteToAppend}`;
+        await api.updatePOStatus(po.id, newStatus, updatedNotes);
+      } else {
+        await api.updatePOStatus(po.id, newStatus);
+      }
+      toast(`PO #${po.po_number} status updated to ${newStatus.replace("_", " ").toUpperCase()}`);
+      await refreshAll();
+      closeModal();
+    } catch (err) {
+      toast("Error updating PO: " + (err as Error).message);
+    }
+  };
+  const [poNumber, setPoNumber] = useState(() => `PO-${Math.floor(100000 + Math.random() * 900000)}`);
   const [supplier, setSupplier] = useState("");
   const [destinationVendorId, setDestinationVendorId] = useState(vendors[0]?.id || "");
   const [expectedDelivery, setExpectedDelivery] = useState("");
@@ -85,7 +104,9 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
     receiveDrafts[item.id] || {
       qty: String(item.quantity_ordered - item.quantity_received),
       expiry: "",
-      batchNumber: `PO-RCV-${Math.floor(1000 + Math.random() * 9000)}`,
+      // Derived from the item's own (stable) id rather than Math.random() — deterministic,
+      // so it doesn't change from render to render, and still unique per line item.
+      batchNumber: `PO-RCV-${item.id.replace(/-/g, "").slice(-6).toUpperCase()}`,
     };
 
   const setDraft = (item: { id: string; quantity_ordered: number; quantity_received: number }, patch: Partial<{ qty: string; expiry: string; batchNumber: string }>) => {
@@ -291,14 +312,108 @@ export default function PurchaseOrderModal({ mode, po }: PurchaseOrderModalProps
           </form>
         ) : (
           <div>
-            <div style={{ background: "#F8FAFC", padding: 16, borderRadius: 6, marginBottom: 16, fontSize: 13 }}>
-              <div>
-                <strong>Supplier:</strong> {po?.supplier}
+            <div style={{ background: "#F8FAFC", padding: 16, borderRadius: 6, marginBottom: 16, fontSize: 13, border: "1px solid #E2E8F0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div>
+                  <strong>Supplier:</strong> {po?.supplier}
+                  <span style={{ marginLeft: 12, color: "#64748B" }}>
+                    Destination: {vendors.find((v) => v.id === po?.destination_vendor_id)?.name || "Store Location"}
+                  </span>
+                </div>
+                <span
+                  style={{
+                    padding: "3px 10px",
+                    borderRadius: 12,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    background:
+                      po?.status === "accepted"
+                        ? "#D1FAE5"
+                        : po?.status === "revision_requested"
+                        ? "#FEF3C7"
+                        : po?.status === "rejected"
+                        ? "#FEE2E2"
+                        : "#DBEAFE",
+                    color:
+                      po?.status === "accepted"
+                        ? "#065F46"
+                        : po?.status === "revision_requested"
+                        ? "#92400E"
+                        : po?.status === "rejected"
+                        ? "#991B1B"
+                        : "#1E40AF",
+                  }}
+                >
+                  {po?.status?.replace("_", " ")}
+                </span>
               </div>
-              <div style={{ marginTop: 4 }}>
-                <strong>Status:</strong> {po?.status?.toUpperCase()}
+
+              {po?.notes && (
+                <div style={{ marginTop: 6, padding: "8px 12px", background: "#FFFFFF", borderRadius: 4, border: "1px solid #CBD5E1", color: "#334155", fontSize: 12 }}>
+                  <strong>Notes & Instructions:</strong> {po.notes}
+                </div>
+              )}
+
+              {/* Vendor Action Controls */}
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px dashed #CBD5E1", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                {po?.status !== "accepted" && po?.status !== "completed" && po?.status !== "rejected" && (
+                  <button
+                    className="save-btn"
+                    onClick={() => void handleUpdateStatus("accepted")}
+                    style={{ background: "#2F6B4F", color: "#FFFFFF", padding: "6px 14px", fontSize: 12, fontWeight: 700 }}
+                  >
+                    ✓ Accept Purchase Order
+                  </button>
+                )}
+
+                {po?.status !== "completed" && po?.status !== "rejected" && (
+                  <button
+                    className="btn-ghost"
+                    onClick={() => setShowRevisionForm((prev) => !prev)}
+                    style={{ background: "#FFFBEB", color: "#B45309", borderColor: "#FCD34D", padding: "6px 14px", fontSize: 12, fontWeight: 600 }}
+                  >
+                    ✏️ Request Revision
+                  </button>
+                )}
+
+                {po?.status !== "rejected" && po?.status !== "completed" && (
+                  <button
+                    className="btn-danger"
+                    onClick={() => void handleUpdateStatus("rejected")}
+                    style={{ padding: "6px 14px", fontSize: 12 }}
+                  >
+                    ✕ Decline PO
+                  </button>
+                )}
               </div>
-              {po?.notes && <div style={{ marginTop: 4, color: "#475569" }}>Notes: {po.notes}</div>}
+
+              {/* Revision Form Toggle */}
+              {showRevisionForm && (
+                <div style={{ marginTop: 12, background: "#FEF3C7", padding: 12, borderRadius: 6, border: "1px solid #FCD34D" }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "#92400E" }}>Specify requested revisions for Main Supplier:</label>
+                  <textarea
+                    rows={2}
+                    value={revisionNote}
+                    onChange={(e) => setRevisionNote(e.target.value)}
+                    placeholder="e.g. Please adjust quantity to 50 units or update delivery date to 20th Aug..."
+                    style={{ width: "100%", padding: "6px 10px", marginTop: 4, borderRadius: 4, border: "1px solid #F59E0B", fontSize: 12 }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+                    <button className="btn-ghost" onClick={() => setShowRevisionForm(false)} style={{ fontSize: 11 }}>
+                      Cancel
+                    </button>
+                    <button
+                      className="save-btn"
+                      onClick={() => void handleUpdateStatus("revision_requested", revisionNote)}
+                      disabled={!revisionNote.trim()}
+                      style={{ background: "#D97706", color: "#FFFFFF", padding: "4px 12px", fontSize: 12, fontWeight: 700 }}
+                    >
+                      Submit Revision Request
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <h4 style={{ margin: "0 0 8px", fontSize: 14 }}>PO Items</h4>

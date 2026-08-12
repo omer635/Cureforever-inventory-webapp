@@ -12,15 +12,16 @@ export async function POST(req: Request) {
     const cleanEmail = String(email).trim();
     const cleanPassword = String(password).trim();
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://uchozkkzgqeismqvamye.supabase.co";
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || anonKey;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !anonKey) {
+      return NextResponse.json({ error: "Server not configured" }, { status: 500 });
+    }
 
     const sbClient = createClient(supabaseUrl, anonKey, {
       auth: { persistSession: false },
     });
 
-    // 1. Try standard sign in
     const { data: signData, error: signError } = await sbClient.auth.signInWithPassword({
       email: cleanEmail,
       password: cleanPassword,
@@ -30,32 +31,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ session: signData.session });
     }
 
-    // 2. Fallback using admin service role if sign in failed
-    if (signError && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    // Only fall back to an admin-assisted retry when the account's email just isn't
+    // confirmed yet — never on a wrong-password error, and never touch the account's
+    // password here. A login endpoint must not be able to reset credentials for an
+    // account it hasn't verified the caller actually owns.
+    const isUnconfirmed = !!signError?.message?.toLowerCase().includes("email not confirmed");
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (isUnconfirmed && serviceRoleKey) {
       const sbAdmin = createClient(supabaseUrl, serviceRoleKey, {
         auth: { persistSession: false },
       });
 
-      // Find user by email
       const { data: usersData } = await sbAdmin.auth.admin.listUsers();
       const targetUser = usersData?.users?.find(
         (u) => u.email?.toLowerCase() === cleanEmail.toLowerCase()
       );
 
       if (targetUser) {
-        // Auto-confirm user email and sync password
-        await sbAdmin.auth.admin.updateUserById(targetUser.id, {
-          email_confirm: true,
-          password: cleanPassword,
-        });
+        await sbAdmin.auth.admin.updateUserById(targetUser.id, { email_confirm: true });
 
-        // Link user_id in vendors table
         await sbAdmin
           .from("vendors")
           .update({ user_id: targetUser.id })
-          .ilike("email", cleanEmail);
+          .ilike("email", cleanEmail)
+          .is("user_id", null);
 
-        // Retry sign in with updated password & confirmed email
         const { data: retryData, error: retryErr } = await sbClient.auth.signInWithPassword({
           email: cleanEmail,
           password: cleanPassword,
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
       }
     }
 
-    if (signError && signError.message.toLowerCase().includes("email not confirmed") && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (isUnconfirmed && !serviceRoleKey) {
       return NextResponse.json(
         { error: "Email not confirmed. Please turn off 'Confirm email' in Supabase Dashboard (Auth -> Providers -> Email)." },
         { status: 400 }

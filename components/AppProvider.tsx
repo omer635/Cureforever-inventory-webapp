@@ -288,7 +288,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
         try {
           // 1. Try matching by user_id first
-          let me = await sb
+          const me = await sb
             .from("vendors")
             .select("*")
             .eq("user_id", s.user.id)
@@ -392,11 +392,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "stock_adjustments" }, () => {
         void refreshLight();
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "purchase_orders" }, () => {
-        void refreshLight();
+      .on("postgres_changes", { event: "*", schema: "public", table: "purchase_orders" }, (payload) => {
+        void refreshAll();
+        if (payload.eventType === "INSERT") {
+          const po = payload.new as { po_number?: string; destination_vendor_id?: string };
+          toast(`📦 New Purchase Order #${po.po_number || ""} issued by Main Supplier!`);
+        } else if (payload.eventType === "UPDATE") {
+          const po = payload.new as { po_number?: string; status?: string };
+          toast(`📋 Purchase Order #${po.po_number || ""} status changed to ${po.status?.toUpperCase() || ""}`);
+        }
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "stock_transfers" }, () => {
         void refreshLight();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "announcements" }, (payload) => {
+        void refreshAll();
+        if (payload.eventType === "INSERT") {
+          const title = (payload.new as { title?: string })?.title || "New Alert";
+          toast(`📢 New Broadcast: ${title}`);
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "announcement_reads" }, () => {
+        void refreshAll();
       })
       .subscribe();
 

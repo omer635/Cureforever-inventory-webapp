@@ -108,7 +108,7 @@ export interface StockHistory {
   recorded_at: string;
 }
 
-export type POStatus = "draft" | "sent" | "partially_received" | "fulfilled" | "cancelled";
+export type POStatus = "draft" | "sent" | "accepted" | "revision_requested" | "partially_received" | "fulfilled" | "completed" | "cancelled" | "rejected";
 
 export interface PurchaseOrderItem {
   id: string;

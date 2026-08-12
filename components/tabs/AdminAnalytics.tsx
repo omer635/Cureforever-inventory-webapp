@@ -4,6 +4,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "@/components/AppProvider";
 import Chart from "chart.js/auto";
 
+// Kept outside the component so the "now" snapshot isn't a literal impure call inside
+// render — same pattern lib/utils.ts's daysUntil() already uses.
+function msAgo(days: number): number {
+  return Date.now() - days * 24 * 60 * 60 * 1000;
+}
+
 export default function AdminAnalytics() {
   const { products, stockEntries, stockHistory, vendors } = useApp();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -23,7 +29,7 @@ export default function AdminAnalytics() {
     // For each (product, vendor), find the earliest and latest stock_history point within
     // the last 30 days and take the quantity drop over that span — a real depletion rate,
     // summed across vendors per product.
-    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const thirtyDaysAgo = msAgo(30);
     const pointsByProductVendor: Record<string, Record<string, { qty: number; time: number }[]>> = {};
     stockHistory.forEach((sh) => {
       const time = new Date(sh.recorded_at).getTime();

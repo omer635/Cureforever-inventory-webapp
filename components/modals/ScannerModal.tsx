@@ -4,10 +4,11 @@ import React, { useRef, useState } from "react";
 import { useApp } from "@/components/AppProvider";
 
 export default function ScannerModal() {
-  const { products, closeModal } = useApp();
+  const { products, closeModal, openModal } = useApp();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const startedRef = useRef(false);
+  const matchedRef = useRef(false);
 
   React.useEffect(() => {
     let scanner: { stop: () => Promise<void> } | null = null;
@@ -24,13 +25,17 @@ export default function ScannerModal() {
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 220, height: 220 } },
           (decodedText: string) => {
-            if (cancelled) return;
+            if (cancelled || matchedRef.current) return;
             setMessage(`Scanned: ${decodedText}`);
             const product = products.find(
               (p) => p.barcode === decodedText || p.sku === decodedText
             );
             if (product) {
-              setMessage(`✓ ${product.name} (SKU ${product.sku}) — in catalog`);
+              matchedRef.current = true;
+              setMessage(`✓ ${product.name} (SKU ${product.sku}) — opening…`);
+              setTimeout(() => {
+                if (!cancelled) openModal({ type: "product", product });
+              }, 500);
             } else {
               setError(`"${decodedText}" not found in SKU catalog`);
             }

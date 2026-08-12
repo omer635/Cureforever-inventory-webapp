@@ -46,12 +46,53 @@ export default function VendorDashboard() {
     stockEntries,
     visibilityMap,
     stockHistory,
+    announcements,
+    announcementReads,
+    purchaseOrders,
     isOnline,
     queueOp,
     refreshAll,
     toast,
     openModal,
   } = useApp();
+
+  const vendorReads = useMemo(
+    () => new Set((announcementReads || []).filter((r) => r.vendor_id === vendorRow?.id).map((r) => r.announcement_id)),
+    [announcementReads, vendorRow]
+  );
+
+  const unreadAnnouncements = useMemo(
+    () => (announcements || []).filter((a) => a.is_active && !vendorReads.has(a.id)),
+    [announcements, vendorReads]
+  );
+
+  const vendorPOs = useMemo(
+    () => (purchaseOrders || []).filter((po) => po.destination_vendor_id === vendorRow?.id),
+    [purchaseOrders, vendorRow]
+  );
+
+  const pendingPOActions = useMemo(
+    () => vendorPOs.filter((po) => po.status === "sent" || po.status === "revision_requested"),
+    [vendorPOs]
+  );
+
+  const dismissAnnouncement = async (id: string) => {
+    if (!vendorRow) return;
+    // Write directly when online so the banner updates now — queueOp alone just appends to
+    // the local offline queue and isn't flushed until the next reconnect/boot, so the
+    // announcement would still show as unread this session.
+    if (isOnline) {
+      try {
+        await api.markAnnouncementRead(id, vendorRow.id);
+        await refreshAll();
+      } catch {
+        queueOp({ type: "announcement_read", data: { announcement_id: id, vendor_id: vendorRow.id } });
+      }
+    } else {
+      queueOp({ type: "announcement_read", data: { announcement_id: id, vendor_id: vendorRow.id } });
+    }
+    toast("Marked as read");
+  };
 
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
@@ -190,6 +231,40 @@ export default function VendorDashboard() {
         </div>
       </div>
 
+      {unreadAnnouncements.length > 0 && (
+        <div className="banner" style={{ background: "#FFFBEB", borderLeft: "4px solid #F59E0B", marginBottom: 16 }}>
+          <div className="banner-head">
+            <h3 style={{ color: "#92400E", margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+              📢 Broadcast Notice from Main Supplier ({unreadAnnouncements.length} Unread)
+            </h3>
+            <button
+              className="btn-ghost"
+              onClick={() => openModal({ type: "alerts" })}
+              style={{ background: "#FDE68A", color: "#78350F", fontSize: 11, fontWeight: 700, borderColor: "transparent" }}
+            >
+              View All Alerts ({unreadAnnouncements.length}) →
+            </button>
+          </div>
+          {unreadAnnouncements.slice(0, 3).map((a) => (
+            <div key={a.id} className="banner-item" style={{ background: "#FFFFFF", padding: "10px 14px", borderRadius: 4, marginTop: 8, border: "1px solid #FCD34D", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <strong style={{ color: "#78350F" }}>
+                  {a.title} {a.is_blocking ? "• BLOCKING NOTICE" : ""}
+                </strong>
+                <div style={{ color: "#4B5563", fontSize: 12, marginTop: 2 }}>{a.message}</div>
+              </div>
+              <button
+                className="link-btn"
+                style={{ color: "#D97706", fontWeight: 700, fontSize: 11, marginLeft: 12, whiteSpace: "nowrap" }}
+                onClick={() => void dismissAnnouncement(a.id)}
+              >
+                Mark as Read ✓
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {lowCount > 0 && (
         <div className="banner">
           <div className="banner-head">
@@ -206,6 +281,85 @@ export default function VendorDashboard() {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {vendorPOs.length > 0 && (
+        <div className="panel" style={{ marginBottom: 24, borderLeft: "4px solid #3B82F6" }}>
+          <div className="panel-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h2 style={{ margin: 0, fontSize: 16, color: "#0F1F3D" }}>📦 Incoming Purchase Orders from Main Supplier ({vendorPOs.length})</h2>
+            {pendingPOActions.length > 0 && (
+              <span className="chip active" style={{ background: "#DBEAFE", color: "#1E40AF", fontWeight: 700, fontSize: 11 }}>
+                {pendingPOActions.length} Action Needed
+              </span>
+            )}
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>PO #</th>
+                  <th>Supplier</th>
+                  <th>Status</th>
+                  <th>Items</th>
+                  <th>Expected Delivery</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vendorPOs.map((po) => (
+                  <tr key={po.id}>
+                    <td>
+                      <strong>#{po.po_number}</strong>
+                    </td>
+                    <td>{po.supplier}</td>
+                    <td>
+                      <span
+                        style={{
+                          padding: "3px 10px",
+                          borderRadius: 12,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          background:
+                            po.status === "accepted"
+                              ? "#D1FAE5"
+                              : po.status === "revision_requested"
+                              ? "#FEF3C7"
+                              : po.status === "rejected"
+                              ? "#FEE2E2"
+                              : "#DBEAFE",
+                          color:
+                            po.status === "accepted"
+                              ? "#065F46"
+                              : po.status === "revision_requested"
+                              ? "#92400E"
+                              : po.status === "rejected"
+                              ? "#991B1B"
+                              : "#1E40AF",
+                        }}
+                      >
+                        {po.status.replace("_", " ")}
+                      </span>
+                    </td>
+                    <td>{po.items?.length || 0} line items</td>
+                    <td>{po.expected_delivery ? fmtDate(po.expected_delivery) : "Standard Shipment"}</td>
+                    <td>
+                      <div className="row-actions">
+                        <button
+                          className="save-btn"
+                          style={{ background: "#0F1F3D", color: "#FFFFFF", padding: "4px 10px", fontSize: 11, fontWeight: 600 }}
+                          onClick={() => openModal({ type: "viewPO", po })}
+                        >
+                          Inspect & Respond →
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

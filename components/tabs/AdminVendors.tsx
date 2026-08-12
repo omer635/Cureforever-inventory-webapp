@@ -15,11 +15,14 @@ export default function AdminVendors({ selectedVendorId }: AdminVendorsProps) {
   const [selectedId, setSelectedId] = useState<string | null>(selectedVendorId || vendors[0]?.id || null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (selectedVendorId) {
-      setSelectedId(selectedVendorId);
-    }
-  }, [selectedVendorId]);
+  // Adopt a newly-navigated-to selectedVendorId (e.g. clicked from the Dashboard) during
+  // render rather than in an effect — React's documented pattern for "adjust state when a
+  // prop changes" (avoids an extra render + the set-state-in-effect cascading-render risk).
+  const [prevSelectedVendorId, setPrevSelectedVendorId] = useState(selectedVendorId);
+  if (selectedVendorId !== prevSelectedVendorId) {
+    setPrevSelectedVendorId(selectedVendorId);
+    if (selectedVendorId) setSelectedId(selectedVendorId);
+  }
 
   const selected = vendors.find((v) => v.id === selectedId) || vendors[0] || null;
 
