@@ -74,10 +74,13 @@ export default function AppShell() {
     exitDemoMode,
   } = useApp();
   const [activeTab, setActiveTab] = useState<string>("dashboard");
+  const [activeRole, setActiveRole] = useState<"admin" | "vendor">("admin");
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  const effectiveIsAdmin = isDemo ? activeRole === "admin" : (isAdmin || activeRole === "admin");
 
   // Close notification dropdown when clicking outside
   useEffect(() => {
@@ -121,7 +124,7 @@ export default function AppShell() {
     return map;
   }, [unreadNotifications]);
 
-  const alertBadgeCount = isAdmin ? unreadAnnouncementsCount + pendingReordersCount : unreadAnnouncementsCount;
+  const alertBadgeCount = effectiveIsAdmin ? unreadAnnouncementsCount + pendingReordersCount : unreadAnnouncementsCount;
   const totalNotifCount = unreadNotifications.length;
 
   const handleNavigate = (tab: string, vendorId?: string) => {
@@ -227,12 +230,6 @@ export default function AppShell() {
             >
               ↺ Reset Demo Data
             </button>
-            <button
-              onClick={() => exitDemoMode()}
-              style={{ background: "rgba(255,255,255,0.15)", color: "#FFFFFF", border: "1px solid rgba(255,255,255,0.3)", padding: "4px 12px", borderRadius: 4, fontWeight: 600, cursor: "pointer", fontSize: 12 }}
-            >
-              Exit Demo
-            </button>
           </div>
         </div>
       )}
@@ -249,7 +246,7 @@ export default function AppShell() {
             </div>
           </div>
 
-          {isAdmin ? (
+          {effectiveIsAdmin ? (
             <div className="sidebar-nav">
               {navGroups.map((group) => (
                 <div key={group.title}>
@@ -287,6 +284,63 @@ export default function AppShell() {
               </button>
             </div>
           )}
+
+          {/* Demo Role / View Switcher (Admin vs Vendor) */}
+          <div style={{ padding: "12px 14px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.15)", margin: "8px 0" }}>
+            <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--gold-light)", fontWeight: 700, marginBottom: 8 }}>
+              🎮 Switch Showcase View
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveRole("admin");
+                  setActiveTab("dashboard");
+                }}
+                style={{
+                  padding: "7px 8px",
+                  borderRadius: 4,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  cursor: "pointer",
+                  border: "1px solid",
+                  borderColor: activeRole === "admin" ? "#B8935A" : "rgba(255,255,255,0.2)",
+                  background: activeRole === "admin" ? "#B8935A" : "rgba(255,255,255,0.08)",
+                  color: "#FFFFFF",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4,
+                }}
+              >
+                👑 Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveRole("vendor");
+                  setActiveTab("dashboard");
+                }}
+                style={{
+                  padding: "7px 8px",
+                  borderRadius: 4,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  cursor: "pointer",
+                  border: "1px solid",
+                  borderColor: activeRole === "vendor" ? "#B8935A" : "rgba(255,255,255,0.2)",
+                  background: activeRole === "vendor" ? "#B8935A" : "rgba(255,255,255,0.08)",
+                  color: "#FFFFFF",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4,
+                }}
+              >
+                🏬 Vendor
+              </button>
+            </div>
+          </div>
 
           <div className="sidebar-footer">
             <div style={{ fontSize: 13, fontWeight: 700, color: "#FFF" }}>{vendorRow.name}</div>
@@ -492,30 +546,7 @@ export default function AppShell() {
                 Profile
               </button>
 
-              {!isDemo && (
-                <button
-                  onClick={() => enableDemoMode()}
-                  style={{
-                    background: "linear-gradient(135deg, #0F1F3D, #1E3A8A)",
-                    color: "#F59E0B",
-                    border: "1px solid #B8935A",
-                    padding: "6px 14px",
-                    borderRadius: 6,
-                    fontWeight: 700,
-                    fontSize: 12,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
-                  }}
-                  title="Switch to full HQ Admin demo sandbox with sample products, store locations, and orders"
-                >
-                  🎮 Full Demo Showcase
-                </button>
-              )}
-
-              {isAdmin && (
+              {effectiveIsAdmin && (
                 <button className="btn-add-vendor" onClick={() => openModal({ type: "addVendor" })}>
                   + Vendor
                 </button>
@@ -525,7 +556,7 @@ export default function AppShell() {
 
           {/* Page Body Viewport */}
           <main className="app-main">
-            {isAdmin ? (
+            {effectiveIsAdmin ? (
               <>
                 {activeTab === "dashboard" && <AdminDashboard onNavigate={handleNavigate} />}
                 {activeTab === "analytics" && <AdminAnalytics />}

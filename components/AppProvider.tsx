@@ -214,7 +214,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshAll = useCallback(async () => {
-    if (typeof window !== "undefined" && localStorage.getItem("cureforever_demo_mode") === "true") {
+    const isDemoAccount = typeof window !== "undefined" && (
+      localStorage.getItem("cureforever_demo_mode") === "true" ||
+      (session?.user?.email && session.user.email.toLowerCase().includes("demo"))
+    );
+
+    if (isDemoAccount) {
       setIsDemo(true);
       const demoData = loadDemoSandbox();
       setProducts(demoData.products || []);
@@ -457,21 +462,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setSession(s);
 
       if (s) {
-        const cached = loadCache();
-        if (cached) {
-          setProducts(cached.products);
-          setProductBatches(cached.productBatches);
-          setVendors(cached.vendors);
-          setStockEntries(cached.stockEntries);
-          setStockHistory(cached.stockHistory ?? []);
-          setStockAdjustments(cached.stockAdjustments ?? []);
-          setReorderRequests(cached.reorderRequests ?? []);
-          setProductVisibility(cached.productVisibility ?? []);
-          setAnnouncements(cached.announcements ?? []);
-          setAnnouncementReads(cached.announcementReads ?? []);
-          setPurchaseOrders(cached.purchaseOrders ?? []);
-          setStockTransfers(cached.stockTransfers ?? []);
-          setNotifications(cached.notifications ?? []);
+        const isDemoUser = s.user.email?.toLowerCase().includes("demo");
+        if (isDemoUser) {
+          setIsDemo(true);
+          const demoData = loadDemoSandbox();
+          setProducts(demoData.products || []);
+          setProductBatches(demoData.productBatches || []);
+          setVendors(demoData.vendors || []);
+          setStockEntries(demoData.stockEntries || []);
+          setStockHistory(demoData.stockHistory || []);
+          setStockAdjustments(demoData.stockAdjustments || []);
+          setReorderRequests(demoData.reorderRequests || []);
+          setProductVisibility(demoData.productVisibility || []);
+          setAnnouncements(demoData.announcements || []);
+          setAnnouncementReads(demoData.announcementReads || []);
+          setPurchaseOrders(demoData.purchaseOrders || []);
+          setStockTransfers(demoData.stockTransfers || []);
+          setNotifications(demoData.notifications || []);
+        } else {
+          const cached = loadCache();
+          if (cached) {
+            setProducts(cached.products);
+            setProductBatches(cached.productBatches);
+            setVendors(cached.vendors);
+            setStockEntries(cached.stockEntries);
+            setStockHistory(cached.stockHistory ?? []);
+            setStockAdjustments(cached.stockAdjustments ?? []);
+            setReorderRequests(cached.reorderRequests ?? []);
+            setProductVisibility(cached.productVisibility ?? []);
+            setAnnouncements(cached.announcements ?? []);
+            setAnnouncementReads(cached.announcementReads ?? []);
+            setPurchaseOrders(cached.purchaseOrders ?? []);
+            setStockTransfers(cached.stockTransfers ?? []);
+            setNotifications(cached.notifications ?? []);
+          }
         }
         await resolveVendorRow(s);
         try {
