@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { getSupabase } from "@/lib/supabase";
+import { DEMO_USER_EMAIL, DEMO_USER_PASS } from "@/lib/demoData";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -9,12 +10,29 @@ export default function LoginScreen() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const startDemoMode = () => {
+    localStorage.setItem("cureforever_demo_mode", "true");
+    window.location.reload();
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password) {
       setError("Enter your email and password.");
       return;
     }
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (
+      cleanEmail === "demo@cureforever.com" ||
+      cleanEmail === "demo2026@cureforever.com" ||
+      cleanEmail === "demo@cureforever.in" ||
+      cleanEmail.startsWith("demo")
+    ) {
+      startDemoMode();
+      return;
+    }
+
     setError("");
     setBusy(true);
     try {
@@ -27,6 +45,7 @@ export default function LoginScreen() {
       });
 
       if (!signInErr && signData.session) {
+        localStorage.removeItem("cureforever_demo_mode");
         return;
       }
 
@@ -39,7 +58,12 @@ export default function LoginScreen() {
 
       if (res.ok) {
         const json = await res.json();
+        if (json.isDemo) {
+          startDemoMode();
+          return;
+        }
         if (json.session) {
+          localStorage.removeItem("cureforever_demo_mode");
           await sb.auth.setSession(json.session);
           return;
         }
@@ -86,6 +110,40 @@ export default function LoginScreen() {
             {busy ? "Signing in…" : "Sign In"}
           </button>
         </form>
+
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px dashed #E2E8F0", textAlign: "center" }}>
+          <div style={{ fontSize: 11, color: "#64748B", marginBottom: 8 }}>
+            Want to showcase all features without changing live database?
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setEmail(DEMO_USER_EMAIL);
+              setPassword(DEMO_USER_PASS);
+              startDemoMode();
+            }}
+            style={{
+              width: "100%",
+              padding: "10px 14px",
+              background: "#F8FAFC",
+              border: "1px solid #CBD5E1",
+              borderRadius: 6,
+              color: "#0F1F3D",
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+            }}
+          >
+            🎮 Launch Demo Showcase Mode
+          </button>
+          <div style={{ fontSize: 10, color: "#94A3B8", marginTop: 6 }}>
+            Login: <strong>{DEMO_USER_EMAIL}</strong> | Pass: <strong>{DEMO_USER_PASS}</strong>
+          </div>
+        </div>
       </div>
     </div>
   );

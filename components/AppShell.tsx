@@ -68,6 +68,8 @@ export default function AppShell() {
     markNotifRead,
     markAllNotifsRead,
     flushQueue,
+    isDemo,
+    resetDemoData,
   } = useApp();
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
@@ -206,6 +208,33 @@ export default function AppShell() {
 
   return (
     <>
+      {isDemo && (
+        <div style={{ background: "linear-gradient(90deg, #0F1F3D, #1E3A8A)", color: "#FFFFFF", padding: "8px 16px", fontSize: 13, fontWeight: 600, display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.2)", zIndex: 1000, flexWrap: "wrap", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 16 }}>🎮</span>
+            <span>
+              <strong>DEMO SHOWCASE SANDBOX</strong> — Pre-loaded with example store locations, catalog products, compliance batches, and purchase order threads. <em>(Zero impact on live database)</em>
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <button
+              onClick={() => {
+                resetDemoData();
+              }}
+              style={{ background: "#B8935A", color: "#FFFFFF", border: "none", padding: "4px 12px", borderRadius: 4, fontWeight: 700, cursor: "pointer", fontSize: 12, boxShadow: "0 1px 2px rgba(0,0,0,0.1)" }}
+            >
+              ↺ Reset Demo Data
+            </button>
+            <button
+              onClick={() => void logout()}
+              style={{ background: "rgba(255,255,255,0.15)", color: "#FFFFFF", border: "1px solid rgba(255,255,255,0.3)", padding: "4px 12px", borderRadius: 4, fontWeight: 600, cursor: "pointer", fontSize: 12 }}
+            >
+              Exit Demo
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="app-container">
         {mobileNavOpen && <div className="sidebar-backdrop" onClick={() => setMobileNavOpen(false)} />}
         {/* Sleek Side Navbar */}

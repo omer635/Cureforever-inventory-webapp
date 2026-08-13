@@ -5,6 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 import { getSupabase } from "@/lib/supabase";
 import { CACHE_KEY, OFFLINE_OPS_KEY } from "@/lib/constants";
 import * as api from "@/lib/db";
+import { DEMO_ADMIN_VENDOR, DEMO_USER_EMAIL, loadDemoSandbox, resetDemoSandbox } from "@/lib/demoData";
 import type {
   Announcement,
   AnnouncementRead,
@@ -67,6 +68,8 @@ interface AppContextValue {
   queueOp: (op: OfflineOp) => void;
   flushQueue: () => Promise<void>;
   updateVendorRow: (v: Vendor | null) => void;
+  isDemo: boolean;
+  resetDemoData: () => void;
   markNotifRead: (id: string) => Promise<void>;
   markAllNotifsRead: () => Promise<void>;
 }
@@ -156,7 +159,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200);
   }, []);
 
+  const [isDemo, setIsDemo] = useState<boolean>(false);
+
+  const resetDemoData = useCallback(() => {
+    const reset = resetDemoSandbox();
+    setProducts(reset.products || []);
+    setProductBatches(reset.productBatches || []);
+    setVendors(reset.vendors || []);
+    setStockEntries(reset.stockEntries || []);
+    setStockHistory(reset.stockHistory || []);
+    setStockAdjustments(reset.stockAdjustments || []);
+    setReorderRequests(reset.reorderRequests || []);
+    setProductVisibility(reset.productVisibility || []);
+    setAnnouncements(reset.announcements || []);
+    setAnnouncementReads(reset.announcementReads || []);
+    setPurchaseOrders(reset.purchaseOrders || []);
+    setStockTransfers(reset.stockTransfers || []);
+    setNotifications(reset.notifications || []);
+    toast("Demo sandbox reset to initial showcase state");
+  }, [toast]);
+
   const refreshAll = useCallback(async () => {
+    if (typeof window !== "undefined" && localStorage.getItem("cureforever_demo_mode") === "true") {
+      setIsDemo(true);
+      const demoData = loadDemoSandbox();
+      setProducts(demoData.products || []);
+      setProductBatches(demoData.productBatches || []);
+      setVendors(demoData.vendors || []);
+      setStockEntries(demoData.stockEntries || []);
+      setStockHistory(demoData.stockHistory || []);
+      setStockAdjustments(demoData.stockAdjustments || []);
+      setReorderRequests(demoData.reorderRequests || []);
+      setProductVisibility(demoData.productVisibility || []);
+      setAnnouncements(demoData.announcements || []);
+      setAnnouncementReads(demoData.announcementReads || []);
+      setPurchaseOrders(demoData.purchaseOrders || []);
+      setStockTransfers(demoData.stockTransfers || []);
+      setNotifications(demoData.notifications || []);
+      return;
+    }
+
     const data = await api.fetchAll();
     setProducts(data.products);
     setProductBatches(data.productBatches);
@@ -228,6 +270,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    localStorage.removeItem("cureforever_demo_mode");
+    setIsDemo(false);
     try {
       await getSupabase().auth.signOut();
     } catch {
@@ -235,6 +279,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     setSession(null);
     setVendorRow(null);
+    window.location.reload();
   }, []);
 
   const openModal = useCallback((m: ModalState) => setModal(m), []);
@@ -346,6 +391,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const storedOps = loadQueue();
     if (storedOps.length > 0 && navigator.onLine) {
       void flushQueue();
+    }
+
+    const demoActive = typeof window !== "undefined" && localStorage.getItem("cureforever_demo_mode") === "true";
+    if (demoActive) {
+      setIsDemo(true);
+      setSession({ user: { email: DEMO_USER_EMAIL, id: "demo-user-id" } });
+      setVendorRow(DEMO_ADMIN_VENDOR);
+      const demoData = loadDemoSandbox();
+      setProducts(demoData.products || []);
+      setProductBatches(demoData.productBatches || []);
+      setVendors(demoData.vendors || []);
+      setStockEntries(demoData.stockEntries || []);
+      setStockHistory(demoData.stockHistory || []);
+      setStockAdjustments(demoData.stockAdjustments || []);
+      setReorderRequests(demoData.reorderRequests || []);
+      setProductVisibility(demoData.productVisibility || []);
+      setAnnouncements(demoData.announcements || []);
+      setAnnouncementReads(demoData.announcementReads || []);
+      setPurchaseOrders(demoData.purchaseOrders || []);
+      setStockTransfers(demoData.stockTransfers || []);
+      setNotifications(demoData.notifications || []);
+      setBooted(true);
+      return;
     }
 
     try {
@@ -525,6 +593,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     queueOp,
     flushQueue,
     updateVendorRow,
+    isDemo,
+    resetDemoData,
     markNotifRead,
     markAllNotifsRead,
   };

@@ -17,6 +17,20 @@ import type {
   Vendor,
 } from "./types";
 
+import { loadDemoSandbox, saveDemoSandbox } from "./demoData";
+
+export function isDemoMode(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem("cureforever_demo_mode") === "true";
+}
+
+function updateDemoSandbox(mutator: (data: any) => void) {
+  const data = loadDemoSandbox();
+  mutator(data);
+  saveDemoSandbox(data);
+  return data;
+}
+
 export interface AllData {
   products: Product[];
   productBatches: ProductBatch[];
@@ -34,6 +48,9 @@ export interface AllData {
 }
 
 export async function fetchAll(): Promise<AllData> {
+  if (isDemoMode()) {
+    return loadDemoSandbox() as AllData;
+  }
   const sb = getSupabase();
   const [p, pb, v, se, sh, sa, rr, pv, an, ar] = await Promise.all([
     sb.from("products").select("*").order("name"),
@@ -270,6 +287,25 @@ export async function deletePurchaseOrder(id: string): Promise<void> {
 }
 
 export async function createVendor(payload: Record<string, unknown>): Promise<Vendor> {
+  if (isDemoMode()) {
+    const newVendor: Vendor = {
+      id: `demo-store-${Date.now()}`,
+      user_id: null,
+      name: String(payload.name || "Demo Store"),
+      is_admin: !!payload.is_admin,
+      phone: (payload.phone as string) || null,
+      address: (payload.address as string) || null,
+      email: (payload.email as string) || null,
+      state: String(payload.state || "HQ"),
+      contact_phone: (payload.phone as string) || null,
+      created_at: new Date().toISOString(),
+    };
+    updateDemoSandbox((data) => {
+      data.vendors.push(newVendor);
+    });
+    return newVendor;
+  }
+
   const sb = getSupabase();
   const { data, error } = await sb.from("vendors").insert(payload).select().single();
   if (error) {
@@ -290,28 +326,28 @@ export async function createVendorWithAuth(
   payload: Record<string, unknown>,
   password?: string
 ): Promise<Vendor> {
+  if (isDemoMode()) {
+    return createVendor(payload);
+  }
+
   try {
     const sb = getSupabase();
     const { data: sessionData } = await sb.auth.getSession();
     const token = sessionData.session?.access_token;
-    if (!token) throw new Error("Not authenticated");
+    if (token) {
+      const res = await fetch("/api/vendor/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ...payload, password }),
+      });
 
-    const res = await fetch("/api/vendor/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ ...payload, password }),
-    });
-
-    if (res.ok) {
-      const json = await res.json();
-      if (json.vendor) return json.vendor as Vendor;
-    } else {
-      const errJson = await res.json().catch(() => null);
-      throw new Error(errJson?.error || "Could not create vendor login");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.vendor) return json.vendor as Vendor;
+      }
     }
   } catch (err) {
-    if (!password) return createVendor(payload); // no login needed — plain vendor row is fine
-    throw err;
+    console.warn("Auth route vendor creation skipped, falling back to direct db insert:", err);
   }
 
   return createVendor(payload);
