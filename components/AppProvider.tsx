@@ -70,6 +70,8 @@ interface AppContextValue {
   updateVendorRow: (v: Vendor | null) => void;
   isDemo: boolean;
   resetDemoData: () => void;
+  enableDemoMode: () => void;
+  exitDemoMode: () => void;
   markNotifRead: (id: string) => Promise<void>;
   markAllNotifsRead: () => Promise<void>;
 }
@@ -178,6 +180,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setNotifications(reset.notifications || []);
     toast("Demo sandbox reset to initial showcase state");
   }, [toast]);
+
+  const enableDemoMode = useCallback(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cureforever_demo_mode", "true");
+    }
+    setIsDemo(true);
+    setSession({ user: { email: DEMO_USER_EMAIL, id: "demo-user-id" } });
+    setVendorRow(DEMO_ADMIN_VENDOR);
+    const demoData = loadDemoSandbox();
+    setProducts(demoData.products || []);
+    setProductBatches(demoData.productBatches || []);
+    setVendors(demoData.vendors || []);
+    setStockEntries(demoData.stockEntries || []);
+    setStockHistory(demoData.stockHistory || []);
+    setStockAdjustments(demoData.stockAdjustments || []);
+    setReorderRequests(demoData.reorderRequests || []);
+    setProductVisibility(demoData.productVisibility || []);
+    setAnnouncements(demoData.announcements || []);
+    setAnnouncementReads(demoData.announcementReads || []);
+    setPurchaseOrders(demoData.purchaseOrders || []);
+    setStockTransfers(demoData.stockTransfers || []);
+    setNotifications(demoData.notifications || []);
+    toast("Switched to Full HQ Admin Demo Sandbox");
+  }, [toast]);
+
+  const exitDemoMode = useCallback(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("cureforever_demo_mode");
+    }
+    setIsDemo(false);
+    window.location.reload();
+  }, []);
 
   const refreshAll = useCallback(async () => {
     if (typeof window !== "undefined" && localStorage.getItem("cureforever_demo_mode") === "true") {
@@ -595,6 +629,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateVendorRow,
     isDemo,
     resetDemoData,
+    enableDemoMode,
+    exitDemoMode,
     markNotifRead,
     markAllNotifsRead,
   };

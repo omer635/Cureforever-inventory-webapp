@@ -70,6 +70,8 @@ export default function AppShell() {
     flushQueue,
     isDemo,
     resetDemoData,
+    enableDemoMode,
+    exitDemoMode,
   } = useApp();
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
@@ -226,7 +228,7 @@ export default function AppShell() {
               ↺ Reset Demo Data
             </button>
             <button
-              onClick={() => void logout()}
+              onClick={() => exitDemoMode()}
               style={{ background: "rgba(255,255,255,0.15)", color: "#FFFFFF", border: "1px solid rgba(255,255,255,0.3)", padding: "4px 12px", borderRadius: 4, fontWeight: 600, cursor: "pointer", fontSize: 12 }}
             >
               Exit Demo
@@ -489,6 +491,29 @@ export default function AppShell() {
               <button className="btn-ghost" onClick={() => openModal({ type: "profile" })} style={{ color: "#0F1F3D", borderColor: "#CBD5E1", background: "#F8FAFC" }}>
                 Profile
               </button>
+
+              {!isDemo && (
+                <button
+                  onClick={() => enableDemoMode()}
+                  style={{
+                    background: "linear-gradient(135deg, #0F1F3D, #1E3A8A)",
+                    color: "#F59E0B",
+                    border: "1px solid #B8935A",
+                    padding: "6px 14px",
+                    borderRadius: 6,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+                  }}
+                  title="Switch to full HQ Admin demo sandbox with sample products, store locations, and orders"
+                >
+                  🎮 Full Demo Showcase
+                </button>
+              )}
 
               {isAdmin && (
                 <button className="btn-add-vendor" onClick={() => openModal({ type: "addVendor" })}>
