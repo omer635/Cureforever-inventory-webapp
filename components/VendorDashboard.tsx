@@ -407,27 +407,8 @@ export default function VendorDashboard() {
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="empty" style={{ padding: "32px 16px" }}>
-                    <div style={{ fontWeight: 600, color: "#0F1F3D" }}>No stock lines registered for this location yet.</div>
-                    <div style={{ fontSize: 12, color: "#64748B", marginTop: 4, marginBottom: 12 }}>
-                      You can receive stock or switch to the Full HQ Demo Sandbox to explore populated showcase modules.
-                    </div>
-                    <button
-                      onClick={() => enableDemoMode()}
-                      style={{
-                        background: "#0F1F3D",
-                        color: "#F59E0B",
-                        border: "1px solid #B8935A",
-                        padding: "6px 14px",
-                        borderRadius: 6,
-                        fontWeight: 700,
-                        fontSize: 12,
-                        cursor: "pointer",
-                        boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                      }}
-                    >
-                      🎮 Launch Full Admin Demo Sandbox
-                    </button>
+                  <td colSpan={9} className="empty">
+                    No stock lines match — {filter === "low" ? "you're all stocked up" : "try a different filter"}.
                   </td>
                 </tr>
               )}

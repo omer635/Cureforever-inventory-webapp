@@ -285,62 +285,64 @@ export default function AppShell() {
             </div>
           )}
 
-          {/* Demo Role / View Switcher (Admin vs Vendor) */}
-          <div style={{ padding: "12px 14px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.15)", margin: "8px 0" }}>
-            <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--gold-light)", fontWeight: 700, marginBottom: 8 }}>
-              🎮 Switch Showcase View
+          {/* Demo Role / View Switcher (Only visible for demo accounts) */}
+          {isDemo && (
+            <div style={{ padding: "12px 14px", borderTop: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.15)", margin: "8px 0" }}>
+              <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8, color: "var(--gold-light)", fontWeight: 700, marginBottom: 8 }}>
+                🎮 Switch Showcase View
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveRole("admin");
+                    setActiveTab("dashboard");
+                  }}
+                  style={{
+                    padding: "7px 8px",
+                    borderRadius: 4,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    border: "1px solid",
+                    borderColor: activeRole === "admin" ? "#B8935A" : "rgba(255,255,255,0.2)",
+                    background: activeRole === "admin" ? "#B8935A" : "rgba(255,255,255,0.08)",
+                    color: "#FFFFFF",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 4,
+                  }}
+                >
+                  👑 Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveRole("vendor");
+                    setActiveTab("dashboard");
+                  }}
+                  style={{
+                    padding: "7px 8px",
+                    borderRadius: 4,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    border: "1px solid",
+                    borderColor: activeRole === "vendor" ? "#B8935A" : "rgba(255,255,255,0.2)",
+                    background: activeRole === "vendor" ? "#B8935A" : "rgba(255,255,255,0.08)",
+                    color: "#FFFFFF",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 4,
+                  }}
+                >
+                  🏬 Vendor
+                </button>
+              </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveRole("admin");
-                  setActiveTab("dashboard");
-                }}
-                style={{
-                  padding: "7px 8px",
-                  borderRadius: 4,
-                  fontWeight: 700,
-                  fontSize: 12,
-                  cursor: "pointer",
-                  border: "1px solid",
-                  borderColor: activeRole === "admin" ? "#B8935A" : "rgba(255,255,255,0.2)",
-                  background: activeRole === "admin" ? "#B8935A" : "rgba(255,255,255,0.08)",
-                  color: "#FFFFFF",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4,
-                }}
-              >
-                👑 Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveRole("vendor");
-                  setActiveTab("dashboard");
-                }}
-                style={{
-                  padding: "7px 8px",
-                  borderRadius: 4,
-                  fontWeight: 700,
-                  fontSize: 12,
-                  cursor: "pointer",
-                  border: "1px solid",
-                  borderColor: activeRole === "vendor" ? "#B8935A" : "rgba(255,255,255,0.2)",
-                  background: activeRole === "vendor" ? "#B8935A" : "rgba(255,255,255,0.08)",
-                  color: "#FFFFFF",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 4,
-                }}
-              >
-                🏬 Vendor
-              </button>
-            </div>
-          </div>
+          )}
 
           <div className="sidebar-footer">
             <div style={{ fontSize: 13, fontWeight: 700, color: "#FFF" }}>{vendorRow.name}</div>
