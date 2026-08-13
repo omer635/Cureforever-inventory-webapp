@@ -9,26 +9,10 @@ export default function LoginScreen() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const startDemoMode = () => {
-    localStorage.setItem("cureforever_demo_mode", "true");
-    window.location.reload();
-  };
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password) {
       setError("Enter your email and password.");
-      return;
-    }
-
-    const cleanEmail = email.trim().toLowerCase();
-    if (
-      cleanEmail === "demo@cureforever.com" ||
-      cleanEmail === "demo2026@cureforever.com" ||
-      cleanEmail === "demo@cureforever.in" ||
-      cleanEmail.startsWith("demo")
-    ) {
-      startDemoMode();
       return;
     }
 
@@ -57,10 +41,6 @@ export default function LoginScreen() {
 
       if (res.ok) {
         const json = await res.json();
-        if (json.isDemo) {
-          startDemoMode();
-          return;
-        }
         if (json.session) {
           localStorage.removeItem("cureforever_demo_mode");
           await sb.auth.setSession(json.session);
