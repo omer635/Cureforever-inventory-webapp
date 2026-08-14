@@ -1,4 +1,6 @@
 :root {
+  --font-primary: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-manrope), 'Manrope', var(--font-inter), sans-serif;
   --navy: #003d29;
   --navy-2: #1c5242;
   --gold: #B8935A;
@@ -38,7 +40,7 @@ body {
   margin: 0;
   background: var(--cream);
   color: var(--ink);
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-primary);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -46,7 +48,7 @@ h1,
 h2,
 h3,
 .brand {
-  font-family: var(--font-garamond), serif;
+  font-family: var(--font-display);
 }
 
 .interactive-card {
@@ -369,7 +371,7 @@ main {
 }
 
 .sidebar-brand {
-  font-family: var(--font-garamond), serif;
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
   color: #fff;
@@ -537,7 +539,7 @@ main {
 }
 
 .stat .num {
-  font-family: var(--font-garamond), serif;
+  font-family: var(--font-display);
   font-size: 30px;
   font-weight: 700;
   color: var(--navy);

@@ -8,22 +8,28 @@
 .env*
 !.env.example
 *.env
+*.env.local
 credentials.json
 service-account*.json
+secrets.json
 *.pem
 *.key
 *.cert
 *.crt
 *.pfx
+*.p12
 
 # 2. Local AI & Agent Workspace Directories
 .agents/
 .gemini/
 .claude/
+.impeccable/
+.cursor/
+.antigravity/
 .system_generated/
 headroom.log
 *.log
-*.db
+/scratch/
 
 # 3. Dependencies & Package Managers
 /node_modules
@@ -33,13 +39,15 @@ headroom.log
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
+!.yarn/sdks
 !.yarn/versions
 yarn-debug.log*
 yarn-error.log*
 npm-debug.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# 4. Next.js & Build Outputs
+# 4. Next.js & Web Build Outputs
 /.next/
 /out/
 /build/
@@ -54,7 +62,43 @@ npm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# 7. IDEs & Code Editors
+# 7. Python Artifacts & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+.eggs/
+sdist/
+wheels/
+*.egg
+
+# 8. Databases & Vector Stores
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.db-shm
+*.db-wal
+ruvector.db
+
+# 9. IDEs & Code Editors
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -67,8 +111,11 @@ next-env.d.ts
 *.sln
 *.sw?
 .vs/
+.project
+.classpath
+.settings/
 
-# 8. OS Generated Files
+# 10. OS Generated Files
 .DS_Store
 .DS_Store?
 ._*
@@ -78,8 +125,18 @@ ehthumbs.db
 Thumbs.db
 Desktop.ini
 
-# 9. Temporary & Scratch Files
+# 11. Temporary & Scratch Files
 *.tmp
 *.temp
-/scratch/
 *.bak
+*.swp
+*.swo
+*~
+
+# 12. Local Presentation Files & Generator Scripts
+CureForever_Presentation.html
+CureForever_Presentation.pptx
+generate_pptx.py
+PRESENTATION.md
+*.pptx
+
