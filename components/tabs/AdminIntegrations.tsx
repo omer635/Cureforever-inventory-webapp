@@ -12,7 +12,7 @@ const SERVICES_STORAGE_KEY = "cureforever_accounting_services_v2";
 const LOGS_STORAGE_KEY = "cureforever_delivery_logs_v2";
 
 export default function AdminIntegrations() {
-  const { stockAdjustments, purchaseOrders, stockEntries, products, toast } = useApp();
+  const { stockAdjustments, purchaseOrders, stockEntries, products, toast, isDemo } = useApp();
   const [activeSubTab, setActiveSubTab] = useState<ActiveSubTab>("webhooks");
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [isTestingWebhook, setIsTestingWebhook] = useState<boolean>(false);
@@ -30,39 +30,7 @@ export default function AdminIntegrations() {
         if (saved) return JSON.parse(saved);
       } catch {}
     }
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://cureforever-inventory.app";
-    return [
-      {
-        id: "wh-101",
-        name: "Shopify OMS Inventory Listener",
-        url: `${origin}/api/webhooks/shopify-stock`,
-        secret: "whsec_9a8b7c6d5e4f3a2b1c",
-        events: ["stock.updated", "low_stock.alert"],
-        status: "active",
-        lastDelivery: new Date().toISOString(),
-        successRate: 99.4,
-      },
-      {
-        id: "wh-102",
-        name: "QuickBooks Auto-Sync Endpoint",
-        url: `${origin}/api/webhooks/quickbooks-sync`,
-        secret: "whsec_qb_7721839102",
-        events: ["po.status_changed", "accounting.sync"],
-        status: "active",
-        lastDelivery: new Date(Date.now() - 3600000).toISOString(),
-        successRate: 100.0,
-      },
-      {
-        id: "wh-103",
-        name: "Custom ERP Warehouse Listener",
-        url: `${origin}/api/webhooks/erp-sync`,
-        secret: "whsec_erp_custom_0019",
-        events: ["batch.expired", "stock.updated"],
-        status: "active",
-        lastDelivery: new Date(Date.now() - 7200000).toISOString(),
-        successRate: 98.2,
-      },
-    ];
+    return [];
   });
 
   // Save webhooks on edit
@@ -86,8 +54,8 @@ export default function AdminIntegrations() {
         name: "QuickBooks Online",
         logo: "🟢",
         status: "connected",
-        lastSync: new Date(Date.now() - 1800000).toLocaleString(),
-        syncedRecords: Math.max(142, realPoCount * 4 + realStockCount),
+        lastSync: "Never",
+        syncedRecords: 0,
         description: "Auto-posts Purchase Orders as Accounts Payable Bills & updates inventory asset ledgers.",
       },
       {
@@ -95,8 +63,8 @@ export default function AdminIntegrations() {
         name: "Xero Accounting",
         logo: "🔵",
         status: "connected",
-        lastSync: new Date(Date.now() - 7200000).toLocaleString(),
-        syncedRecords: Math.max(89, realAdjCount * 3 + realPoCount),
+        lastSync: "Never",
+        syncedRecords: 0,
         description: "Synchronizes stock valuation, cost-of-goods-sold (COGS), and inventory asset balances.",
       },
       {
@@ -104,8 +72,8 @@ export default function AdminIntegrations() {
         name: "myBillBook (GST Invoicing)",
         logo: "📙",
         status: "connected",
-        lastSync: new Date(Date.now() - 14400000).toLocaleString(),
-        syncedRecords: Math.max(310, realStockCount * 2 + realPoCount * 5),
+        lastSync: "Never",
+        syncedRecords: 0,
         description: "Syncs GST e-invoices, vendor bill receipts, and automated stock reconciliation.",
       },
       {
@@ -119,6 +87,21 @@ export default function AdminIntegrations() {
       },
     ];
   });
+
+  const computedServices = useMemo(() => {
+    return services.map((s) => {
+      let liveRecords = 0;
+      if (s.status === "connected") {
+        if (s.id === "quickbooks") liveRecords = realPoCount + realStockCount;
+        else if (s.id === "xero") liveRecords = realAdjCount + realPoCount;
+        else if (s.id === "mybillbook") liveRecords = realStockCount + realPoCount;
+      }
+      return {
+        ...s,
+        syncedRecords: liveRecords,
+      };
+    });
+  }, [services, realPoCount, realAdjCount, realStockCount]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -307,15 +290,7 @@ export default function AdminIntegrations() {
       setIsSyncing(false);
       const nowStr = new Date().toLocaleString();
       setServices((prev) =>
-        prev.map((s) =>
-          s.status === "connected"
-            ? {
-                ...s,
-                lastSync: nowStr,
-                syncedRecords: s.syncedRecords + Math.max(1, realPoCount + Math.floor(Math.random() * 3 + 1)),
-              }
-            : s
-        )
+        prev.map((s) => (s.status === "connected" ? { ...s, lastSync: nowStr } : s))
       );
       toast(`Successfully synchronized accounting records (${realPoCount} POs, ${realStockCount} stock entries) with QuickBooks, Xero & myBillBook!`);
     }, 800);
@@ -331,7 +306,6 @@ export default function AdminIntegrations() {
           ...s,
           status: nextStatus,
           lastSync: nextStatus === "connected" ? new Date().toLocaleString() : s.lastSync,
-          syncedRecords: nextStatus === "connected" ? Math.max(10, realPoCount * 3 + realStockCount) : s.syncedRecords,
         };
       })
     );
@@ -542,7 +516,7 @@ export default function AdminIntegrations() {
 
           {/* Integration Cards Grid */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-            {services.map((s) => (
+            {computedServices.map((s) => (
               <div key={s.id} style={{ background: "#FFF", border: `1px solid ${s.status === "connected" ? "#BBF7D0" : "#E2E8F0"}`, borderRadius: 8, padding: 18, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
