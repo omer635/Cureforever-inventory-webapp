@@ -213,6 +213,32 @@ export default function VendorDashboard() {
 
   return (
     <>
+      {/* Real-time Sync Header Bar */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, background: "#FFF", padding: "12px 16px", borderRadius: 8, border: "1px solid #E5E7EB" }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 18, color: "#0F1F3D", fontWeight: 700 }}>Store Inventory & Stock Management</h2>
+          <p style={{ margin: "2px 0 0", fontSize: 12, color: "#6B7280" }}>
+            Live SKU quantities, batch expiry tracking, and instant stock level adjustments for {vendorRow.name}.
+          </p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div
+            style={{ display: "flex", alignItems: "center", gap: 6, background: "#F0FDF4", border: "1px solid #BBF7D0", padding: "4px 10px", borderRadius: 6, fontSize: 11, color: "#166534", fontWeight: 600 }}
+            data-testid="vendor-live-sync-indicator"
+          >
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#22C55E", display: "inline-block", boxShadow: "0 0 0 2px rgba(34, 197, 94, 0.2)" }} />
+            <span>Live Sync Active</span>
+          </div>
+          <button
+            onClick={() => void refreshAll()}
+            style={{ padding: "4px 10px", background: "#FFF", border: "1px solid #CBD5E1", borderRadius: 6, fontSize: 11, fontWeight: 600, color: "#0F172A", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}
+            data-testid="vendor-refresh-btn"
+          >
+            🔄 Refresh
+          </button>
+        </div>
+      </div>
+
       <div className="stat-row">
         <div className="stat">
           <div className="num">{products.length}</div>
@@ -433,6 +459,7 @@ export default function VendorDashboard() {
                           void saveRow(r);
                         }
                       }}
+                      data-testid={`qty-input-${r.entry.id}`}
                     />
                   </td>
                   <td>
@@ -450,6 +477,7 @@ export default function VendorDashboard() {
                       className="reason-select"
                       value={reasons[r.entry.id] ?? "manual_adjustment"}
                       onChange={(e) => setReasons((m) => ({ ...m, [r.entry.id]: e.target.value }))}
+                      data-testid={`reason-select-${r.entry.id}`}
                     >
                       {REASONS.map((reason) => (
                         <option key={reason} value={reason}>
@@ -469,6 +497,7 @@ export default function VendorDashboard() {
                           void saveRow(r);
                         }
                       }}
+                      data-testid={`notes-input-${r.entry.id}`}
                     />
                   </td>
                   <td>
@@ -480,6 +509,7 @@ export default function VendorDashboard() {
                             onClick={() => void saveRow(r)}
                             disabled={savingKey === r.entry.id}
                             style={{ background: "#2F6B4F", color: "#fff", padding: "4px 8px", fontSize: 11 }}
+                            data-testid={`save-stock-btn-${r.entry.id}`}
                           >
                             {savingKey === r.entry.id ? "Saving…" : "✓ Save"}
                           </button>

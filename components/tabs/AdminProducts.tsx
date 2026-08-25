@@ -407,8 +407,19 @@ export default function AdminProducts() {
                     />
                   </td>
                   <td>
-                    <strong>{cleanText(p.name)}</strong>
-                    {p.description && <div className="sku">{p.description}</div>}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover", border: "1px solid #E2E8F0" }} />
+                      ) : (
+                        <div style={{ width: 36, height: 36, borderRadius: 6, background: "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>
+                          📦
+                        </div>
+                      )}
+                      <div>
+                        <strong>{cleanText(p.name)}</strong>
+                        {p.description && <div className="sku">{p.description}</div>}
+                      </div>
+                    </div>
                   </td>
                   <td className="sku">{p.sku}</td>
                   <td>{p.category || "—"}</td>

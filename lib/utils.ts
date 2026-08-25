@@ -228,7 +228,11 @@ export function sortRows(rows: StockRow[], sortKey: string, sortDir: "asc" | "de
     else if (sortKey === "qty") cmp = a.entry.quantity - b.entry.quantity;
     else if (sortKey === "expiry")
       cmp = (a.batch?.expiry_date || "9999").localeCompare(b.batch?.expiry_date || "9999");
-    else if (sortKey === "low") cmp = rankStatus(a) - rankStatus(b);
+    else if (sortKey === "low") {
+      const sa = stockStatus(a.product, a.entry.quantity);
+      const sb = stockStatus(b.product, b.entry.quantity);
+      cmp = (sa === "out" ? 0 : sa === "low" ? 1 : 2) - (sb === "out" ? 0 : sb === "low" ? 1 : 2);
+    }
     return cmp * dir;
   });
   return sorted;

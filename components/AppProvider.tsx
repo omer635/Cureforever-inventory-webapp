@@ -202,6 +202,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setPurchaseOrders(demoData.purchaseOrders || []);
     setStockTransfers(demoData.stockTransfers || []);
     setNotifications(demoData.notifications || []);
+    setBooted(true);
     toast("Switched to Full HQ Admin Demo Sandbox");
   }, [toast]);
 

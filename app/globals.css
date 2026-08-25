@@ -1,46 +1,80 @@
 :root {
-  --font-primary: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: var(--font-manrope), 'Manrope', var(--font-inter), sans-serif;
-  --navy: #003d29;
-  --navy-2: #1c5242;
-  --gold: #B8935A;
-  --gold-light: #E8DCC4;
-  --cream: #FAF9F5;
-  --paper: #FFFFFF;
-  --ink: #141413;
-  --muted: #6C6A64;
-  --line: #E6DFD8;
+  /* Brand Tokens: Untitled Page (WTF Everyday Vendor Partner Dashboard) */
+  --color-text-primary: #1a1a2e;
+  --color-surface-base: #ffffff;
+  --color-text-tertiary: #888888;
+  --color-text-inverse: #c9a96e;
+  --color-surface-muted: #000000;
+  --color-surface-raised: #f5f6f8;
+  --color-surface-strong: #0f0f14;
+  --color-border-default: #ebedf0;
+
+  /* Typography Tokens */
+  --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-stack: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 13.33px;
+  --font-size-lg: 16px;
+  --font-size-xl: 22px;
+  --font-weight-base: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --font-line-height-base: normal;
+
+  /* Spacing Scale Tokens */
+  --space-1: 1px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 7px;
+  --space-5: 8px;
+  --space-6: 9px;
+  --space-7: 10px;
+  --space-8: 12px;
+
+  /* Radius, Shadow & Motion Tokens */
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --shadow-1: rgba(201, 169, 110, 0) 0px 0px 0px 0px;
+  --motion-duration-instant: 150ms;
+  --motion-duration-fast: 200ms;
+
+  /* Alias Fallback Tokens */
+  --navy: var(--color-surface-strong);
+  --navy-2: #161824;
+  --gold: var(--color-text-inverse);
+  --gold-light: #e6d3af;
+  --cream: var(--color-surface-base);
+  --paper: var(--color-surface-base);
+  --ink: var(--color-text-primary);
+  --muted: var(--color-text-tertiary);
+  --line: var(--color-border-default);
   --danger: #C64545;
   --danger-bg: #FDF2F2;
   --warn: #D4A017;
   --warn-bg: #FEFCE8;
   --ok: #5DB872;
   --ok-bg: #F0FDF4;
-  --accent-purple: #5B21B6;
-  --accent-purple-bg: #EDE9FE;
-  /* Mintlify & Claude Design System Tokens */
-  --mint: #00d4a4;
-  --mint-deep: #00b48a;
-  --mint-soft: #e6fbf5;
-  --mint-glow: rgba(0, 212, 164, 0.2);
-  --claude-coral: #CC785C;
-  --claude-coral-deep: #A9583E;
-  --claude-cream: #FAF9F5;
-  --claude-surface: #F5F0E8;
-  --claude-card: #EFE9DE;
-  --claude-teal: #5DB8A6;
-  --claude-amber: #E8A55A;
 }
 
 * {
   box-sizing: border-box;
 }
 
+*:focus-visible {
+  outline: 2px solid var(--color-text-inverse) !important;
+  outline-offset: 2px !important;
+}
+
 body {
   margin: 0;
-  background: var(--cream);
-  color: var(--ink);
-  font-family: var(--font-primary);
+  background: var(--color-surface-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-base);
+  line-height: var(--font-line-height-base);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -1462,5 +1496,37 @@ tr:hover td {
     width: calc(100vw - 32px);
     right: -60px;
     max-height: 60vh;
+  }
+}
+
+/* ─── PRINT MEDIA STYLES FOR LABEL STUDIO ─────────────────────────────── */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print,
+  header,
+  aside,
+  .sidebar,
+  .top-bar {
+    display: none !important;
+  }
+  .modal-overlay {
+    position: static !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+  .modal {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    background: transparent !important;
+  }
+  .printable-label-item {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }

@@ -39,4 +39,5 @@ export const ADMIN_TAB_LABELS: Record<string, string> = {
   products: "Products Catalog",
   vendors: "Vendor Locations",
   announcements: "Announcements",
+  integrations: "Integrations & Webhooks",
 };

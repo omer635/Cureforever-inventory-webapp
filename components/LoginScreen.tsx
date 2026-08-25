@@ -2,12 +2,14 @@
 
 import React, { useState } from "react";
 import { getSupabase } from "@/lib/supabase";
+import { useApp } from "@/components/AppProvider";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const { enableDemoMode } = useApp();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +69,7 @@ export default function LoginScreen() {
         />
         <p className="brand" style={{ textAlign: "center" }}>CureForever</p>
         <p className="sub" style={{ textAlign: "center" }}>Enterprise Inventory Portal</p>
-        {error && <div className="err">{error}</div>}
+        {error && <div className="err" data-testid="login-error">{error}</div>}
         <form onSubmit={submit}>
           <label>Email</label>
           <input
@@ -76,6 +78,7 @@ export default function LoginScreen() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
             autoComplete="username"
+            data-testid="login-email"
           />
           <label>Password</label>
           <input
@@ -84,11 +87,23 @@ export default function LoginScreen() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             autoComplete="current-password"
+            data-testid="login-password"
           />
-          <button className="btn-primary" type="submit" disabled={busy}>
+          <button className="btn-primary" type="submit" disabled={busy} data-testid="login-submit">
             {busy ? "Signing in…" : "Sign In"}
           </button>
         </form>
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--color-border-default)", textAlign: "center" }}>
+          <button
+            type="button"
+            className="btn-sec"
+            style={{ width: "100%", fontSize: 13, padding: "8px 12px" }}
+            onClick={() => enableDemoMode()}
+            data-testid="demo-mode-btn"
+          >
+            ⚡ Launch Sandbox Demo Mode
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -250,6 +250,27 @@ export async function updateBatch(id: string, payload: Record<string, unknown>):
 }
 
 export async function createProduct(payload: Record<string, unknown>): Promise<Product> {
+  if (isDemoMode()) {
+    const newProduct: Product = {
+      id: `demo-prod-${Date.now()}`,
+      name: String(payload.name || ""),
+      sku: String(payload.sku || ""),
+      category: String(payload.category || "General"),
+      low_stock_threshold: Number(payload.low_stock_threshold || 10),
+      reorder_threshold: payload.reorder_threshold ? Number(payload.reorder_threshold) : null,
+      cost_price: Number(payload.cost_price || 0),
+      selling_price: Number(payload.selling_price || 0),
+      barcode: (payload.barcode as string) || null,
+      description: (payload.description as string) || null,
+      image_url: (payload.image_url as string) || null,
+      created_at: new Date().toISOString(),
+    };
+    updateDemoSandbox((data) => {
+      data.products.push(newProduct);
+    });
+    return newProduct;
+  }
+
   const sb = getSupabase();
   const { data, error } = await sb.from("products").insert(payload).select().single();
   if (error) throw new Error(error.message);
@@ -257,12 +278,30 @@ export async function createProduct(payload: Record<string, unknown>): Promise<P
 }
 
 export async function updateProduct(id: string, payload: Record<string, unknown>): Promise<void> {
+  if (isDemoMode()) {
+    updateDemoSandbox((data) => {
+      const idx = data.products.findIndex((p: Product) => p.id === id);
+      if (idx !== -1) {
+        data.products[idx] = { ...data.products[idx], ...payload };
+      }
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const { error } = await sb.from("products").update(payload).eq("id", id);
   if (error) throw new Error(error.message);
 }
 
 export async function deleteProductRow(id: string): Promise<void> {
+  if (isDemoMode()) {
+    updateDemoSandbox((data) => {
+      data.products = data.products.filter((p: Product) => p.id !== id);
+      data.stockEntries = data.stockEntries.filter((se: StockEntry) => se.product_id !== id);
+    });
+    return;
+  }
+
   const sb = getSupabase();
   await sb.from("product_visibility").delete().eq("product_id", id);
   await sb.from("stock_entries").delete().eq("product_id", id);
@@ -563,13 +602,13 @@ export async function markNotificationRead(id: string): Promise<void> {
 
 export async function markAllNotificationsRead(vendorId: string | null): Promise<void> {
   const sb = getSupabase();
-  const query = sb.from("notifications").update({ is_read: true }).eq("is_read", false);
+  let query = sb.from("notifications").update({ is_read: true });
   if (vendorId) {
-    // Vendor: mark their own
-    query.eq("vendor_id", vendorId);
+    // Vendor: mark their own notifications
+    query = query.eq("vendor_id", vendorId);
   } else {
     // Admin: mark admin notifications (vendor_id IS NULL)
-    query.is("vendor_id", null);
+    query = query.is("vendor_id", null);
   }
   const { error } = await query;
   if (error) throw new Error(error.message);

@@ -140,3 +140,10 @@ generate_pptx.py
 PRESENTATION.md
 *.pptx
 
+# 13. Playwright & Test Execution Output Artifacts
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+

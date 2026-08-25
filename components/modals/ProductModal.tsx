@@ -17,7 +17,21 @@ export default function ProductModal({ product }: { product: Product | null }) {
   const [low, setLow] = useState(product ? String(product.low_stock_threshold ?? 10) : "10");
   const [reorder, setReorder] = useState(product?.reorder_threshold != null ? String(product.reorder_threshold) : "");
   const [description, setDescription] = useState(product?.description || "");
+  const [imageUrl, setImageUrl] = useState(product?.image_url || "");
   const [busy, setBusy] = useState(false);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      if (evt.target?.result) {
+        setImageUrl(evt.target.result as string);
+        toast("Product image uploaded");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   if (!isAdmin) {
     closeModal();
@@ -41,6 +55,7 @@ export default function ProductModal({ product }: { product: Product | null }) {
         low_stock_threshold: safeInt(low, 10),
         reorder_threshold: reorder ? safeInt(reorder, 10) : null,
         description: description || null,
+        image_url: imageUrl.trim() || null,
       };
       if (product) {
         await api.updateProduct(product.id, payload);
@@ -83,11 +98,11 @@ export default function ProductModal({ product }: { product: Product | null }) {
       <h3>{product ? "Edit Product" : "New Product"}</h3>
       <p className="modal-sub">Product master record.</p>
       <label>Name</label>
-      <input value={name} onChange={(e) => setName(e.target.value)} />
+      <input value={name} onChange={(e) => setName(e.target.value)} data-testid="product-name-input" />
       <div className="inline-form-grid">
         <div>
           <label>SKU</label>
-          <input value={sku} onChange={(e) => setSku(e.target.value)} />
+          <input value={sku} onChange={(e) => setSku(e.target.value)} data-testid="product-sku-input" />
         </div>
         <div>
           <label>Category</label>
@@ -114,6 +129,46 @@ export default function ProductModal({ product }: { product: Product | null }) {
           <input type="number" step="0.01" value={sellingPrice} onChange={(e) => setSellingPrice(e.target.value)} />
         </div>
       </div>
+
+      {/* Product Image Section */}
+      <div style={{ marginTop: 12, marginBottom: 12, background: "#F8FAFC", padding: 12, borderRadius: 6, border: "1px solid #E2E8F0" }}>
+        <label style={{ display: "block", marginBottom: 6, fontWeight: 600, fontSize: 13, color: "#0F172A" }}>
+          🖼️ Product Image (URL or Local Upload)
+        </label>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          {imageUrl ? (
+            <img src={imageUrl} alt="Product Preview" style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover", border: "1px solid #CBD5E1", background: "#FFF" }} />
+          ) : (
+            <div style={{ width: 44, height: 44, borderRadius: 6, border: "1px border-dashed #CBD5E1", background: "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+              📦
+            </div>
+          )}
+          <input
+            type="text"
+            placeholder="Paste image URL (https://...)"
+            value={imageUrl}
+            onChange={(e) => setImageUrl(e.target.value)}
+            style={{ flex: 1, padding: "7px 10px", borderRadius: 4, border: "1px solid #CBD5E1", fontSize: 13 }}
+            data-testid="product-image-url-input"
+          />
+          <label
+            style={{
+              padding: "7px 12px",
+              background: "#FFF",
+              border: "1px solid #CBD5E1",
+              borderRadius: 4,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            📁 Upload File
+            <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: "none" }} data-testid="product-image-file-input" />
+          </label>
+        </div>
+      </div>
+
       <label>Description</label>
       <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
       <div className="modal-actions" style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>

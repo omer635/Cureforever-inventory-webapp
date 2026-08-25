@@ -40,6 +40,70 @@ export default function AdminFinancials() {
       .slice(0, 300);
   }, [stockAdjustments, vendorFilter, reasonFilter]);
 
+  // Comprehensive Valuation Comparison (Weighted Avg vs FIFO vs LIFO side-by-side)
+  const valuationComparison = useMemo(() => {
+    let weightedTotal = 0;
+    let fifoTotal = 0;
+    let lifoTotal = 0;
+    let retailTotal = 0;
+
+    const perProductRows = products.map((p) => {
+      const pEntries = stockEntries.filter((se) => se.product_id === p.id);
+      const totalQty = pEntries.reduce((sum, e) => sum + (Number(e.quantity) || 0), 0);
+      const pBatches = productBatches.filter((b) => b.product_id === p.id);
+
+      let weightedCost = p.cost_price;
+      let fifoCost = p.cost_price;
+      let lifoCost = p.cost_price;
+
+      if (pBatches.length > 0) {
+        const totalBatchQty = pBatches.reduce((acc, b) => acc + (b.quantity || 1), 0);
+        const weightedCostSum = pBatches.reduce((acc, b) => acc + (b.cost_price || p.cost_price) * (b.quantity || 1), 0);
+        weightedCost = totalBatchQty > 0 ? weightedCostSum / totalBatchQty : p.cost_price;
+
+        const oldestBatch = [...pBatches].sort((a, b) => a.received_date.localeCompare(b.received_date))[0];
+        fifoCost = oldestBatch?.cost_price || p.cost_price;
+
+        const newestBatch = [...pBatches].sort((a, b) => b.received_date.localeCompare(a.received_date))[0];
+        lifoCost = newestBatch?.cost_price || p.cost_price;
+      }
+
+      const weightedVal = totalQty * weightedCost;
+      const fifoVal = totalQty * fifoCost;
+      const lifoVal = totalQty * lifoCost;
+      const retailVal = totalQty * p.selling_price;
+
+      weightedTotal += weightedVal;
+      fifoTotal += fifoVal;
+      lifoTotal += lifoVal;
+      retailTotal += retailVal;
+
+      return {
+        product: p,
+        totalQty,
+        weightedCost,
+        fifoCost,
+        lifoCost,
+        weightedVal,
+        fifoVal,
+        lifoVal,
+        retailVal,
+        fifoLifoDiff: fifoVal - lifoVal,
+      };
+    });
+
+    const fifoLifoVariance = fifoTotal - lifoTotal;
+
+    return {
+      perProductRows,
+      weightedTotal,
+      fifoTotal,
+      lifoTotal,
+      retailTotal,
+      fifoLifoVariance,
+    };
+  }, [products, stockEntries, productBatches]);
+
   // Inventory Valuation Calculation (FIFO vs LIFO vs Weighted Avg)
   const valuation = useMemo(() => {
     let totalCostVal = 0;
@@ -73,6 +137,36 @@ export default function AdminFinancials() {
     return { totalCostVal, totalRetailVal, totalProfitMargin };
   }, [products, stockEntries, productBatches, valuationModel]);
 
+  const exportValuationComparisonCSV = () => {
+    const header = [
+      "SKU",
+      "Product Name",
+      "Category",
+      "Total On-Hand Qty",
+      "Weighted Avg Unit Cost",
+      "FIFO Unit Cost",
+      "LIFO Unit Cost",
+      "Weighted Avg Total Value",
+      "FIFO Total Value",
+      "LIFO Total Value",
+      "FIFO vs LIFO Delta",
+    ];
+    const data = valuationComparison.perProductRows.map((r) => [
+      r.product.sku,
+      r.product.name,
+      r.product.category || "",
+      r.totalQty,
+      r.weightedCost.toFixed(2),
+      r.fifoCost.toFixed(2),
+      r.lifoCost.toFixed(2),
+      r.weightedVal.toFixed(2),
+      r.fifoVal.toFixed(2),
+      r.lifoVal.toFixed(2),
+      r.fifoLifoDiff.toFixed(2),
+    ]);
+    downloadCSV(`fifo-lifo-valuation-report-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...data]);
+  };
+
   const exportCSV = () => {
     const header = ["When", "Vendor", "Product", "Prev", "New", "Change", "Reason", "Notes"];
     const data = rows.map((a) => [
@@ -105,6 +199,7 @@ export default function AdminFinancials() {
               value={valuationModel}
               onChange={(e) => setValuationModel(e.target.value as ValuationModel)}
               style={{ display: "block", padding: "6px 10px", borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 13, fontWeight: 600 }}
+              data-testid="valuation-model-select"
             >
               <option value="weighted_avg">Weighted Average Cost</option>
               <option value="fifo">FIFO (First-In, First-Out)</option>
@@ -118,6 +213,7 @@ export default function AdminFinancials() {
               value={currency}
               onChange={(e) => setCurrency(e.target.value as Currency)}
               style={{ display: "block", padding: "6px 10px", borderRadius: 4, border: "1px solid #D1D5DB", fontSize: 13, fontWeight: 600 }}
+              data-testid="currency-select"
             >
               <option value="INR">INR (₹) Indian Rupee</option>
               <option value="USD">USD ($)</option>
@@ -129,10 +225,62 @@ export default function AdminFinancials() {
         </div>
       </div>
 
+      {/* Side-by-Side Accounting Valuation Model Comparison Matrix */}
+      <div style={{ background: "#FFF", padding: 16, borderRadius: 8, border: "1px solid #E5E7EB", marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <h4 style={{ margin: 0, fontSize: 14, color: "#0F1F3D", fontWeight: 700 }}>
+            📊 Valuation Model Side-by-Side Comparison (FIFO vs LIFO vs Weighted Avg)
+          </h4>
+          <button
+            onClick={exportValuationComparisonCSV}
+            style={{ padding: "6px 14px", background: "#0F1F3D", color: "#FFF", borderRadius: 4, fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer" }}
+            data-testid="export-valuation-comparison-btn"
+          >
+            📥 Export FIFO/LIFO Comparison CSV
+          </button>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+          <div style={{ background: "#F8FAFC", padding: 12, borderRadius: 6, border: "1px solid #E2E8F0" }}>
+            <div style={{ fontSize: 11, color: "#64748B", fontWeight: 600 }}>WEIGHTED AVERAGE COST</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#0F172A", marginTop: 4 }}>
+              {fmtCurrency(valuationComparison.weightedTotal)}
+            </div>
+            <div style={{ fontSize: 11, color: "#64748B", marginTop: 2 }}>Balanced smooth average</div>
+          </div>
+
+          <div style={{ background: "#EFF6FF", padding: 12, borderRadius: 6, border: "1px solid #BFDBFE" }}>
+            <div style={{ fontSize: 11, color: "#1E40AF", fontWeight: 600 }}>FIFO (FIRST-IN, FIRST-OUT)</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#1E3A8A", marginTop: 4 }}>
+              {fmtCurrency(valuationComparison.fifoTotal)}
+            </div>
+            <div style={{ fontSize: 11, color: "#2563EB", marginTop: 2 }}>Oldest batch costs applied</div>
+          </div>
+
+          <div style={{ background: "#FEF3C7", padding: 12, borderRadius: 6, border: "1px solid #FDE68A" }}>
+            <div style={{ fontSize: 11, color: "#92400E", fontWeight: 600 }}>LIFO (LAST-IN, FIRST-OUT)</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#78350F", marginTop: 4 }}>
+              {fmtCurrency(valuationComparison.lifoTotal)}
+            </div>
+            <div style={{ fontSize: 11, color: "#D97706", marginTop: 2 }}>Newest batch costs applied</div>
+          </div>
+
+          <div style={{ background: "#F3E8FF", padding: 12, borderRadius: 6, border: "1px solid #E9D5FF" }}>
+            <div style={{ fontSize: 11, color: "#6B21A8", fontWeight: 600 }}>FIFO vs LIFO VARIANCE</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#581C87", marginTop: 4 }}>
+              {fmtCurrency(Math.abs(valuationComparison.fifoLifoVariance))}
+            </div>
+            <div style={{ fontSize: 11, color: "#7E22CE", marginTop: 2 }}>
+              {valuationComparison.fifoLifoVariance >= 0 ? "FIFO higher by" : "LIFO higher by"} {Math.abs(valuationComparison.fifoLifoVariance).toFixed(0)}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Financial Valuation Stat Cards */}
       <div className="stat-row">
-        <div className="stat ok">
-          <div className="num">{fmtCurrency(valuation.totalCostVal)}</div>
+        <div className="stat ok" data-testid="cost-valuation-card">
+          <div className="num" data-testid="cost-valuation-display">{fmtCurrency(valuation.totalCostVal)}</div>
           <div className="lbl">Total Cost Valuation ({valuationModel.toUpperCase()})</div>
         </div>
         <div className="stat">
@@ -170,7 +318,7 @@ export default function AdminFinancials() {
                 </option>
               ))}
             </select>
-            <button className="export-btn" onClick={exportCSV}>
+            <button className="export-btn" onClick={exportCSV} data-testid="export-csv-btn">
               Export CSV
             </button>
           </div>

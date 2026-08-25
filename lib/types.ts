@@ -11,6 +11,7 @@ export interface Product {
   selling_price: number;
   barcode: string | null;
   description: string | null;
+  image_url?: string | null;
   created_at: string;
 }
 

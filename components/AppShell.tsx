@@ -15,6 +15,7 @@ import AdminAnalytics from "@/components/tabs/AdminAnalytics";
 import AdminPurchaseOrders from "@/components/tabs/AdminPurchaseOrders";
 import AdminTransfers from "@/components/tabs/AdminTransfers";
 import AdminAuditLogs from "@/components/tabs/AdminAuditLogs";
+import AdminIntegrations from "@/components/tabs/AdminIntegrations";
 import ModalHost from "@/components/ModalHost";
 
 const MODULE_ICON: Record<string, string> = {
@@ -203,6 +204,7 @@ export default function AppShell() {
       items: [
         { id: "vendors", label: "Vendor Locations", icon: "🏬" },
         { id: "announcements", label: "Announcements", icon: "📢", module: "announcements" },
+        { id: "integrations", label: "Webhooks & Sync", icon: "🔌" },
       ],
     },
   ];
@@ -263,6 +265,7 @@ export default function AppShell() {
                           setActiveTab(item.id);
                           setMobileNavOpen(false);
                         }}
+                        data-testid={`nav-${item.id}`}
                       >
                         <span style={{ fontSize: 15 }}>{item.icon}</span>
                         <span>{item.label}</span>
@@ -278,7 +281,7 @@ export default function AppShell() {
           ) : (
             <div className="sidebar-nav">
               <div className="nav-section-title">Vendor Portal</div>
-              <button className="sidebar-link active">
+              <button className="sidebar-link active" data-testid="nav-vendor-store">
                 <span>🏬</span>
                 <span>Vendor Store</span>
               </button>
@@ -313,6 +316,7 @@ export default function AppShell() {
                     justifyContent: "center",
                     gap: 4,
                   }}
+                  data-testid="role-switch-admin"
                 >
                   👑 Admin
                 </button>
@@ -337,6 +341,7 @@ export default function AppShell() {
                     justifyContent: "center",
                     gap: 4,
                   }}
+                  data-testid="role-switch-vendor"
                 >
                   🏬 Vendor
                 </button>
@@ -571,6 +576,7 @@ export default function AppShell() {
                 {activeTab === "products" && <AdminProducts />}
                 {activeTab === "vendors" && <AdminVendors selectedVendorId={selectedVendorId} />}
                 {activeTab === "announcements" && <AdminAnnouncements />}
+                {activeTab === "integrations" && <AdminIntegrations />}
               </>
             ) : (
               <VendorDashboard />

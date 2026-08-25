@@ -123,8 +123,19 @@ export default function AdminAllStock() {
                 <tr key={r.entry.id}>
                   <td>{r.vendor?.name || "—"}</td>
                   <td>
-                    <strong>{r.product.name}</strong>
-                    {restricted && <span className="badge purple" style={{ marginLeft: 6 }}>RESTRICTED</span>}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      {r.product.image_url ? (
+                        <img src={r.product.image_url} alt={r.product.name} style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", border: "1px solid #E2E8F0" }} />
+                      ) : (
+                        <div style={{ width: 32, height: 32, borderRadius: 6, background: "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
+                          📦
+                        </div>
+                      )}
+                      <div>
+                        <strong>{r.product.name}</strong>
+                        {restricted && <span className="badge purple" style={{ marginLeft: 6 }}>RESTRICTED</span>}
+                      </div>
+                    </div>
                   </td>
                   <td className="sku">{r.product.sku}</td>
                   <td>{r.entry.quantity}</td>
