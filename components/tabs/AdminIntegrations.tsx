@@ -476,48 +476,56 @@ export default function AdminIntegrations() {
                   </tr>
                 </thead>
                 <tbody>
-                  {endpoints.map((ep) => (
-                    <tr key={ep.id} style={{ borderBottom: "1px solid #F3F4F6", fontSize: 13 }}>
-                      <td style={{ padding: "12px 16px" }}>
-                        <strong style={{ color: "#0F172A" }}>{ep.name}</strong>
-                        <div style={{ fontSize: 11, color: "#64748B", fontFamily: "monospace" }}>Secret: {ep.secret.substring(0, 12)}...</div>
-                      </td>
-                      <td style={{ padding: "12px 16px", color: "#2563EB", fontFamily: "monospace", fontSize: 12 }}>{ep.url}</td>
-                      <td style={{ padding: "12px 16px" }}>
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                          {ep.events.map((evt) => (
-                            <span key={evt} style={{ background: "#EFF6FF", color: "#1E40AF", padding: "2px 6px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>
-                              {evt}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td style={{ padding: "12px 16px", fontWeight: 700, color: "#15803D" }}>{ep.successRate}%</td>
-                      <td style={{ padding: "12px 16px" }}>
-                        <span style={{ background: "#DCFCE7", color: "#15803D", padding: "2px 8px", borderRadius: 4, fontWeight: 700, fontSize: 11 }}>
-                          🟢 200 OK
-                        </span>
-                      </td>
-                      <td style={{ padding: "12px 16px", textAlign: "right" }}>
-                        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                          <button
-                            onClick={() => handleTestWebhook(ep)}
-                            disabled={isTestingWebhook}
-                            style={{ padding: "4px 10px", background: "#0F1F3D", color: "#FFF", border: "none", borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
-                            data-testid="test-webhook-btn"
-                          >
-                            ⚡ Test Payload
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEndpoint(ep.id)}
-                            style={{ padding: "4px 8px", background: "#FEE2E2", color: "#991B1B", border: "none", borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
-                          >
-                            🗑️
-                          </button>
-                        </div>
+                  {endpoints.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: "center", padding: "24px 16px", color: "#64748B", fontSize: 13 }}>
+                        No outgoing webhook endpoints registered yet. Enter an endpoint name and target URL above to register your first webhook.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    endpoints.map((ep) => (
+                      <tr key={ep.id} style={{ borderBottom: "1px solid #F3F4F6", fontSize: 13 }}>
+                        <td style={{ padding: "12px 16px" }}>
+                          <strong style={{ color: "#0F172A" }}>{ep.name}</strong>
+                          <div style={{ fontSize: 11, color: "#64748B", fontFamily: "monospace" }}>Secret: {ep.secret.substring(0, 12)}...</div>
+                        </td>
+                        <td style={{ padding: "12px 16px", color: "#2563EB", fontFamily: "monospace", fontSize: 12 }}>{ep.url}</td>
+                        <td style={{ padding: "12px 16px" }}>
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            {ep.events.map((evt) => (
+                              <span key={evt} style={{ background: "#EFF6FF", color: "#1E40AF", padding: "2px 6px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>
+                                {evt}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td style={{ padding: "12px 16px", fontWeight: 700, color: "#15803D" }}>{ep.successRate}%</td>
+                        <td style={{ padding: "12px 16px" }}>
+                          <span style={{ background: "#DCFCE7", color: "#15803D", padding: "2px 8px", borderRadius: 4, fontWeight: 700, fontSize: 11 }}>
+                            🟢 200 OK
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                            <button
+                              onClick={() => handleTestWebhook(ep)}
+                              disabled={isTestingWebhook}
+                              style={{ padding: "4px 10px", background: "#0F1F3D", color: "#FFF", border: "none", borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                              data-testid="test-webhook-btn"
+                            >
+                              ⚡ Test Payload
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEndpoint(ep.id)}
+                              style={{ padding: "4px 8px", background: "#FEE2E2", color: "#991B1B", border: "none", borderRadius: 4, fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
