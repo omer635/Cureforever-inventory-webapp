@@ -267,6 +267,14 @@ export const DEMO_PRODUCT_BATCHES: ProductBatch[] = [
 ];
 
 export const DEMO_STOCK_ENTRIES: StockEntry[] = [
+  { id: "demo-se-hq-1", vendor_id: "demo-admin-hq", product_id: "demo-p-1", batch_id: "demo-b-1", quantity: 75, updated_at: "2026-08-20T10:00:00Z" },
+  { id: "demo-se-hq-2", vendor_id: "demo-admin-hq", product_id: "demo-p-2", batch_id: "demo-b-2", quantity: 18, updated_at: "2026-08-20T10:00:00Z" },
+  { id: "demo-se-hq-3", vendor_id: "demo-admin-hq", product_id: "demo-p-3", batch_id: "demo-b-3", quantity: 6, updated_at: "2026-08-20T10:00:00Z" },
+  { id: "demo-se-hq-4", vendor_id: "demo-admin-hq", product_id: "demo-p-4", batch_id: "demo-b-4", quantity: 120, updated_at: "2026-08-21T11:00:00Z" },
+  { id: "demo-se-hq-5", vendor_id: "demo-admin-hq", product_id: "demo-p-5", batch_id: "demo-b-5", quantity: 45, updated_at: "2026-08-23T14:00:00Z" },
+  { id: "demo-se-hq-6", vendor_id: "demo-admin-hq", product_id: "demo-p-6", batch_id: null, quantity: 12, updated_at: "2026-08-22T12:00:00Z" },
+  { id: "demo-se-hq-7", vendor_id: "demo-admin-hq", product_id: "demo-p-7", batch_id: null, quantity: 8, updated_at: "2026-08-22T12:00:00Z" },
+  { id: "demo-se-hq-8", vendor_id: "demo-admin-hq", product_id: "demo-p-8", batch_id: null, quantity: 30, updated_at: "2026-08-24T12:00:00Z" },
   { id: "demo-se-1", vendor_id: "demo-store-1", product_id: "demo-p-1", batch_id: "demo-b-1", quantity: 75, updated_at: "2026-08-20T10:00:00Z" },
   { id: "demo-se-2", vendor_id: "demo-store-1", product_id: "demo-p-2", batch_id: "demo-b-2", quantity: 18, updated_at: "2026-08-20T10:00:00Z" },
   { id: "demo-se-3", vendor_id: "demo-store-1", product_id: "demo-p-3", batch_id: "demo-b-3", quantity: 6, updated_at: "2026-08-20T10:00:00Z" },

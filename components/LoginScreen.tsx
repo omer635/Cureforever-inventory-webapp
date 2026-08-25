@@ -18,6 +18,16 @@ export default function LoginScreen() {
       return;
     }
 
+    // Direct bypass for demo credentials to avoid unnecessary HTTP 400 Auth errors in Supabase logs
+    const isDemoCreds =
+      email.trim().toLowerCase().includes("demo") ||
+      password === "Cureforever@2026";
+
+    if (isDemoCreds) {
+      enableDemoMode();
+      return;
+    }
+
     setError("");
     setBusy(true);
     try {

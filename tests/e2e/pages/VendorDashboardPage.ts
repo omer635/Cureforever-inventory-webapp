@@ -22,19 +22,8 @@ export class VendorDashboardPage {
     const qtyInput = this.page.locator('.qty-input').first();
     await qtyInput.waitFor({ state: 'visible' });
     await qtyInput.fill(newQuantity.toString());
-
-    const saveBtn = this.page.locator('.save-btn').first();
-    if (await saveBtn.isVisible()) {
-      await saveBtn.click();
-    } else {
-      await qtyInput.press('Enter');
-    }
-
-    // Verify toast notification appears confirming update or sync
-    await expect(this.page.locator('text=Saved stock update')).toBeVisible({ timeout: 5000 }).catch(() => {
-      // Toast message fallback
-      return true;
-    });
+    await qtyInput.press('Enter');
+    await this.page.waitForTimeout(500);
   }
 
   async verifyRealTimeSyncBadge() {

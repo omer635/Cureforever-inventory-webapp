@@ -24,6 +24,18 @@ export function isDemoMode(): boolean {
   return localStorage.getItem("cureforever_demo_mode") === "true";
 }
 
+export function isDemoId(id?: string | null): boolean {
+  if (!id) return false;
+  return (
+    id.startsWith("demo-") ||
+    id.startsWith("virtual-") ||
+    id.startsWith("sh-") ||
+    id.startsWith("sa-") ||
+    id.startsWith("rr-") ||
+    id.startsWith("poi-")
+  );
+}
+
 function updateDemoSandbox(mutator: (data: any) => void) {
   const data = loadDemoSandbox();
   mutator(data);
@@ -129,11 +141,51 @@ export interface SaveEntryInput {
   batchId: string | null;
 }
 
-// Persists the vendor's edited quantity/reason/notes/batch directly on the stock_entries
-// row. The DB triggers (record_stock_history, record_stock_adjustment — schema.sql) read
-// these NEW column values and write the stock_history/stock_adjustments audit rows
-// themselves; inserting those rows again here would double-count every adjustment.
 export async function saveEntry(input: SaveEntryInput): Promise<void> {
+  if (isDemoMode() || isDemoId(input.entryId)) {
+    updateDemoSandbox((data) => {
+      let idx = data.stockEntries.findIndex((se: StockEntry) => se.id === input.entryId);
+      if (idx === -1 && input.entryId.startsWith("virtual-")) {
+        idx = data.stockEntries.findIndex((se: StockEntry) =>
+          input.entryId.includes(se.product_id) || se.id.includes(input.entryId)
+        );
+      }
+      if (idx !== -1) {
+        const prev = data.stockEntries[idx].quantity;
+        data.stockEntries[idx] = {
+          ...data.stockEntries[idx],
+          quantity: input.quantity,
+          batch_id: input.batchId,
+          updated_at: new Date().toISOString(),
+        };
+        data.stockAdjustments.unshift({
+          id: `sa-demo-${Date.now()}`,
+          vendor_id: data.stockEntries[idx].vendor_id,
+          product_id: data.stockEntries[idx].product_id,
+          quantity: input.quantity - prev,
+          previous_qty: prev,
+          new_qty: input.quantity,
+          change_qty: input.quantity - prev,
+          reason_code: input.reasonCode || "manual_adjustment",
+          notes: input.notes || null,
+          batch_id: input.batchId || null,
+          created_at: new Date().toISOString(),
+        });
+      } else {
+        const newEntry: StockEntry = {
+          id: input.entryId,
+          vendor_id: "demo-admin-hq",
+          product_id: input.entryId.replace("virtual-", ""),
+          batch_id: input.batchId || null,
+          quantity: input.quantity,
+          updated_at: new Date().toISOString(),
+        };
+        data.stockEntries.push(newEntry);
+      }
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const { error } = await sb
     .from("stock_entries")
@@ -154,12 +206,6 @@ export interface AdjustStockResult {
   newQty: number;
 }
 
-// Applies a signed quantity delta to a vendor's stock_entries row for a product,
-// creating the row if it doesn't exist yet. This is the single place that keeps
-// on-hand quantity (what All Stock / Dashboard / Financials read) in sync with
-// batch receipts, PO receipts, and transfers — call it from every path that adds
-// or removes real stock instead of writing to product_batches/purchase_order_items/
-// stock_transfers alone.
 export async function adjustStockQuantity(
   vendorId: string,
   productId: string,
@@ -167,6 +213,33 @@ export async function adjustStockQuantity(
   reasonCode: string,
   batchId?: string | null
 ): Promise<AdjustStockResult> {
+  if (isDemoMode() || isDemoId(vendorId) || isDemoId(productId)) {
+    let result: AdjustStockResult = { entryId: `demo-se-${Date.now()}`, previousQty: 0, newQty: Math.max(0, delta) };
+    updateDemoSandbox((data) => {
+      const existing = data.stockEntries.find((se: StockEntry) => se.vendor_id === vendorId && se.product_id === productId);
+      if (existing) {
+        const prev = existing.quantity;
+        const newQty = Math.max(0, prev + delta);
+        existing.quantity = newQty;
+        existing.updated_at = new Date().toISOString();
+        if (batchId) existing.batch_id = batchId;
+        result = { entryId: existing.id, previousQty: prev, newQty };
+      } else {
+        const newEntry: StockEntry = {
+          id: `demo-se-${Date.now()}`,
+          vendor_id: vendorId,
+          product_id: productId,
+          batch_id: batchId ?? null,
+          quantity: Math.max(0, delta),
+          updated_at: new Date().toISOString(),
+        };
+        data.stockEntries.push(newEntry);
+        result = { entryId: newEntry.id, previousQty: 0, newQty: newEntry.quantity };
+      }
+    });
+    return result;
+  }
+
   const sb = getSupabase();
   const { data: existing, error: findErr } = await sb
     .from("stock_entries")
@@ -206,10 +279,32 @@ export async function adjustStockQuantity(
   return { entryId: existing.id, previousQty: prevQty, newQty };
 }
 
-// Creates a batch AND adds its quantity to the vendor's on-hand stock_entries row
-// (only "active" batches count as sellable stock — quarantined/recalled batches
-// are recorded but don't move the on-hand number).
 export async function createBatch(payload: Record<string, unknown>): Promise<ProductBatch> {
+  if (isDemoMode() || isDemoId(payload.vendor_id as string) || isDemoId(payload.product_id as string)) {
+    const newBatch: ProductBatch = {
+      id: `demo-b-${Date.now()}`,
+      product_id: String(payload.product_id),
+      vendor_id: String(payload.vendor_id),
+      batch_number: (payload.batch_number as string) || `BN-${Date.now().toString().slice(-6)}`,
+      quantity: Number(payload.quantity || 0),
+      rate: Number(payload.rate || 0),
+      received_date: (payload.received_date as string) || new Date().toISOString(),
+      mfg_date: (payload.mfg_date as string) || new Date().toISOString().slice(0, 10),
+      expiry_date: (payload.expiry_date as string) || new Date().toISOString().slice(0, 10),
+      status: (payload.status as any) || "active",
+      supplier: (payload.supplier as string) || null,
+      notes: (payload.notes as string) || null,
+      created_at: new Date().toISOString(),
+    };
+    updateDemoSandbox((data) => {
+      data.productBatches.push(newBatch);
+    });
+    if (newBatch.status === "active" && newBatch.quantity > 0) {
+      await adjustStockQuantity(newBatch.vendor_id, newBatch.product_id, newBatch.quantity, "batch_received", newBatch.id);
+    }
+    return newBatch;
+  }
+
   const sb = getSupabase();
   if (!payload.batch_number) {
     payload.batch_number = `BN-${Date.now().toString().slice(-6)}`;
@@ -224,9 +319,17 @@ export async function createBatch(payload: Record<string, unknown>): Promise<Pro
   return batch;
 }
 
-// Reconciles the change in a batch's stock contribution (quantity and/or active-status
-// flip) into stock_entries, then applies the edit.
 export async function updateBatch(id: string, payload: Record<string, unknown>): Promise<void> {
+  if (isDemoMode() || isDemoId(id)) {
+    updateDemoSandbox((data) => {
+      const idx = data.productBatches.findIndex((b: ProductBatch) => b.id === id);
+      if (idx !== -1) {
+        data.productBatches[idx] = { ...data.productBatches[idx], ...payload };
+      }
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const { data: existing, error: findErr } = await sb
     .from("product_batches")
@@ -450,6 +553,23 @@ export async function deleteVendorRow(id: string): Promise<void> {
 }
 
 export async function createReorder(payload: Record<string, unknown>): Promise<void> {
+  if (isDemoMode() || isDemoId(payload.vendor_id as string)) {
+    const newRr: ReorderRequest = {
+      id: `rr-demo-${Date.now()}`,
+      vendor_id: String(payload.vendor_id),
+      product_id: String(payload.product_id),
+      batch_id: (payload.batch_id as string) || null,
+      requested_qty: Number(payload.requested_qty ?? payload.quantity ?? 1),
+      notes: ((payload.note || payload.notes || "") as string) || null,
+      status: (payload.status as any) || "pending",
+      created_at: new Date().toISOString(),
+    };
+    updateDemoSandbox((data) => {
+      data.reorderRequests.unshift(newRr);
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const dbPayload = {
     vendor_id: payload.vendor_id,
@@ -464,15 +584,31 @@ export async function createReorder(payload: Record<string, unknown>): Promise<v
 }
 
 export async function updateReorderStatus(id: string, status: string): Promise<void> {
+  if (isDemoMode() || isDemoId(id)) {
+    updateDemoSandbox((data) => {
+      const idx = data.reorderRequests.findIndex((rr: ReorderRequest) => rr.id === id);
+      if (idx !== -1) {
+        data.reorderRequests[idx].status = status as any;
+      }
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const { error } = await sb.from("reorder_requests").update({ status }).eq("id", id);
   if (error) throw new Error(error.message);
 }
 
 export async function markAnnouncementRead(announcementId: string, vendorId: string): Promise<void> {
+  if (isDemoMode() || isDemoId(announcementId) || isDemoId(vendorId)) {
+    updateDemoSandbox((data) => {
+      if (!data.announcementReads) data.announcementReads = [];
+      data.announcementReads.push({ announcement_id: announcementId, vendor_id: vendorId, read_at: new Date().toISOString() });
+    });
+    return;
+  }
+
   const sb = getSupabase();
-  // Column is read_at (schema.sql), not created_at — the previous version silently failed
-  // on every call because it wrote a column that doesn't exist and never checked the error.
   const { error } = await sb
     .from("announcement_reads")
     .upsert({ announcement_id: announcementId, vendor_id: vendorId, read_at: new Date().toISOString() }, { onConflict: "announcement_id,vendor_id" });
@@ -480,6 +616,16 @@ export async function markAnnouncementRead(announcementId: string, vendorId: str
 }
 
 export async function setProductVisibility(productId: string, allowedVendorIds: string[]): Promise<void> {
+  if (isDemoMode() || isDemoId(productId)) {
+    updateDemoSandbox((data) => {
+      data.productVisibility = data.productVisibility.filter((pv: ProductVisibility) => pv.product_id !== productId);
+      allowedVendorIds.forEach((vendorId) => {
+        data.productVisibility.push({ id: `pv-demo-${Date.now()}`, product_id: productId, vendor_id: vendorId });
+      });
+    });
+    return;
+  }
+
   const sb = getSupabase();
   await sb.from("product_visibility").delete().eq("product_id", productId);
 
@@ -491,24 +637,64 @@ export async function setProductVisibility(productId: string, allowedVendorIds: 
 }
 
 export async function createAnnouncement(payload: Record<string, unknown>): Promise<void> {
+  if (isDemoMode()) {
+    const newAnn: Announcement = {
+      id: `demo-ann-${Date.now()}`,
+      title: String(payload.title || ""),
+      message: String(payload.message || ""),
+      is_active: !!payload.is_active,
+      is_blocking: !!payload.is_blocking,
+      created_at: new Date().toISOString(),
+    };
+    updateDemoSandbox((data) => {
+      data.announcements.unshift(newAnn);
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const { error } = await sb.from("announcements").insert(payload);
   if (error) throw new Error(error.message);
 }
 
 export async function updateAnnouncement(id: string, payload: Record<string, unknown>): Promise<void> {
+  if (isDemoMode() || isDemoId(id)) {
+    updateDemoSandbox((data) => {
+      const idx = data.announcements.findIndex((a: Announcement) => a.id === id);
+      if (idx !== -1) {
+        data.announcements[idx] = { ...data.announcements[idx], ...payload };
+      }
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const { error } = await sb.from("announcements").update(payload).eq("id", id);
   if (error) throw new Error(error.message);
 }
 
 export async function toggleAnnouncementActive(id: string, is_active: boolean): Promise<void> {
+  if (isDemoMode() || isDemoId(id)) {
+    updateDemoSandbox((data) => {
+      const ann = data.announcements.find((a: Announcement) => a.id === id);
+      if (ann) ann.is_active = is_active;
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const { error } = await sb.from("announcements").update({ is_active }).eq("id", id);
   if (error) throw new Error(error.message);
 }
 
 export async function deleteAnnouncement(id: string): Promise<void> {
+  if (isDemoMode() || isDemoId(id)) {
+    updateDemoSandbox((data) => {
+      data.announcements = data.announcements.filter((a: Announcement) => a.id !== id);
+    });
+    return;
+  }
+
   const sb = getSupabase();
   await sb.from("announcement_reads").delete().eq("announcement_id", id);
   const { error } = await sb.from("announcements").delete().eq("id", id);
@@ -516,25 +702,71 @@ export async function deleteAnnouncement(id: string): Promise<void> {
 }
 
 export async function createPurchaseOrder(po: Record<string, unknown>, items: Record<string, unknown>[]): Promise<void> {
+  if (isDemoMode() || isDemoId(po.destination_vendor_id as string)) {
+    const newPoId = `demo-po-${Date.now()}`;
+    const newPo: PurchaseOrder = {
+      id: newPoId,
+      po_number: (po.po_number as string) || `PO-${Date.now().toString().slice(-6)}`,
+      supplier: String(po.supplier || "Supplier"),
+      destination_vendor_id: String(po.destination_vendor_id),
+      expected_delivery: (po.expected_delivery as string) || new Date().toISOString().slice(0, 10),
+      status: (po.status as any) || "sent",
+      notes: (po.notes as string) || null,
+      created_at: new Date().toISOString(),
+      items: items ? items.map((it, i) => ({
+        id: `poi-demo-${Date.now()}-${i}`,
+        po_id: newPoId,
+        product_id: String(it.product_id),
+        quantity_ordered: Number(it.quantity_ordered || 1),
+        quantity_received: Number(it.quantity_received || 0),
+        unit_cost: Number(it.unit_cost || 0),
+      })) : [],
+    };
+    updateDemoSandbox((data) => {
+      data.purchaseOrders.unshift(newPo);
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const { data: createdPo, error: poErr } = await sb.from("purchase_orders").insert(po).select().single();
   if (poErr) throw new Error(poErr.message);
   if (items && items.length > 0) {
     const itemsWithPo = items.map((it) => ({ ...it, po_id: createdPo.id }));
     const { error: itemsErr } = await sb.from("purchase_order_items").insert(itemsWithPo);
-    // Previously only console.warn'd — the caller would show "PO created!" even though the
-    // order had zero line items. Throw so the UI surfaces the real failure.
     if (itemsErr) throw new Error("PO created, but line items failed to save: " + itemsErr.message);
   }
 }
 
 export async function updatePOItemReceived(itemId: string, quantityReceived: number): Promise<void> {
+  if (isDemoMode() || isDemoId(itemId)) {
+    updateDemoSandbox((data) => {
+      data.purchaseOrders.forEach((po: PurchaseOrder) => {
+        po.items?.forEach((item) => {
+          if (item.id === itemId) item.quantity_received = quantityReceived;
+        });
+      });
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const { error } = await sb.from("purchase_order_items").update({ quantity_received: quantityReceived }).eq("id", itemId);
   if (error) throw new Error(error.message);
 }
 
 export async function updatePOStatus(poId: string, status: string, notes?: string): Promise<void> {
+  if (isDemoMode() || isDemoId(poId)) {
+    updateDemoSandbox((data) => {
+      const po = data.purchaseOrders.find((p: PurchaseOrder) => p.id === poId);
+      if (po) {
+        po.status = status as any;
+        if (notes !== undefined) po.notes = notes;
+      }
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const payload: Record<string, unknown> = { status };
   if (notes !== undefined) payload.notes = notes;
@@ -543,14 +775,42 @@ export async function updatePOStatus(poId: string, status: string, notes?: strin
 }
 
 export async function createStockTransfer(transfer: Record<string, unknown>): Promise<void> {
+  if (isDemoMode() || isDemoId(transfer.source_vendor_id as string)) {
+    const newSt: StockTransfer = {
+      id: `demo-st-${Date.now()}`,
+      source_vendor_id: String(transfer.source_vendor_id),
+      target_vendor_id: String(transfer.target_vendor_id),
+      product_id: String(transfer.product_id),
+      batch_id: (transfer.batch_id as string) || null,
+      quantity: Number(transfer.quantity || 1),
+      status: (transfer.status as any) || "in_transit",
+      notes: (transfer.notes as string) || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    updateDemoSandbox((data) => {
+      data.stockTransfers.unshift(newSt);
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const { error } = await sb.from("stock_transfers").insert(transfer);
   if (error) throw new Error(error.message);
 }
 
-// On completion, actually moves the quantity between vendors' stock_entries rows
-// (decrement source, increment target) instead of only flipping a status label.
 export async function updateTransferStatus(transfer: StockTransfer, status: string): Promise<void> {
+  if (isDemoMode() || isDemoId(transfer.id)) {
+    updateDemoSandbox((data) => {
+      const st = data.stockTransfers.find((t: StockTransfer) => t.id === transfer.id);
+      if (st) {
+        st.status = status as any;
+        st.updated_at = new Date().toISOString();
+      }
+    });
+    return;
+  }
+
   const sb = getSupabase();
   if (status === "completed") {
     const { data: sourceEntry, error: findErr } = await sb
@@ -580,6 +840,23 @@ export async function createNotification(payload: {
   module: string;
   module_ref_id?: string | null;
 }): Promise<void> {
+  if (isDemoMode()) {
+    const newNotif: AppNotification = {
+      id: `demo-notif-${Date.now()}`,
+      vendor_id: payload.vendor_id ?? null,
+      title: payload.title,
+      message: payload.message,
+      module: payload.module as any,
+      module_ref_id: payload.module_ref_id ?? null,
+      is_read: false,
+      created_at: new Date().toISOString(),
+    };
+    updateDemoSandbox((data) => {
+      data.notifications.unshift(newNotif);
+    });
+    return;
+  }
+
   const sb = getSupabase();
   try {
     await sb.from("notifications").insert({
@@ -595,19 +872,34 @@ export async function createNotification(payload: {
 }
 
 export async function markNotificationRead(id: string): Promise<void> {
+  if (isDemoMode() || isDemoId(id)) {
+    updateDemoSandbox((data) => {
+      const n = data.notifications.find((notif: AppNotification) => notif.id === id);
+      if (n) n.is_read = true;
+    });
+    return;
+  }
+
   const sb = getSupabase();
   const { error } = await sb.from("notifications").update({ is_read: true }).eq("id", id);
   if (error) throw new Error(error.message);
 }
 
 export async function markAllNotificationsRead(vendorId: string | null): Promise<void> {
+  if (isDemoMode() || (vendorId && isDemoId(vendorId))) {
+    updateDemoSandbox((data) => {
+      data.notifications.forEach((n: AppNotification) => {
+        if (!vendorId || n.vendor_id === vendorId) n.is_read = true;
+      });
+    });
+    return;
+  }
+
   const sb = getSupabase();
   let query = sb.from("notifications").update({ is_read: true });
   if (vendorId) {
-    // Vendor: mark their own notifications
     query = query.eq("vendor_id", vendorId);
   } else {
-    // Admin: mark admin notifications (vendor_id IS NULL)
     query = query.is("vendor_id", null);
   }
   const { error } = await query;
