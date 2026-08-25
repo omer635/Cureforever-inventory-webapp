@@ -296,19 +296,42 @@ export default function AdminIntegrations() {
     }, 800);
   };
 
-  const toggleServiceConnection = (serviceId: string) => {
+  const [connectingService, setConnectingService] = useState<AccountingService | null>(null);
+  const [apiCredentials, setApiCredentials] = useState<{ clientId: string; clientSecret: string; realmId: string }>({
+    clientId: "",
+    clientSecret: "",
+    realmId: "",
+  });
+
+  const handleOpenConnectModal = (service: AccountingService) => {
+    if (service.status === "connected") {
+      setServices((prev) =>
+        prev.map((s) => (s.id === service.id ? { ...s, status: "disconnected" } : s))
+      );
+      toast(`${service.name} integration disconnected.`);
+      return;
+    }
+    setConnectingService(service);
+    setApiCredentials({ clientId: "", clientSecret: "", realmId: "" });
+  };
+
+  const handleSaveConnection = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!connectingService) return;
+
     setServices((prev) =>
-      prev.map((s) => {
-        if (s.id !== serviceId) return s;
-        const nextStatus = s.status === "connected" ? "disconnected" : "connected";
-        toast(`${s.name} integration ${nextStatus === "connected" ? "connected" : "disconnected"}`);
-        return {
-          ...s,
-          status: nextStatus,
-          lastSync: nextStatus === "connected" ? new Date().toLocaleString() : s.lastSync,
-        };
-      })
+      prev.map((s) =>
+        s.id === connectingService.id
+          ? {
+              ...s,
+              status: "connected",
+              lastSync: new Date().toLocaleString(),
+            }
+          : s
+      )
     );
+    toast(`${connectingService.name} API integration credentials saved & connected successfully!`);
+    setConnectingService(null);
   };
 
   return (
@@ -529,7 +552,7 @@ export default function AdminIntegrations() {
                     </div>
                   </div>
                   <button
-                    onClick={() => toggleServiceConnection(s.id)}
+                    onClick={() => handleOpenConnectModal(s)}
                     style={{
                       padding: "4px 10px",
                       background: s.status === "connected" ? "#FEF2F2" : "#F0FDF4",
@@ -599,6 +622,100 @@ export default function AdminIntegrations() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Connection Modal */}
+      {connectingService && (
+        <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div style={{ background: "#FFF", width: "90%", maxWidth: 480, borderRadius: 12, padding: 24, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 18, color: "#0F172A" }}>
+                {connectingService.logo} Connect {connectingService.name}
+              </h3>
+              <button onClick={() => setConnectingService(null)} style={{ background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#64748B" }}>✕</button>
+            </div>
+
+            <p style={{ fontSize: 13, color: "#475569", marginBottom: 16 }}>
+              Enter your {connectingService.name} API credentials or connection URL below to enable automated sync with CureForever Inventory:
+            </p>
+
+            <form onSubmit={handleSaveConnection} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {connectingService.id === "tally" ? (
+                <>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Tally XML Server Host URL</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="http://localhost:9000"
+                      value={apiCredentials.clientId}
+                      onChange={(e) => setApiCredentials({ ...apiCredentials, clientId: e.target.value })}
+                      style={{ width: "100%", padding: "8px 12px", border: "1px solid #CBD5E1", borderRadius: 6, fontSize: 13, marginTop: 4 }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Tally Company Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. CureForever Pharmacy HQ"
+                      value={apiCredentials.realmId}
+                      onChange={(e) => setApiCredentials({ ...apiCredentials, realmId: e.target.value })}
+                      style={{ width: "100%", padding: "8px 12px", border: "1px solid #CBD5E1", borderRadius: 6, fontSize: 13, marginTop: 4 }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>API Client ID / Key</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. AB1234567890client_id"
+                      value={apiCredentials.clientId}
+                      onChange={(e) => setApiCredentials({ ...apiCredentials, clientId: e.target.value })}
+                      style={{ width: "100%", padding: "8px 12px", border: "1px solid #CBD5E1", borderRadius: 6, fontSize: 13, marginTop: 4 }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>API Client Secret / Key</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••••••••••"
+                      value={apiCredentials.clientSecret}
+                      onChange={(e) => setApiCredentials({ ...apiCredentials, clientSecret: e.target.value })}
+                      style={{ width: "100%", padding: "8px 12px", border: "1px solid #CBD5E1", borderRadius: 6, fontSize: 13, marginTop: 4 }}
+                    />
+                  </div>
+                  {connectingService.id === "quickbooks" && (
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Company Realm ID</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. 913035028471"
+                        value={apiCredentials.realmId}
+                        onChange={(e) => setApiCredentials({ ...apiCredentials, realmId: e.target.value })}
+                        style={{ width: "100%", padding: "8px 12px", border: "1px solid #CBD5E1", borderRadius: 6, fontSize: 13, marginTop: 4 }}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
+                <button type="button" onClick={() => setConnectingService(null)} style={{ padding: "8px 16px", background: "#F1F5F9", color: "#475569", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                  Cancel
+                </button>
+                <button type="submit" style={{ padding: "8px 16px", background: "#0F1F3D", color: "#FFF", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                  🔐 Save & Connect Integration
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
