@@ -151,6 +151,40 @@ export interface StockTransfer {
 
 export type NotificationModule = "purchase_orders" | "transfers" | "announcements" | "stock" | "batches";
 
+export interface WebhookEndpoint {
+  id: string;
+  name: string;
+  url: string;
+  secret: string;
+  events: string[];
+  status: "active" | "paused" | "error";
+  lastDelivery?: string;
+  successRate?: number;
+  created_at?: string;
+}
+
+export interface AccountingService {
+  id: string;
+  name: string;
+  logo: string;
+  status: "connected" | "disconnected";
+  lastSync: string;
+  syncedRecords: number;
+  description: string;
+  updated_at?: string;
+}
+
+export interface DeliveryLog {
+  id: string;
+  eventId: string;
+  event: string;
+  targetUrl: string;
+  statusCode: number;
+  durationMs: number;
+  timestamp: string;
+  payloadSnippet: string;
+}
+
 export interface AppNotification {
   id: string;
   vendor_id: string | null;

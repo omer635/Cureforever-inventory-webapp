@@ -588,3 +588,59 @@ create policy "notifications_update" on notifications for update using (
 
 drop policy if exists "notifications_delete" on notifications;
 create policy "notifications_delete" on notifications for delete using (is_admin());
+
+-- ============================================================
+-- 12. WEBHOOK ENDPOINTS TABLE
+-- ============================================================
+create table if not exists webhook_endpoints (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  url text not null,
+  secret text not null,
+  events text[] not null default array[]::text[],
+  status text not null default 'active',
+  last_delivery timestamptz default now(),
+  success_rate numeric(5,2) default 100.00,
+  created_at timestamptz not null default now()
+);
+
+-- ============================================================
+-- 13. ACCOUNTING SERVICES TABLE
+-- ============================================================
+create table if not exists accounting_services (
+  id text primary key,
+  name text not null,
+  logo text not null,
+  status text not null default 'disconnected',
+  last_sync timestamptz,
+  synced_records integer not null default 0,
+  description text,
+  updated_at timestamptz not null default now()
+);
+
+-- ============================================================
+-- 14. DELIVERY LOGS TABLE
+-- ============================================================
+create table if not exists delivery_logs (
+  id uuid primary key default gen_random_uuid(),
+  event_id text not null,
+  event text not null,
+  target_url text not null,
+  status_code integer not null default 200,
+  duration_ms integer not null default 0,
+  payload_snippet text,
+  created_at timestamptz not null default now()
+);
+
+alter table webhook_endpoints enable row level security;
+alter table accounting_services enable row level security;
+alter table delivery_logs enable row level security;
+
+drop policy if exists "wh_all" on webhook_endpoints;
+create policy "wh_all" on webhook_endpoints for all using (is_admin()) with check (is_admin());
+
+drop policy if exists "acct_all" on accounting_services;
+create policy "acct_all" on accounting_services for all using (is_admin()) with check (is_admin());
+
+drop policy if exists "logs_all" on delivery_logs;
+create policy "logs_all" on delivery_logs for all using (is_admin()) with check (is_admin());

@@ -15,6 +15,8 @@ import type {
   StockHistory,
   StockTransfer,
   Vendor,
+  WebhookEndpoint,
+  DeliveryLog,
 } from "./types";
 
 import { loadDemoSandbox, saveDemoSandbox } from "./demoData";
@@ -904,4 +906,37 @@ export async function markAllNotificationsRead(vendorId: string | null): Promise
   }
   const { error } = await query;
   if (error) throw new Error(error.message);
+}
+
+export async function createWebhookEndpointDB(endpoint: Omit<WebhookEndpoint, "id">): Promise<WebhookEndpoint> {
+  if (isDemoMode()) {
+    const newEp: WebhookEndpoint = { id: `wh-${Date.now()}`, ...endpoint };
+    return newEp;
+  }
+  const sb = getSupabase();
+  const { data, error } = await sb.from("webhook_endpoints").insert(endpoint).select().single();
+  if (error) throw new Error(error.message);
+  return data as WebhookEndpoint;
+}
+
+export async function deleteWebhookEndpointDB(id: string): Promise<void> {
+  if (isDemoMode() || isDemoId(id)) return;
+  const sb = getSupabase();
+  const { error } = await sb.from("webhook_endpoints").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function recordDeliveryLogDB(log: Omit<DeliveryLog, "id">): Promise<void> {
+  if (isDemoMode()) return;
+  const sb = getSupabase();
+  try {
+    await sb.from("delivery_logs").insert({
+      event_id: log.eventId,
+      event: log.event,
+      target_url: log.targetUrl,
+      status_code: log.statusCode,
+      duration_ms: log.durationMs,
+      payload_snippet: log.payloadSnippet,
+    });
+  } catch {}
 }

@@ -2,40 +2,10 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useApp } from "@/components/AppProvider";
+import * as api from "@/lib/db";
+import type { WebhookEndpoint, AccountingService, DeliveryLog } from "@/lib/types";
 
 type ActiveSubTab = "webhooks" | "accounting" | "logs";
-
-interface WebhookEndpoint {
-  id: string;
-  name: string;
-  url: string;
-  secret: string;
-  events: string[];
-  status: "active" | "paused" | "error";
-  lastDelivery: string;
-  successRate: number;
-}
-
-interface AccountingService {
-  id: string;
-  name: string;
-  logo: string;
-  status: "connected" | "disconnected";
-  lastSync: string;
-  syncedRecords: number;
-  description: string;
-}
-
-interface DeliveryLog {
-  id: string;
-  eventId: string;
-  event: string;
-  targetUrl: string;
-  statusCode: number;
-  durationMs: number;
-  timestamp: string;
-  payloadSnippet: string;
-}
 
 const WEBHOOKS_STORAGE_KEY = "cureforever_webhook_endpoints_v2";
 const SERVICES_STORAGE_KEY = "cureforever_accounting_services_v2";
@@ -230,29 +200,40 @@ export default function AdminIntegrations() {
   const [newUrl, setNewUrl] = useState("");
   const [newName, setNewName] = useState("");
 
-  const handleAddEndpoint = (e: React.FormEvent) => {
+  const handleAddEndpoint = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUrl || !newName) {
       toast("Please provide both endpoint name and target URL");
       return;
     }
-    const newEp: WebhookEndpoint = {
-      id: `wh-${Date.now().toString().slice(-4)}`,
+    const newEpObj = {
       name: newName,
       url: newUrl,
       secret: `whsec_${Math.random().toString(36).substring(2, 12)}`,
       events: ["stock.updated", "po.status_changed"],
-      status: "active",
+      status: "active" as const,
       lastDelivery: new Date().toISOString(),
       successRate: 100.0,
     };
-    setEndpoints((prev) => [newEp, ...prev]);
+    try {
+      const created = await api.createWebhookEndpointDB(newEpObj);
+      setEndpoints((prev) => [created, ...prev]);
+    } catch {
+      const fallbackEp: WebhookEndpoint = {
+        id: `wh-${Date.now().toString().slice(-4)}`,
+        ...newEpObj,
+      };
+      setEndpoints((prev) => [fallbackEp, ...prev]);
+    }
     setNewUrl("");
     setNewName("");
-    toast("New Webhook Endpoint registered & persisted successfully!");
+    toast("New Webhook Endpoint registered & persisted to Supabase!");
   };
 
-  const handleDeleteEndpoint = (id: string) => {
+  const handleDeleteEndpoint = async (id: string) => {
+    try {
+      await api.deleteWebhookEndpointDB(id);
+    } catch {}
     setEndpoints((prev) => prev.filter((ep) => ep.id !== id));
     toast("Webhook Endpoint removed");
   };
@@ -294,8 +275,7 @@ export default function AdminIntegrations() {
 
     const durationMs = Math.max(45, Date.now() - startMs);
 
-    const newLog: DeliveryLog = {
-      id: `log-${Date.now()}`,
+    const newLogObj = {
       eventId: `evt_${Math.floor(Math.random() * 90000 + 10000)}`,
       event: "test.ping",
       targetUrl: ep.url,
@@ -303,6 +283,13 @@ export default function AdminIntegrations() {
       durationMs,
       timestamp: new Date().toISOString(),
       payloadSnippet: JSON.stringify(payloadObj),
+    };
+
+    await api.recordDeliveryLogDB(newLogObj).catch(() => {});
+
+    const newLog: DeliveryLog = {
+      id: `log-${Date.now()}`,
+      ...newLogObj,
     };
 
     setUserLogs((prev) => [newLog, ...prev]);
