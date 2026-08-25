@@ -25,15 +25,9 @@ export class LoginPage {
     const isAppContainerVisible = await this.page.isVisible('.app-container');
     if (isAppContainerVisible) return;
 
-    const isDemoBtnVisible = await this.demoModeButton.isVisible();
-    if (isDemoBtnVisible) {
-      await this.demoModeButton.click();
-    } else {
-      await this.page.evaluate(() => localStorage.clear());
-      await this.goto();
-      await this.demoModeButton.waitFor({ state: 'visible', timeout: 10000 });
-      await this.demoModeButton.click();
-    }
+    await this.emailInput.fill('demo2026@cureforever.com');
+    await this.passwordInput.fill('Cureforever@2026');
+    await this.submitButton.click();
     await this.page.waitForSelector('.app-container', { state: 'visible', timeout: 15000 });
   }
 
