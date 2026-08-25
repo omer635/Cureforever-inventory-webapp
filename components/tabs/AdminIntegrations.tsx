@@ -60,11 +60,12 @@ export default function AdminIntegrations() {
         if (saved) return JSON.parse(saved);
       } catch {}
     }
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://cureforever-inventory.app";
     return [
       {
         id: "wh-101",
         name: "Shopify OMS Inventory Listener",
-        url: "https://api.wtfevryday.com/webhooks/shopify-stock",
+        url: `${origin}/api/webhooks/shopify-stock`,
         secret: "whsec_9a8b7c6d5e4f3a2b1c",
         events: ["stock.updated", "low_stock.alert"],
         status: "active",
@@ -74,7 +75,7 @@ export default function AdminIntegrations() {
       {
         id: "wh-102",
         name: "QuickBooks Auto-Sync Endpoint",
-        url: "https://connect.quickbooks.com/v3/company/913/webhook",
+        url: `${origin}/api/webhooks/quickbooks-sync`,
         secret: "whsec_qb_7721839102",
         events: ["po.status_changed", "accounting.sync"],
         status: "active",
@@ -84,7 +85,7 @@ export default function AdminIntegrations() {
       {
         id: "wh-103",
         name: "Custom ERP Warehouse Listener",
-        url: "https://erp.internal.cureforever.com/api/v1/stock-adjustments",
+        url: `${origin}/api/webhooks/erp-sync`,
         secret: "whsec_erp_custom_0019",
         events: ["batch.expired", "stock.updated"],
         status: "active",
@@ -165,7 +166,7 @@ export default function AdminIntegrations() {
         id: `log-po-${po.id}`,
         eventId: `evt_po_${po.po_number || idx}`,
         event: "po.status_changed",
-        targetUrl: endpoints[0]?.url || "https://connect.quickbooks.com/v3/company/913/webhook",
+        targetUrl: endpoints[0]?.url || (typeof window !== "undefined" ? `${window.location.origin}/api/webhooks/quickbooks-sync` : "https://cureforever-inventory.app/api/webhooks/quickbooks-sync"),
         statusCode: 200,
         durationMs: 140 + idx * 15,
         timestamp: po.created_at || new Date(Date.now() - idx * 3600000).toISOString(),
@@ -186,7 +187,7 @@ export default function AdminIntegrations() {
         id: `log-sa-${adj.id}`,
         eventId: `evt_adj_${adj.id.slice(-5)}`,
         event: "stock.updated",
-        targetUrl: endpoints[1]?.url || "https://api.wtfevryday.com/webhooks/shopify-stock",
+        targetUrl: endpoints[1]?.url || (typeof window !== "undefined" ? `${window.location.origin}/api/webhooks/shopify-stock` : "https://cureforever-inventory.app/api/webhooks/shopify-stock"),
         statusCode: 200,
         durationMs: 110 + idx * 12,
         timestamp: adj.created_at || new Date(Date.now() - idx * 7200000).toISOString(),

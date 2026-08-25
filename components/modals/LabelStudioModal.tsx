@@ -56,7 +56,8 @@ function RenderedLabelItem({
 
   const qrPayload = useMemo(() => {
     if (qrPayloadType === "url") {
-      return `https://partners.wtfevryday.com/vendor?sku=${encodeURIComponent(product?.sku || "")}`;
+      const origin = typeof window !== "undefined" ? window.location.origin : "https://cureforever.com";
+      return `${origin}/catalog?sku=${encodeURIComponent(product?.sku || "")}`;
     }
     if (qrPayloadType === "batch" && batch) {
       return JSON.stringify({ sku: product?.sku, batch: batch.batch_number, exp: batch.expiry_date });
