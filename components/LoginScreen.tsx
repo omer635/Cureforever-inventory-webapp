@@ -18,10 +18,8 @@ export default function LoginScreen() {
       return;
     }
 
-    // Direct bypass for demo credentials to avoid unnecessary HTTP 400 Auth errors in Supabase logs
-    const isDemoCreds =
-      email.trim().toLowerCase().includes("demo") ||
-      password === "Cureforever@2026";
+    // Direct bypass ONLY for demo accounts matching 'demo' in email address
+    const isDemoCreds = email.trim().toLowerCase().includes("demo");
 
     if (isDemoCreds) {
       enableDemoMode();
@@ -61,7 +59,7 @@ export default function LoginScreen() {
       }
 
       const errJson = await res.json().catch(() => null);
-      if (email.trim().toLowerCase().includes("demo") || password === "Cureforever@2026") {
+      if (email.trim().toLowerCase().includes("demo")) {
         enableDemoMode();
         return;
       }
